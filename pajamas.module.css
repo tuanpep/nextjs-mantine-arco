@@ -1,0 +1,204 @@
+.active:active:not(:disabled, [data-disabled], [data-loading]) {
+  background-color: var(--button-active, var(--button-hover));
+  color: var(
+    --button-active-color,
+    var(--button-hover-color, var(--button-color))
+  );
+}
+
+:global(body) {
+  background-color: var(--gl-bg-canvas);
+}
+
+:global(.mantine-focus-auto:focus-visible),
+:global(.mantine-focus-always:focus) {
+  outline: none;
+  box-shadow:
+    0 0 0 1px var(--gl-focus-inner),
+    0 0 0 3px var(--gl-focus-outer);
+}
+
+.tab-list {
+  --tabs-list-border-width: 0;
+
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.tab-list::before {
+  content: none;
+}
+
+.tab {
+  padding: 1rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--gl-tab-fg);
+  font-size: var(--mantine-font-size-md);
+  font-weight: 400;
+  line-height: 1rem;
+}
+
+.tab::before {
+  content: "";
+  position: absolute;
+  inset-inline: -1px;
+  bottom: -1px;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-list .tab:hover:not([data-active], :disabled, [data-disabled]) {
+  border-color: transparent;
+  background-color: var(--gl-action-hover);
+}
+
+.tab-list .tab:hover:not([data-active], :disabled, [data-disabled])::before {
+  border-bottom-color: var(--gl-tab-hover-indicator);
+}
+
+.tab-list .tab[data-active] {
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--gl-tab-fg);
+  font-weight: 600;
+}
+
+.tab-list .tab[data-active]::before {
+  border-bottom-color: var(--gl-tab-indicator);
+}
+
+:global([data-mantine-color-scheme]) .input:focus,
+:global([data-mantine-color-scheme]) .input:focus-within {
+  --input-bd: var(--gl-control-border-focus);
+
+  outline: none;
+  box-shadow:
+    0 0 0 1px var(--gl-focus-inner),
+    0 0 0 3px var(--gl-focus-outer);
+}
+
+:global([data-mantine-color-scheme]) .segmented {
+  padding: 0;
+  overflow: visible;
+  background-color: transparent;
+  border-radius: var(--mantine-radius-lg);
+}
+
+.segmented-indicator {
+  display: none;
+}
+
+.segmented-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--gl-button-border);
+  border-radius: 0;
+  background-color: var(--gl-button-bg);
+  color: var(--gl-button-fg);
+  font-size: var(--mantine-font-size-md);
+  font-weight: 400;
+  line-height: 1rem;
+}
+
+.segmented-control:first-of-type .segmented-label {
+  border-start-start-radius: var(--mantine-radius-lg);
+  border-end-start-radius: var(--mantine-radius-lg);
+}
+
+.segmented-control:last-of-type .segmented-label {
+  border-start-end-radius: var(--mantine-radius-lg);
+  border-end-end-radius: var(--mantine-radius-lg);
+}
+
+.segmented-control:not(:first-of-type) .segmented-label {
+  margin-inline-start: -1px;
+}
+
+.segmented[data-with-items-borders] .segmented-control::before {
+  content: none;
+}
+
+.segmented .segmented-label:hover:not([data-active], [data-disabled]) {
+  background-color: var(--gl-button-hover);
+}
+
+.segmented .segmented-label[data-active] {
+  z-index: 1;
+  border-color: var(--gl-segment-selected-bd);
+  background-color: var(--gl-segment-selected-bg);
+  color: var(--gl-segment-selected-fg);
+}
+
+.segmented-input:focus-visible + .segmented-label {
+  --segmented-control-outline: none;
+
+  outline: none;
+  box-shadow:
+    0 0 0 1px var(--gl-focus-inner),
+    0 0 0 3px var(--gl-focus-outer);
+}
+
+:global([data-mantine-color-scheme]) .switch-track {
+  --switch-bg: var(--gl-toggle-bg);
+  --switch-color: var(--gl-toggle-checked-bg);
+  --switch-thumb-bg: var(--gl-toggle-thumb);
+}
+
+.alert {
+  padding: 1rem;
+}
+
+.alert::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--gl-alert-accent) 50%,
+    transparent 100%
+  );
+}
+
+:global([data-mantine-color-scheme]) .pagination-control {
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--gl-button-fg);
+  font-size: var(--mantine-font-size-md);
+  font-weight: 400;
+}
+
+:global([data-mantine-color-scheme]) .pagination-control[data-active] {
+  border-color: var(--gl-pagination-active-bg);
+  background-color: var(--gl-pagination-active-bg);
+  color: var(--gl-pagination-active-fg);
+}
+
+.breadcrumbs a {
+  color: var(--mantine-color-dimmed);
+  text-decoration-color: transparent;
+}
+
+.breadcrumbs a:hover {
+  text-decoration-line: underline;
+  text-decoration-color: currentcolor;
+}
+
+.breadcrumbs > :last-child {
+  color: var(--mantine-color-text);
+  font-weight: 600;
+}
+
+.breadcrumb-separator {
+  color: var(--gl-breadcrumb-separator);
+}
+
+:global([data-mantine-color-scheme]) .skeleton[data-visible]::after {
+  background-color: var(--gl-skeleton-bg);
+}

@@ -4,7 +4,7 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { render as testingLibraryRender } from "@testing-library/react";
 import type { ReactNode } from "react";
 
-import { theme } from "@/theme";
+import { cssVariablesResolver, theme } from "@/theme";
 
 export function render(ui: ReactNode) {
   const queryClient = new QueryClient({
@@ -17,7 +17,11 @@ export function render(ui: ReactNode) {
 
   return testingLibraryRender(ui, {
     wrapper: ({ children }) => (
-      <MantineProvider theme={theme} defaultColorScheme="light">
+      <MantineProvider
+        theme={theme}
+        cssVariablesResolver={cssVariablesResolver}
+        defaultColorScheme="light"
+      >
         <QueryClientProvider client={queryClient}>
           <NuqsTestingAdapter>{children}</NuqsTestingAdapter>
         </QueryClientProvider>

@@ -1,13 +1,10 @@
 import "@mantine/core/styles.css";
+import "@/pajamas.module.css";
 
-import {
-  ColorSchemeScript,
-  MantineProvider,
-  mantineHtmlProps,
-} from "@mantine/core";
+import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import type { Metadata } from "next";
 
-import { theme } from "@/theme";
+import { fontClassName } from "@/lib/fonts";
 import { AppProviders } from "./providers";
 
 export const metadata: Metadata = {
@@ -17,14 +14,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" {...mantineHtmlProps}>
+    <html lang="en" {...mantineHtmlProps} className={fontClassName}>
       <head>
         <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body>
-        <MantineProvider theme={theme} defaultColorScheme="light">
-          <AppProviders>{children}</AppProviders>
-        </MantineProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
