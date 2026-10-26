@@ -1,6 +1,6 @@
 # Next.js frontend template
 
-App Router frontend with Mantine, Zod, TanStack Query, nuqs, Vitest, Playwright, and Storybook. Coding agents follow [AGENTS.md](AGENTS.md).
+App Router frontend with Mantine, Zod, TanStack Query, nuqs, Vitest, Playwright, and Storybook. Layout and commit guidance is in `.cursor/skills/nextjs-fe/` and is read when that work starts.
 
 ```bash
 npm install
