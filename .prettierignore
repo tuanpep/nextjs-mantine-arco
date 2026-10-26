@@ -1,0 +1,10 @@
+.next
+node_modules
+coverage
+package-lock.json
+next-env.d.ts
+AGENTS.md
+storybook-static
+playwright-report
+test-results
+blob-report
