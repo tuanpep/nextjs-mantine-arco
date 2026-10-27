@@ -8,6 +8,22 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
+    // Existing feature tests exercise the English UI. Locale tests clear this cookie.
+    storageState: {
+      cookies: [
+        {
+          name: "DX_LOCALE",
+          value: "en",
+          domain: "localhost",
+          path: "/",
+          expires: -1,
+          httpOnly: true,
+          secure: false,
+          sameSite: "Lax",
+        },
+      ],
+      origins: [],
+    },
   },
   projects: [
     {

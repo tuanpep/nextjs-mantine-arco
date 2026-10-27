@@ -1,0 +1,22 @@
+{
+  "Workspace": {
+    "overview": "Tổng quan",
+    "support": "Hỗ trợ",
+    "projectIdeas": "Ý tưởng dự án",
+    "home": "Trang chủ",
+    "applications": "Ứng dụng",
+    "getHelp": "Nhận trợ giúp",
+    "requests": "Yêu cầu của tôi",
+    "closeNavigation": "Đóng điều hướng",
+    "openNavigation": "Mở điều hướng",
+    "digitalServices": "Dịch vụ số",
+    "lightTheme": "Chuyển sang giao diện sáng",
+    "darkTheme": "Chuyển sang giao diện tối",
+    "demoAccount": "Tài khoản demo Jo Lee",
+    "mainNavigation": "Điều hướng chính",
+    "workItems": "Hạng mục công việc",
+    "demoNotice": "Không gian demo · Dữ liệu giả định · Thay đổi sẽ mất khi tải lại trang · Không có xác thực hoặc cung cấp dịch vụ thực tế",
+    "language": "Ngôn ngữ",
+    "languageError": "Không thể đổi ngôn ngữ. Vui lòng thử lại."
+  }
+}

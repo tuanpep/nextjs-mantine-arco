@@ -1,0 +1,22 @@
+{
+  "Workspace": {
+    "overview": "Overview",
+    "support": "Support",
+    "projectIdeas": "Project ideas",
+    "home": "Home",
+    "applications": "Applications",
+    "getHelp": "Get help",
+    "requests": "My requests",
+    "closeNavigation": "Close navigation",
+    "openNavigation": "Open navigation",
+    "digitalServices": "Digital services",
+    "lightTheme": "Switch to light theme",
+    "darkTheme": "Switch to dark theme",
+    "demoAccount": "Jo Lee demo account",
+    "mainNavigation": "Main navigation",
+    "workItems": "Work items",
+    "demoNotice": "Demo workspace · Fictional records · Changes reset on reload · No authentication or live service fulfillment",
+    "language": "Language",
+    "languageError": "Could not change language. Please try again."
+  }
+}

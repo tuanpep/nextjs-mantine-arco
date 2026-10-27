@@ -3,23 +3,38 @@ import "@/pajamas.module.css";
 
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import type { Metadata } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
+import { Suspense, type ReactNode } from "react";
 
 import { fontClassName } from "@/lib/fonts";
 import { AppProviders } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Next.js FE",
-  description: "Next.js frontend template",
+  title: { default: "DX Support", template: "%s | DX Support" },
+  description:
+    "Find company applications, learn workflows, request digital services, get support, and test upcoming releases.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" {...mantineHtmlProps} className={fontClassName}>
+    <Suspense>
+      <LocalizedDocument>{children}</LocalizedDocument>
+    </Suspense>
+  );
+}
+
+async function LocalizedDocument({ children }: { children: ReactNode }) {
+  const locale = await getLocale();
+  return (
+    <html lang={locale} {...mantineHtmlProps} className={fontClassName}>
       <head>
         <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body>
-        <AppProviders>{children}</AppProviders>
+        <NextIntlClientProvider>
+          <AppProviders>{children}</AppProviders>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
