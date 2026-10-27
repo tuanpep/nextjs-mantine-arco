@@ -3,6 +3,11 @@
 import { Alert, Button, Stack } from "@mantine/core";
 import Link from "next/link";
 
+import {
+  DEFAULT_PROJECT_ID,
+  projectSupportPath,
+} from "@/modules/projects/lib/applications";
+
 export default function WorkspaceError({ reset }: { reset: () => void }) {
   return (
     <Stack align="flex-start">
@@ -11,8 +16,12 @@ export default function WorkspaceError({ reset }: { reset: () => void }) {
         view again.
       </Alert>
       <Button onClick={reset}>Try again</Button>
-      <Button component={Link} href="/projects" variant="subtle">
-        Back to Projects
+      <Button
+        component={Link}
+        href={projectSupportPath(DEFAULT_PROJECT_ID)}
+        variant="subtle"
+      >
+        Back to Support
       </Button>
     </Stack>
   );

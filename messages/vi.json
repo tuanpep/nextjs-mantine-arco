@@ -1,22 +1,24 @@
 {
   "Workspace": {
-    "overview": "Tổng quan",
     "support": "Hỗ trợ",
-    "projectIdeas": "Ý tưởng dự án",
-    "home": "Trang chủ",
-    "applications": "Ứng dụng",
-    "getHelp": "Nhận trợ giúp",
-    "requests": "Yêu cầu của tôi",
+    "feedback": "Phản hồi",
+    "ideas": "Ý tưởng",
+    "uat": "Chiến dịch UAT",
+    "settings": "Cài đặt",
+    "workspace": "Không gian làm việc",
+    "noProjectContext": "Mở một dự án để dùng Hỗ trợ, Phản hồi, Ý tưởng hoặc UAT.",
     "closeNavigation": "Đóng điều hướng",
     "openNavigation": "Mở điều hướng",
-    "digitalServices": "Dịch vụ số",
     "lightTheme": "Chuyển sang giao diện sáng",
     "darkTheme": "Chuyển sang giao diện tối",
     "demoAccount": "Tài khoản demo Jo Lee",
+    "signedOut": "Đã đăng xuất",
+    "logOut": "Đăng xuất",
     "mainNavigation": "Điều hướng chính",
     "workItems": "Hạng mục công việc",
-    "demoNotice": "Không gian demo · Dữ liệu giả định · Thay đổi sẽ mất khi tải lại trang · Không có xác thực hoặc cung cấp dịch vụ thực tế",
+    "demoNotice": "Không gian demo · Dữ liệu giả định · Thay đổi sẽ mất khi tải lại trang · Đăng nhập Keycloak · Không cung cấp dịch vụ thực tế",
     "language": "Ngôn ngữ",
-    "languageError": "Không thể đổi ngôn ngữ. Vui lòng thử lại."
+    "languageError": "Không thể đổi ngôn ngữ. Vui lòng thử lại.",
+    "switchProject": "Chuyển dự án"
   }
 }

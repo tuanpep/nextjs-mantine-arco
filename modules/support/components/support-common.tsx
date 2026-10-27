@@ -2,7 +2,12 @@
 
 import { Anchor, Badge, Group, Stack, Text, Title } from "@mantine/core";
 import Link from "next/link";
-import { getApplication } from "@/modules/projects/lib/applications";
+
+import {
+  DEFAULT_PROJECT_ID,
+  getApplication,
+  projectSupportPath,
+} from "@/modules/projects/lib/applications";
 
 import {
   supportProjectId,
@@ -11,16 +16,26 @@ import {
 } from "../lib/fixtures";
 
 export const supportBasePath = `/projects/${supportProjectId}/support`;
+
 export function supportPath(applicationId: string | null) {
-  return applicationId === null ? "/support" : `/projects/${applicationId}/support`;
+  return projectSupportPath(applicationId ?? DEFAULT_PROJECT_ID);
 }
 
-export function SupportIntro({ title, applicationId = "beacon-portal" }: { title: string; applicationId?: string | null }) {
+export function SupportIntro({
+  title,
+  applicationId = "beacon-portal",
+}: {
+  title: string;
+  applicationId?: string | null;
+}) {
+  const projectName = applicationId
+    ? getApplication(applicationId)?.name
+    : undefined;
   return (
     <Stack gap={6}>
       <Group gap="xs">
         <Text size="sm" c="dimmed">
-          {applicationId ? `Applications / ${getApplication(applicationId)?.name} / Support` : "Digital services / Support"}
+          {projectName ? `${projectName} / Support` : "Support"}
         </Text>
         <Badge variant="light" color="gray">
           Support
@@ -41,8 +56,8 @@ export function SupportUnavailable() {
         This destination is not available. It may not exist or you may not have
         access.
       </Text>
-      <Anchor component={Link} href="/projects">
-        Back to projects
+      <Anchor component={Link} href={projectSupportPath(DEFAULT_PROJECT_ID)}>
+        Back to Support
       </Anchor>
     </Stack>
   );

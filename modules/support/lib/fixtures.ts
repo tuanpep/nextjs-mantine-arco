@@ -1,3 +1,8 @@
+import type { EvidenceAttachment } from "./attachments";
+import type { MisrouteTarget } from "./intake-fields";
+import type { Priority, ImpactScope, Urgency } from "./priority";
+import type { RequestType } from "./request-catalog";
+
 export const supportProjectId = "beacon-portal";
 export const sender = "Jo Lee";
 export const supportStatuses = [
@@ -9,12 +14,35 @@ export const supportStatuses = [
 ] as const;
 export type SupportStatus = (typeof supportStatuses)[number];
 
+export const triageDispositions = [
+  "needs-info",
+  "duplicate",
+  "linked-eng",
+  "workaround",
+  "misroute",
+] as const;
+export type TriageDisposition = (typeof triageDispositions)[number];
+
+export const triageDispositionLabels: Record<TriageDisposition, string> = {
+  "needs-info": "Needs more info",
+  duplicate: "Duplicate of another request",
+  "linked-eng": "Linked to engineering tracker",
+  workaround: "Known workaround",
+  misroute: "Misrouted (send to another area)",
+};
+
 export type SupportContext = {
   summary: string;
   situation: string;
   expected: string;
   impact: string;
   environment: string;
+  reproSteps: string;
+  correlationId: string;
+  requestType: RequestType;
+  impactScope: ImpactScope | "";
+  urgency: Urgency | "";
+  attachments: EvidenceAttachment[];
 };
 export type Outcome = {
   summary: string;
@@ -33,6 +61,13 @@ export type SupportRequest = SupportContext & {
   nextAction: string;
   conversation: { author: string; text: string }[];
   outcomes: Outcome[];
+  priority: Priority;
+  csat: number | null;
+  lastDisposition: TriageDisposition | null;
+  relatedRequestId: string | null;
+  engTrackerId: string | null;
+  autoClosePaused: boolean;
+  misrouteTarget: MisrouteTarget | null;
 };
 
 const context: SupportContext = {
@@ -42,11 +77,27 @@ const context: SupportContext = {
   expected: "All visible rows should appear in the exported file.",
   impact: "I need to compare the totals before sharing the report.",
   environment: "Beacon Portal demo, desktop browser",
+  reproSteps:
+    "1. Open monthly report\n2. Choose Export\n3. Compare row count to the on-screen table",
+  correlationId: "",
+  requestType: "broken",
+  impactScope: "my-team",
+  urgency: "this-week",
+  attachments: [],
 };
+
+const openTriage = {
+  lastDisposition: null,
+  relatedRequestId: null,
+  engTrackerId: null,
+  autoClosePaused: false,
+  misrouteTarget: null,
+} as const;
 
 export const supportFixtures: SupportRequest[] = [
   {
     ...context,
+    ...openTriage,
     applicationId: "beacon-portal",
     responsibleTeam: "Product Services",
     id: "SUP112",
@@ -63,9 +114,13 @@ export const supportFixtures: SupportRequest[] = [
       },
     ],
     outcomes: [],
+    priority: "Medium",
+    csat: null,
+    lastDisposition: "needs-info",
   },
   {
     ...context,
+    ...openTriage,
     applicationId: "beacon-portal",
     responsibleTeam: "Product Services",
     id: "SUP113",
@@ -83,9 +138,12 @@ export const supportFixtures: SupportRequest[] = [
       },
     ],
     outcomes: [],
+    priority: "Medium",
+    csat: null,
   },
   {
     ...context,
+    ...openTriage,
     applicationId: "beacon-portal",
     responsibleTeam: "Product Services",
     id: "SUP114",
@@ -108,13 +166,23 @@ export const supportFixtures: SupportRequest[] = [
         superseded: false,
       },
     ],
+    priority: "Low",
+    csat: null,
   },
   {
     ...context,
+    ...openTriage,
     applicationId: "beacon-portal",
     responsibleTeam: "Product Services",
     id: "SUP115",
     summary: "Where can I find report guidance?",
+    situation:
+      "I need the monthly report location. I checked the home page and search.",
+    expected: "",
+    reproSteps: "",
+    requestType: "question",
+    impactScope: "only-me",
+    urgency: "can-wait",
     sender,
     status: "Unclaimed",
     handler: null,
@@ -123,9 +191,12 @@ export const supportFixtures: SupportRequest[] = [
       "An eligible handler needs to review this request and take responsibility.",
     conversation: [],
     outcomes: [],
+    priority: "Low",
+    csat: null,
   },
   {
     ...context,
+    ...openTriage,
     applicationId: "beacon-portal",
     responsibleTeam: "Product Services",
     id: "SUP116",
@@ -143,15 +214,22 @@ export const supportFixtures: SupportRequest[] = [
       },
     ],
     outcomes: [],
+    priority: "High",
+    csat: null,
+    engTrackerId: "DEMO-4821",
+    autoClosePaused: true,
+    lastDisposition: "linked-eng",
   },
   {
     ...context,
+    ...openTriage,
     applicationId: "orchid-reports",
     responsibleTeam: "Business Analytics",
     id: "SUP201",
     summary: "Scheduled report did not arrive",
     situation: "The fictional weekly report is missing from the demo inbox.",
     environment: "Orchid Reports demo",
+    requestType: "broken",
     sender,
     status: "Unclaimed",
     handler: null,
@@ -159,6 +237,8 @@ export const supportFixtures: SupportRequest[] = [
     nextAction: "Business Analytics needs to review the scheduled delivery.",
     conversation: [],
     outcomes: [],
+    priority: "Medium",
+    csat: null,
   },
 ];
 

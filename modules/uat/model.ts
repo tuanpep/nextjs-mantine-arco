@@ -17,22 +17,21 @@ export type Defect = {
 export type Campaign = {
   scenarios: Scenario[];
   defects: Defect[];
-  accepted: boolean;
 };
 
 export const initialCampaign: Campaign = {
-  accepted: false,
   defects: [],
   scenarios: [
     {
       id: "UAT-01",
       title: "Find the right project",
       steps: [
-        "Open the project directory.",
-        "Search for Beacon Portal.",
-        "Open the matching project and review its owner.",
+        "Confirm the project name in the header switcher.",
+        "Switch to Beacon Portal if needed.",
+        "Open Support and confirm you are still in Beacon Portal.",
       ],
-      expected: "The matching project opens and displays its scope and owner.",
+      expected:
+        "The header shows Beacon Portal and Support stays in that project.",
       result: "Not run",
     },
     {
@@ -49,14 +48,14 @@ export const initialCampaign: Campaign = {
     },
     {
       id: "UAT-03",
-      title: "Find a learning guide",
+      title: "Record a failed scenario",
       steps: [
-        "Open the learning center.",
-        "Search for acceptance and expand the matching guide.",
-        "Read the guide and mark it helpful.",
+        "Open an assigned UAT campaign in this project.",
+        "Mark a scenario as Fail with a short note.",
+        "Confirm the campaign still shows the fail and does not treat it as a pass.",
       ],
       expected:
-        "The guide is readable and the page acknowledges your feedback.",
+        "The fail result remains visible and is not treated as release approval.",
       result: "Not run",
     },
   ],
@@ -73,16 +72,7 @@ export type CampaignAction =
     }
   | { type: "retest"; defectId: number }
   | { type: "resolve"; defectId: number }
-  | { type: "accept" }
   | { type: "reset" };
-
-export function canAccept(campaign: Campaign) {
-  return (
-    campaign.scenarios.length > 0 &&
-    campaign.scenarios.every((scenario) => scenario.result === "Pass") &&
-    campaign.defects.every((defect) => defect.status === "Resolved")
-  );
-}
 
 export function campaignReducer(
   state: Campaign,
@@ -92,7 +82,6 @@ export function campaignReducer(
     case "result":
       return {
         ...state,
-        accepted: false,
         scenarios: state.scenarios.map((scenario) =>
           scenario.id === action.scenarioId
             ? { ...scenario, result: action.result }
@@ -108,7 +97,6 @@ export function campaignReducer(
         return state;
       return {
         ...state,
-        accepted: false,
         defects: [
           ...state.defects,
           {
@@ -126,7 +114,6 @@ export function campaignReducer(
       if (!defect || defect.status !== "Open") return state;
       return {
         ...state,
-        accepted: false,
         scenarios: state.scenarios.map((scenario) =>
           scenario.id === defect.scenarioId
             ? { ...scenario, result: "Not run" }
@@ -150,16 +137,17 @@ export function campaignReducer(
         return state;
       return {
         ...state,
-        accepted: false,
         defects: state.defects.map((item) =>
           item.id === defect.id ? { ...item, status: "Resolved" } : item,
         ),
       };
     }
-    case "accept":
-      return canAccept(state) ? { ...state, accepted: true } : state;
     case "reset":
       return initialCampaign;
+    default: {
+      const _exhaustive: never = action;
+      return _exhaustive;
+    }
   }
 }
 

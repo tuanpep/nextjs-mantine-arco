@@ -28,14 +28,14 @@ test("Vietnamese default, keyboard switching, persistence, and unchanged URLs", 
   await expect(page.getByRole("combobox", { name: "Language" })).toHaveValue(
     "en",
   );
-  await page.getByRole("link", { name: "Get help", exact: true }).click();
-  await expect(page).toHaveURL("/help");
+  await page.getByRole("link", { name: "Ideas", exact: true }).click();
+  await expect(page).toHaveURL("/projects/beacon-portal/ideas");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
   await page.getByRole("combobox", { name: "Language" }).selectOption("vi");
   await expect(page.locator("html")).toHaveAttribute("lang", "vi");
   await expect(
-    page.getByRole("link", { name: "Nhận trợ giúp", exact: true }),
+    page.getByRole("link", { name: "Ý tưởng", exact: true }),
   ).toBeVisible();
 });
 
@@ -44,9 +44,9 @@ test("unsupported locale cookies fall back to Vietnamese", async ({
   context,
 }) => {
   await context.addCookies([
-    { name: "DX_LOCALE", value: "fr", url: "http://localhost:3000" },
+    { name: "DX_LOCALE", value: "fr", url: "http://localhost:4202" },
   ]);
-  await page.goto("/help");
+  await page.goto("/projects/beacon-portal/support");
   await expect(page.locator("html")).toHaveAttribute("lang", "vi");
   await expect(page.getByRole("combobox", { name: "Ngôn ngữ" })).toHaveValue(
     "vi",
@@ -59,10 +59,10 @@ test("mobile selector remains accessible and failed changes can be retried", asy
 }) => {
   await context.clearCookies();
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/help");
+  await page.goto("/projects/beacon-portal/support");
   const selector = page.getByRole("combobox", { name: "Ngôn ngữ" });
   await expect(selector).toBeVisible();
-  await page.route("**/help", async (route) => {
+  await page.route("**/projects/beacon-portal/support", async (route) => {
     if (route.request().method() === "POST") {
       await route.abort();
     } else {
@@ -76,7 +76,7 @@ test("mobile selector remains accessible and failed changes can be retried", asy
   await expect(error).toBeVisible();
   await expect(selector).toBeEnabled();
   await expect(selector).toHaveValue("vi");
-  await page.unroute("**/help");
+  await page.unroute("**/projects/beacon-portal/support");
   await selector.selectOption("en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(error).toHaveCount(0);

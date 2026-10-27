@@ -4,6 +4,7 @@ import {
   Alert,
   Anchor,
   Avatar,
+  Badge,
   Button,
   Card,
   Divider,
@@ -19,7 +20,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { useMounted } from "@mantine/hooks";
 
-import { type SupportRequest } from "../lib/fixtures";
+import { DetailsReadout } from "@/lib/form-details";
+import {
+  triageDispositionLabels,
+  type SupportRequest,
+} from "../lib/fixtures";
+import {
+  intakeReadoutRows,
+  misrouteTargetLabels,
+} from "../lib/intake-fields";
+import { priorities, type Priority } from "../lib/priority";
+import { requestTypeLabels } from "../lib/request-catalog";
 import { getApplication } from "@/modules/projects/lib/applications";
 import {
   SupportIntro,
@@ -27,6 +38,7 @@ import {
   SupportUnavailable,
   supportPath,
 } from "./support-common";
+import { SupportHandlerTriage } from "./support-handler-triage";
 import { useSupport } from "./support-provider";
 
 export function SupportDetails({
@@ -38,14 +50,18 @@ export function SupportDetails({
 }) {
   const { requests } = useSupport();
   if (projectId && !getApplication(projectId)) return <SupportUnavailable />;
-  const item = requests.find((request) => request.id === supportId && (projectId ? request.applicationId === projectId : request.applicationId === null));
+  const item = requests.find(
+    (request) =>
+      request.id === supportId &&
+      (!projectId || request.applicationId === projectId),
+  );
   if (!item) return <SupportUnavailable />;
   return <SupportDetailContent key={item.id} item={item} />;
 }
 
 function SupportDetailContent({ item }: { item: SupportRequest }) {
   const mounted = useMounted();
-  const { respond } = useSupport();
+  const { respond, handle } = useSupport();
   const [text, setText] = useState("");
   const [result, setResult] = useState<"Pass" | "Fail" | "Unable">("Pass");
   const [error, setError] = useState("");
@@ -106,8 +122,28 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
         </Group>
       </Anchor>
       <SupportIntro title={item.summary} applicationId={item.applicationId} />
-      <Text size="sm" c="dimmed">
-        {item.id} · Submitted by {item.sender}
+      <Group gap="sm">
+        <Text size="sm" c="dimmed">
+          {item.id} · Submitted by {item.sender}
+        </Text>
+        <Badge variant="light">{requestTypeLabels[item.requestType]}</Badge>
+        <Badge variant="light" color="grape">
+          Priority {item.priority}
+        </Badge>
+        {item.lastDisposition && (
+          <Badge variant="outline">
+            {triageDispositionLabels[item.lastDisposition]}
+          </Badge>
+        )}
+        {item.autoClosePaused && (
+          <Badge variant="outline" color="orange">
+            Auto-close paused
+          </Badge>
+        )}
+      </Group>
+      <Text size="xs" c="dimmed">
+        Priority comes from impact and urgency. Submitters do not pick it.
+        Handlers may adjust it. Linked engineering work pauses demo auto-close.
       </Text>
       <Card withBorder p="md" radius="sm">
         <Stack>
@@ -136,6 +172,38 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
               </Text>
               <Text fw={600}>{item.nextActor}</Text>
             </div>
+            <div>
+              <Text size="sm" c="dimmed">
+                Priority
+              </Text>
+              <Text fw={600}>{item.priority}</Text>
+            </div>
+            {item.engTrackerId && (
+              <div>
+                <Text size="sm" c="dimmed">
+                  Engineering tracker
+                </Text>
+                <Text fw={600}>{item.engTrackerId}</Text>
+              </div>
+            )}
+            {item.relatedRequestId && (
+              <div>
+                <Text size="sm" c="dimmed">
+                  Related request
+                </Text>
+                <Text fw={600}>{item.relatedRequestId}</Text>
+              </div>
+            )}
+            {item.misrouteTarget && (
+              <div>
+                <Text size="sm" c="dimmed">
+                  Redirected to
+                </Text>
+                <Text fw={600}>
+                  {misrouteTargetLabels[item.misrouteTarget]}
+                </Text>
+              </div>
+            )}
           </Group>
           <div>
             <Text size="sm" fw={600}>
@@ -143,6 +211,24 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
             </Text>
             <Text size="sm">{item.nextAction}</Text>
           </div>
+          {item.status !== "Resolved" && (
+            <Select
+              disabled={!mounted}
+              label="Demo handler: adjust priority"
+              description="Visible to the requester as read-only priority above."
+              data={priorities.map((value) => ({ value, label: value }))}
+              value={item.priority}
+              allowDeselect={false}
+              onChange={(value) => {
+                if (!value) return;
+                handle(item.id, {
+                  kind: "set-priority",
+                  priority: value as Priority,
+                });
+                setNotice(`Priority set to ${value} in this demo.`);
+              }}
+            />
+          )}
         </Stack>
       </Card>
       {notice && (
@@ -150,32 +236,67 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
           {notice}
         </Alert>
       )}
+      <SupportHandlerTriage item={item} onNotice={setNotice} />
       <Stack gap="md">
         <Card withBorder p="md" radius="sm">
           <Stack gap="md">
             <Title order={2} size="h3">
               Initial context
             </Title>
-            {[
-              ["Situation", item.situation],
-              ["Expected behavior", item.expected],
-              ["Impact", item.impact],
-              ["Version or environment", item.environment],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <Text fw={600} size="sm">
-                  {label}
+            <DetailsReadout rows={intakeReadoutRows(item)} />
+            <div>
+              <Text fw={600} size="sm">
+                Evidence
+              </Text>
+              {item.attachments.length === 0 ? (
+                <Text size="sm" c="dimmed">
+                  None attached
                 </Text>
-                <Text
-                  size="sm"
-                  style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
-                >
-                  {value?.trim() || "Not provided"}
-                </Text>
-              </div>
-            ))}
+              ) : (
+                item.attachments.map((file) => (
+                  <Text key={file.id} size="sm">
+                    {file.name} · {file.sizeLabel} · {file.status}
+                    {file.status !== "Ready" ? " · not downloadable" : ""}
+                  </Text>
+                ))
+              )}
+            </div>
           </Stack>
         </Card>
+        {item.status === "Resolved" && (
+          <Card withBorder p="md" radius="sm">
+            <Stack gap="sm">
+              <Title order={2} size="h3">
+                How was the help you received?
+              </Title>
+              <Text size="sm" c="dimmed">
+                Optional. A low score does not reopen the ticket or create a new
+                one.
+              </Text>
+              {item.csat === null ? (
+                <Group>
+                  {[1, 2, 3, 4, 5].map((score) => (
+                    <Button
+                      key={score}
+                      variant="light"
+                      disabled={!mounted}
+                      onClick={() => {
+                        respond(item.id, { kind: "csat", score });
+                        setNotice(
+                          `Thanks. Score ${score} saved in this demo only.`,
+                        );
+                      }}
+                    >
+                      {score}
+                    </Button>
+                  ))}
+                </Group>
+              ) : (
+                <Text size="sm">You rated this {item.csat} out of 5.</Text>
+              )}
+            </Stack>
+          </Card>
+        )}
         <Card withBorder p="md" radius="sm">
           <Stack>
             <Title order={2} size="h3">
@@ -228,7 +349,6 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
                   <Group gap="sm">
                     <Avatar
                       size="sm"
-                      radius="xl"
                       color={message.author === "Jo Lee" ? "blue" : "teal"}
                     >
                       {message.author
@@ -254,9 +374,6 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
             )}
           </Stack>
         </Card>
-        <Anchor component={Link} href="/operations">
-          Open DX operations demo
-        </Anchor>
         {
           <Card withBorder p="md" radius="sm">
             <form onSubmit={submitResponse}>

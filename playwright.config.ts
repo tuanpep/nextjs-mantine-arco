@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:4202",
     trace: "on-first-retry",
     // Existing feature tests exercise the English UI. Locale tests clear this cookie.
     storageState: {
@@ -33,7 +33,11 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run dev",
-    url: "http://localhost:3000",
+    url: "http://localhost:4202",
     reuseExistingServer: !process.env.CI,
+    env: {
+      ...process.env,
+      NEXT_PUBLIC_E2E_AUTH_BYPASS: "1",
+    },
   },
 });

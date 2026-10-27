@@ -13,7 +13,7 @@ import { AppProviders } from "./providers";
 export const metadata: Metadata = {
   title: { default: "DX Support", template: "%s | DX Support" },
   description:
-    "Find company applications, learn workflows, request digital services, get support, and test upcoming releases.",
+    "Project workspace for support, feedback, ideas, and UAT campaigns. Demo only.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

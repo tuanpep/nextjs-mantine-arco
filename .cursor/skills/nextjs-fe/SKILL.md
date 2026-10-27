@@ -1,6 +1,6 @@
 ---
 name: nextjs-fe
-description: Places Next.js App Router code in app routes, modules features, and lib helpers, and writes Conventional Commits. Use when creating or editing routes, features, components, schemas, tests, stories, or git commits in the Next.js frontend.
+description: Places Next.js App Router code in app routes, modules features, and lib helpers, and writes Conventional Commits. Use when creating or editing routes, features, components, schemas, tests, or git commits in the Next.js frontend.
 ---
 
 # Next.js frontend
@@ -13,7 +13,6 @@ Read [references/commits.md](references/commits.md) only when creating a commit.
 - `npm run dev` starts the app.
 - `npm run check` runs format, lint, stylelint, types, and unit tests.
 - `npm run test:e2e` runs Playwright.
-- `npm run storybook` starts Storybook.
 
 ## Stack
 

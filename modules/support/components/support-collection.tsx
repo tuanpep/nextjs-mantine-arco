@@ -8,11 +8,13 @@ import {
   Card,
   Group,
   Select,
+  SimpleGrid,
   Stack,
   Text,
   TextInput,
   ThemeIcon,
   Title,
+  UnstyledButton,
 } from "@mantine/core";
 import {
   IconArrowRight,
@@ -24,6 +26,10 @@ import Link from "next/link";
 import { useQueryStates } from "nuqs";
 
 import { supportStatuses } from "../lib/fixtures";
+import {
+  requestCatalogCards,
+  requestTypeLabels,
+} from "../lib/request-catalog";
 import { getApplication } from "@/modules/projects/lib/applications";
 import { supportSearchParams } from "../lib/search-params";
 import { filterSupport } from "../lib/support-state";
@@ -39,7 +45,7 @@ export function SupportCollection({ projectId }: { projectId?: string }) {
   const { requests } = useSupport();
   const [filters, setFilters] = useQueryStates(supportSearchParams);
   if (projectId && !getApplication(projectId)) return <SupportUnavailable />;
-  const basePath = projectId ? supportPath(projectId) : "/support";
+  const basePath = supportPath(projectId ?? null);
   const items = filterSupport(requests.filter((item) => !projectId || item.applicationId === projectId), filters.q, filters.status);
   return (
     <Stack gap="md">
@@ -52,12 +58,41 @@ export function SupportCollection({ projectId }: { projectId?: string }) {
         </div>
         <Button
           component={Link}
-          href={`${basePath}/new`}
+          href={`${basePath}/new?type=general`}
           leftSection={<IconPlus size={16} />}
         >
-          New request
+          Ask for help
         </Button>
       </Group>
+      <Stack gap="xs">
+        <Text size="sm" fw={600}>
+          Request catalog in this project
+        </Text>
+        <Text size="xs" c="dimmed">
+          Known types route to the default handler when configured. Something
+          else remains the catch-all. Choosing a type does not fulfill the
+          request.
+        </Text>
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="sm">
+          {requestCatalogCards.map((card) => (
+            <UnstyledButton
+              key={card.type}
+              component={Link}
+              href={`${basePath}/new?type=${card.type}`}
+              style={{ display: "block" }}
+            >
+              <Card withBorder padding="sm" radius="sm" h="100%">
+                <Text fw={600} size="sm">
+                  {card.title}
+                </Text>
+                <Text size="xs" c="dimmed" mt={4}>
+                  {card.description}
+                </Text>
+              </Card>
+            </UnstyledButton>
+          ))}
+        </SimpleGrid>
+      </Stack>
       <Card withBorder p={0} radius="sm">
         <Group
           align="flex-end"
@@ -152,10 +187,17 @@ export function SupportCollection({ projectId }: { projectId?: string }) {
                       {item.summary}
                     </Anchor>
                     <Text size="sm" c="dimmed">
-                      {getApplication(item.applicationId ?? "")?.name ?? "Application not identified"} · {item.handler ?? "Unclaimed"} · Next: {item.nextActor}
+                      {getApplication(item.applicationId ?? "")?.name ??
+                        "Application not identified"}{" "}
+                      · {requestTypeLabels[item.requestType]} · Priority{" "}
+                      {item.priority} · {item.handler ?? "Unclaimed"} · Next:{" "}
+                      {item.nextActor}
                     </Text>
                   </Stack>
                   <Group gap="sm">
+                    <Badge variant="light" color="grape" size="sm">
+                      {item.priority}
+                    </Badge>
                     <SupportStatusBadge status={item.status} />
                     <IconArrowRight size={18} aria-hidden="true" />
                   </Group>

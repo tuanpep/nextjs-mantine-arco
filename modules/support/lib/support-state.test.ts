@@ -14,6 +14,36 @@ function fixture(id: string) {
   return item;
 }
 
+describe("application triage", () => {
+  test("unidentified intake is routed without replacing the request or conversation", () => {
+    const draft = createSupportRequest("SUP-unknown", fixture("SUP112"), null);
+    expect(draft.applicationId).toBeNull();
+    expect(draft.responsibleTeam).toBe("DX triage");
+    const routed = applyHandlerAction(draft, {
+      kind: "route",
+      applicationId: "orchid-reports",
+    });
+    expect(routed.id).toBe(draft.id);
+    expect(routed.applicationId).toBe("orchid-reports");
+    expect(routed.responsibleTeam).toBe("Business Analytics");
+    expect(routed.status).toBe("Unclaimed");
+    expect(routed.conversation.at(-1)?.text).toContain("Orchid Reports");
+  });
+
+  test("rejects unknown applications and rerouting already identified requests", () => {
+    const draft = createSupportRequest("SUP-unknown", fixture("SUP112"), null);
+    expect(() =>
+      applyHandlerAction(draft, { kind: "route", applicationId: "missing" }),
+    ).toThrow("Choose a known application");
+    expect(() =>
+      applyHandlerAction(fixture("SUP112"), {
+        kind: "route",
+        applicationId: "orchid-reports",
+      }),
+    ).toThrow("Only unidentified requests");
+  });
+});
+
 describe("sender transitions", () => {
   test("reply retains the handler and returns next action without concluding", () => {
     const item = applySenderAction(fixture("SUP112"), {
@@ -85,19 +115,130 @@ describe("sender transitions", () => {
   });
 });
 
-test("creation fixes sender, starts unclaimed and makes no handling promise", () => {
+test("creation fixes sender, starts unclaimed and sets priority from impact and urgency", () => {
   const item = createSupportRequest("local-id", {
     summary: " Help ",
     situation: " Trying to export ",
-    expected: "",
+    expected: " Rows export ",
     impact: "",
-    environment: "",
+    environment: " demo ",
+    reproSteps: " 1. Open report ",
+    correlationId: " req-123 ",
+    requestType: "broken",
+    impactScope: "my-team",
+    urgency: "today",
+    attachments: [
+      {
+        id: "a1",
+        name: "shot.png",
+        sizeLabel: "12 KB",
+        status: "Ready",
+      },
+      {
+        id: "a2",
+        name: "pending.png",
+        sizeLabel: "8 KB",
+        status: "Scanning",
+      },
+    ],
   });
   expect(item.sender).toBe("Jo Lee");
   expect(item.status).toBe("Unclaimed");
   expect(item.handler).toBeNull();
   expect(item.nextActor).toBe("Responsible team");
   expect(item.summary).toBe("Help");
+  expect(item.reproSteps).toBe("1. Open report");
+  expect(item.correlationId).toBe("req-123");
+  expect(item.priority).toBe("High");
+  expect(item.autoClosePaused).toBe(false);
+  expect(item.lastDisposition).toBeNull();
+  expect(item.attachments).toEqual([
+    { id: "a1", name: "shot.png", sizeLabel: "12 KB", status: "Ready" },
+  ]);
+  expect(item.csat).toBeNull();
+});
+
+describe("handler triage dispositions", () => {
+  test("needs-info claims unclaimed work and waits on the sender", () => {
+    const item = applyHandlerAction(fixture("SUP115"), {
+      kind: "needs-info",
+      text: "Which guide did you open?",
+    });
+    expect(item.handler).toBe("Demo DX operator");
+    expect(item.status).toBe("Waiting for sender");
+    expect(item.lastDisposition).toBe("needs-info");
+    expect(item.nextAction).toBe("Which guide did you open?");
+  });
+
+  test("link-eng pauses auto-close without resolving", () => {
+    const item = applyHandlerAction(fixture("SUP116"), {
+      kind: "link-eng",
+      engTrackerId: " ENG-9 ",
+      text: "Tracking the filter reset.",
+    });
+    expect(item.status).toBe("Handling");
+    expect(item.engTrackerId).toBe("ENG-9");
+    expect(item.autoClosePaused).toBe(true);
+    expect(item.lastDisposition).toBe("linked-eng");
+  });
+
+  test("duplicate and misroute resolve with structured outcomes", () => {
+    const duplicate = applyHandlerAction(fixture("SUP116"), {
+      kind: "duplicate",
+      relatedRequestId: "sup112",
+      text: "Same export symptom.",
+    });
+    expect(duplicate.status).toBe("Resolved");
+    expect(duplicate.relatedRequestId).toBe("SUP112");
+    expect(duplicate.outcomes.at(-1)?.summary).toBe("Duplicate of SUP112");
+
+    const misrouted = applyHandlerAction(fixture("SUP115"), {
+      kind: "misroute",
+      target: "ideas",
+      text: "This is a product wish, not a break.",
+    });
+    expect(misrouted.status).toBe("Resolved");
+    expect(misrouted.misrouteTarget).toBe("ideas");
+    expect(misrouted.lastDisposition).toBe("misroute");
+  });
+
+  test("workaround can keep the ticket open or resolve it", () => {
+    const open = applyHandlerAction(fixture("SUP116"), {
+      kind: "workaround",
+      text: "Re-apply filters after navigation.",
+      keepOpen: true,
+    });
+    expect(open.status).toBe("Waiting for sender");
+    expect(open.lastDisposition).toBe("workaround");
+
+    const closed = applyHandlerAction(fixture("SUP116"), {
+      kind: "workaround",
+      text: "Use the saved view instead.",
+      keepOpen: false,
+    });
+    expect(closed.status).toBe("Resolved");
+    expect(closed.outcomes.at(-1)?.summary).toBe("Workaround provided");
+  });
+});
+
+test("handler can adjust priority without resolving", () => {
+  const item = applyHandlerAction(fixture("SUP116"), {
+    kind: "set-priority",
+    priority: "Critical",
+  });
+  expect(item.priority).toBe("Critical");
+  expect(item.status).toBe("Handling");
+});
+
+test("csat is recorded once on a resolved request", () => {
+  const scored = applySenderAction(fixture("SUP114"), {
+    kind: "csat",
+    score: 4,
+  });
+  expect(scored.csat).toBe(4);
+  expect(
+    applySenderAction(scored, { kind: "csat", score: 1 }).csat,
+  ).toBe(4);
 });
 
 test("collection combines query and status filters", () => {

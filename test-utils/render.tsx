@@ -4,6 +4,7 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { render as testingLibraryRender } from "@testing-library/react";
 import type { ReactNode } from "react";
 
+import { AuthProvider } from "@/modules/account/components/auth-provider";
 import { cssVariablesResolver, theme } from "@/theme";
 
 export function render(ui: ReactNode) {
@@ -23,7 +24,9 @@ export function render(ui: ReactNode) {
         defaultColorScheme="light"
       >
         <QueryClientProvider client={queryClient}>
-          <NuqsTestingAdapter>{children}</NuqsTestingAdapter>
+          <AuthProvider>
+            <NuqsTestingAdapter>{children}</NuqsTestingAdapter>
+          </AuthProvider>
         </QueryClientProvider>
       </MantineProvider>
     ),

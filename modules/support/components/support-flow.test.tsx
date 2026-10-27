@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, screen } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 
 import { render } from "@/test-utils/render";
 
@@ -7,24 +7,45 @@ import { SupportDetails } from "./support-details";
 import { SupportForm } from "./support-form";
 import { SupportProvider } from "./support-provider";
 
-afterEach(cleanup);
+const search = vi.hoisted(() => ({ type: null as string | null }));
 
-test("an application route cannot display another application's request", () => {
-  render(<SupportProvider><SupportDetails projectId="orchid-reports" supportId="SUP112" /></SupportProvider>);
-  expect(screen.getByRole("heading", { name: "Support unavailable" })).toBeInTheDocument();
-  expect(screen.queryByText("Help with the monthly report export")).not.toBeInTheDocument();
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => ({
+    get: (key: string) => (key === "type" ? search.type : null),
+  }),
+}));
+
+afterEach(() => {
+  cleanup();
+  search.type = null;
 });
 
-test("unknown application intake routes to triage without assigning Beacon", () => {
-  render(<SupportProvider><SupportForm /></SupportProvider>);
-  expect(screen.getByLabelText("Affected application")).toHaveValue("");
-  fireEvent.change(screen.getByLabelText(/Brief summary/), { target: { value: "Cannot find my report" } });
-  fireEvent.change(screen.getByLabelText(/^Situation/), { target: { value: "I do not know which application owns this report." } });
-  fireEvent.click(screen.getByRole("button", { name: "Review request" }));
-  expect(screen.getByText(/Not sure, route to DX triage/)).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Confirm creation in demo" }));
-  expect(screen.getByText(/Responsible team: DX triage/)).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "View request" })).toHaveAttribute("href", expect.stringMatching(/^\/support\/SUP-/));
+test("a valid application cannot open another application's request", () => {
+  render(
+    <SupportProvider>
+      <SupportDetails projectId="orchid-reports" supportId="SUP112" />
+    </SupportProvider>,
+  );
+  expect(
+    screen.getByRole("heading", { name: "Support unavailable" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText("Help with the monthly report export"),
+  ).not.toBeInTheDocument();
+});
+
+test("a project route cannot display another project's request", () => {
+  render(
+    <SupportProvider>
+      <SupportDetails projectId="orchid-reports" supportId="SUP112" />
+    </SupportProvider>,
+  );
+  expect(
+    screen.getByRole("heading", { name: "Support unavailable" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText("Help with the monthly report export"),
+  ).not.toBeInTheDocument();
 });
 
 test("review does not create; explicit confirmation creates an in-memory request", () => {
@@ -36,7 +57,7 @@ test("review does not create; explicit confirmation creates an in-memory request
   fireEvent.change(screen.getByLabelText(/Brief summary/), {
     target: { value: "Help finding a report" },
   });
-  fireEvent.change(screen.getByLabelText(/^Situation/), {
+  fireEvent.change(screen.getByLabelText(/Situation/), {
     target: {
       value: "I tried the reports menu but could not find the monthly report.",
     },
@@ -63,6 +84,43 @@ test("review does not create; explicit confirmation creates an in-memory request
     "href",
     expect.stringContaining("/projects/beacon-portal/support/SUP-"),
   );
+});
+
+test("broken intake shows repro and correlation fields", () => {
+  search.type = "broken";
+  render(
+    <SupportProvider>
+      <SupportForm projectId="beacon-portal" />
+    </SupportProvider>,
+  );
+  expect(screen.getByLabelText(/Steps to reproduce/)).toBeInTheDocument();
+  expect(
+    screen.getByLabelText(/Correlation \/ error ID/),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/Broken reports need repro steps/i),
+  ).toBeInTheDocument();
+});
+
+test("demo handler triage can mark needs more info", () => {
+  render(
+    <SupportProvider>
+      <SupportDetails projectId="beacon-portal" supportId="SUP116" />
+    </SupportProvider>,
+  );
+  expect(screen.getByText("DEMO-4821")).toBeInTheDocument();
+  expect(screen.getByText("Auto-close paused")).toBeInTheDocument();
+  fireEvent.change(
+    screen.getByLabelText(/What do you still need from the sender/),
+    {
+      target: { value: "Which filter values reset after navigation?" },
+    },
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: "Apply disposition in demo" }),
+  );
+  expect(screen.getByRole("status")).toHaveTextContent("needs more info");
+  expect(screen.getByText("Waiting for sender")).toBeInTheDocument();
 });
 
 test("sender reply updates responsibility and removes stale reply controls", () => {

@@ -13,49 +13,62 @@ import {
   SimpleGrid,
   Stack,
   Text,
-  Textarea,
-  TextInput,
   Title,
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { IconClipboardCheck } from "@tabler/icons-react";
-import {
-  campaignReducer,
-  canAccept,
-  initialCampaign,
-  isResult,
-} from "../model";
 
-export function UatScreen() {
+import { DetailsFormFields, DetailsReadout } from "@/lib/form-details";
+
+import {
+  composeUatDetails,
+  uatDefectIntakeFields,
+  uatDefectReadoutRows,
+  validateUatDefectIntake,
+} from "../lib/intake-fields";
+import { campaignReducer, initialCampaign, isResult } from "../model";
+
+export function UatScreen({ projectId }: { projectId?: string }) {
   const [campaign, dispatch] = useReducer(campaignReducer, initialCampaign);
   const [scenarioId, setScenarioId] = useState("UAT-01");
-  const [title, setTitle] = useState("");
-  const [details, setDetails] = useState("");
   const [severity, setSeverity] = useState("Major");
-  const [attempted, setAttempted] = useState(false);
   const [notice, setNotice] = useState("");
+  const defectForm = useForm({
+    initialValues: {
+      title: "",
+      reproSteps: "",
+      expected: "",
+      actual: "",
+    },
+    validate: validateUatDefectIntake,
+  });
   const passed = campaign.scenarios.filter(
     (scenario) => scenario.result === "Pass",
   ).length;
   const unresolved = campaign.defects.filter(
     (defect) => defect.status !== "Resolved",
   ).length;
-  const ready = canAccept(campaign);
+  const failed = campaign.scenarios.filter(
+    (scenario) => scenario.result === "Fail" || scenario.result === "Blocked",
+  ).length;
 
   return (
     <Stack gap="lg">
       <Group gap="sm">
         <IconClipboardCheck size={28} aria-hidden />
         <div>
-          <Title order={1}>User acceptance testing</Title>
+          <Title order={1}>UAT campaigns</Title>
           <Text c="dimmed">
-            Run scenarios, track defects, and verify readiness.
+            Run scenarios and track defects. Campaign progress is not release
+            approval.
           </Text>
         </div>
       </Group>
       <Alert title="Demo session only" color="blue">
         All results and defects are sample data in page memory. Leaving or
-        reloading resets this campaign. Acceptance here does not approve a real
+        reloading resets this campaign. Recording a result does not approve a
         release or notify anyone.
+        {projectId ? ` Project context: ${projectId}.` : ""}
       </Alert>
       <Paper withBorder p="lg">
         <Stack>
@@ -66,24 +79,19 @@ export function UatScreen() {
               </Text>
               <Title order={2}>Beacon Portal readiness</Title>
             </div>
-            <Badge color={campaign.accepted ? "green" : "orange"}>
-              {campaign.accepted ? "Accepted in demo" : "In progress"}
-            </Badge>
+            <Badge color="orange">In progress</Badge>
           </Group>
           <Text>
-            Scope: project discovery, support intake, and self-service learning.
-            Run against the demo portal with sample records only.
+            Scope: project switching, support intake, and scenario results. Run
+            against the demo portal with sample records only.
           </Text>
           <Text size="sm" c="dimmed">
-            Release: Beacon Portal pilot 1.0 · Module: employee self-service ·
-            Test window: October 26–30, 2026 · Demo coordinator: Product
-            Services · Business acceptance role: department representative
+            Version: Beacon Portal pilot 1.0 · Test window: October 26–30, 2026
+            · Demo coordinator: Hoa Nguyen
           </Text>
           <Text size="sm">
-            Entry criteria: the sample build is available and testers can open
-            the portal. Exit criteria: every scenario passes and all recorded
-            defects are resolved after retesting. This demo does not record
-            formal business sign-off or deployment approval.
+            Progress shows evidence only. Failed and blocked scenarios need
+            follow-up. This screen does not record release acceptance.
           </Text>
           <SimpleGrid cols={{ base: 1, sm: 3 }}>
             <div>
@@ -175,24 +183,18 @@ export function UatScreen() {
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
         <Paper withBorder p="lg">
           <form
-            noValidate
-            onSubmit={(event) => {
-              event.preventDefault();
-              setAttempted(true);
+            onSubmit={defectForm.onSubmit((values) => {
               setNotice("");
-              if (!title.trim() || !details.trim()) return;
               dispatch({
                 type: "defect",
                 scenarioId,
-                title,
-                details,
+                title: values.title.trim().slice(0, 160),
+                details: composeUatDetails(values).slice(0, 4000),
                 severity,
               });
-              setTitle("");
-              setDetails("");
-              setAttempted(false);
+              defectForm.reset();
               setNotice("Defect added to this demo campaign.");
-            }}
+            })}
           >
             <Stack>
               <Title order={2}>Record a defect</Title>
@@ -205,31 +207,9 @@ export function UatScreen() {
                   label: `${scenario.id} · ${scenario.title}`,
                 }))}
               />
-              <TextInput
-                label="Defect summary"
-                required
-                maxLength={160}
-                value={title}
-                onChange={(event) => setTitle(event.currentTarget.value)}
-                error={
-                  attempted && !title.trim()
-                    ? "Enter a defect summary."
-                    : undefined
-                }
-              />
-              <Textarea
-                label="Steps and actual behavior"
-                description="Include reproduction steps, expected outcome, and what happened. Use sample data, not personal information."
-                required
-                minRows={4}
-                maxLength={4000}
-                value={details}
-                onChange={(event) => setDetails(event.currentTarget.value)}
-                error={
-                  attempted && !details.trim()
-                    ? "Describe the steps and actual behavior."
-                    : undefined
-                }
+              <DetailsFormFields
+                fields={uatDefectIntakeFields}
+                getInputProps={(key) => defectForm.getInputProps(key)}
               />
               <NativeSelect
                 label="Severity"
@@ -279,15 +259,7 @@ export function UatScreen() {
                     <Text size="sm" c="dimmed">
                       {defect.scenarioId} · {defect.severity}
                     </Text>
-                    <Text
-                      size="sm"
-                      style={{
-                        whiteSpace: "pre-wrap",
-                        overflowWrap: "anywhere",
-                      }}
-                    >
-                      {defect.details}
-                    </Text>
+                    <DetailsReadout rows={uatDefectReadoutRows(defect.details)} />
                     {defect.status === "Open" && (
                       <Button
                         onClick={() =>
@@ -328,26 +300,13 @@ export function UatScreen() {
       </SimpleGrid>
       <Paper withBorder p="lg">
         <Stack>
-          <Title order={2}>Acceptance decision</Title>
+          <Title order={2}>Campaign progress</Title>
           <Text>
-            Every scenario must pass and every defect must be resolved after
-            retesting. Any later change to results or defects clears acceptance.
-          </Text>
-          <Text role="status">
-            {campaign.accepted
-              ? "Campaign accepted in this demo. No real release approval was created."
-              : ready
-                ? "Ready for demo acceptance."
-                : `Not ready: ${campaign.scenarios.length - passed} scenarios still need a passing result; ${unresolved} unresolved defects.`}
+            Passed: {passed}. Failed or blocked: {failed}. Unresolved defects:{" "}
+            {unresolved}. Not run is not a pass. Progress is evidence, not
+            release approval.
           </Text>
           <Group>
-            <Button
-              variant="filled"
-              disabled={!ready || campaign.accepted}
-              onClick={() => dispatch({ type: "accept" })}
-            >
-              Accept campaign in demo
-            </Button>
             <Button
               onClick={() => {
                 dispatch({ type: "reset" });

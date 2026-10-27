@@ -27,7 +27,6 @@ modules/<feature>/
 | URL state | `lib/search-params.ts` |
 | Fixture | `lib/fixtures.ts` |
 | Unit test | `name.test.ts` beside the module |
-| Story | `components/*.stories.tsx` |
 | Theme | `theme.ts` at the frontend root. Icons come from `@tabler/icons-react` |
 | Render harness | `test-utils/` |
 | Session fixture | `modules/account/lib/session.ts`. This is not an auth package |

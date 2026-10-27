@@ -891,7 +891,7 @@ export const theme = createTheme({
     Avatar: Avatar.extend({
       defaultProps: {
         size: 32,
-        radius: "lg",
+        radius: "50%",
       },
       styles: {
         placeholder: {

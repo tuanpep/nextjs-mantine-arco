@@ -1,15 +1,16 @@
 # DX Support
 
-An interactive frontend for the Digital Transformation department's employee service portal. Uses Next.js App Router and the existing Mantine theme. The existing project workspace and production-support workflows remain available.
+An interactive frontend for a **project workspace MVP**: Support, Feedback, Ideas, and UAT campaigns inside one project context, with a header project switcher. Built with Next.js App Router and the existing Mantine theme.
 
-All accounts and records are fictional. Changes are held in browser memory and reset on reload. Some feature-local state also resets when leaving that feature. There is no backend, authentication, permission enforcement, live intake, notification delivery, monitoring, or access provisioning. The DX work queue simulates staff actions and is accessible to everyone in this demo. Never enter real employee, customer, credential, or confidential business data.
+Feature records are fictional and held in browser memory (they reset on reload). Sign-in uses corporate Keycloak SSO; copy `.env.example` to `.env.local` for local values. Feature tickets still use demo fixtures — there is no live intake, notification delivery, or access provisioning through this UI. Never enter real employee, customer, credential, or confidential business data into demo forms.
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000 for the workspace Home overview. Browse `/projects` for the full-width project directory. Each project has an overview and Support and Ideas work-item collections.
+Open http://localhost:4202. You will be redirected to Keycloak to sign in. After auth, the root path redirects to `/projects/beacon-portal/support`. Playwright sets `NEXT_PUBLIC_E2E_AUTH_BYPASS=1` so browser tests skip SSO.
 
 ## Languages
 
@@ -25,12 +26,7 @@ language without a full page reload. The cookie is not an authentication mechani
 Shared locale configuration and request loading live in `lib/i18n/`. Message
 catalogs live in `messages/vi.json` and `messages/en.json`. Keep their keys aligned.
 Client components use `useTranslations("Workspace")`; server components can use
-`getTranslations` from `next-intl/server`. Add feature-specific namespaces as
-screens are migrated, including validation and accessible labels. Use
-`useFormatter` or server-side `getFormatter` for locale-aware numbers and dates.
-The initial formatting time zone is `Asia/Ho_Chi_Minh`; change that explicitly if
-the portal needs user-specific time zones. Do not translate user-entered content
-or use translated labels as record IDs or routing conditions.
+`getTranslations` from `next-intl/server`.
 
 Verify with `npm run test:run -- lib/i18n/config.test.ts` and
 `npm run test:e2e -- e2e/i18n.spec.ts`. Existing feature browser tests explicitly
@@ -50,35 +46,35 @@ For programmatic navigation in client components, import the wrapper hook so
 import { useRouter } from "nextjs-toploader/app";
 
 const router = useRouter();
-router.push("/projects");
+router.push("/projects/beacon-portal/support");
 ```
 
 Keep other navigation hooks such as `usePathname` and `useSearchParams` imported
-from `next/navigation`. The bar indicates navigation activity, not a measured
-download percentage or completion of every data request on the destination.
+from `next/navigation`.
 
-## Portal areas
+## Project workspace
 
-Navigation is a flat list ordered by priority: Home, Get help, My service requests, Service catalog, Service status, Applications, Learning center, UAT & testing, Improvements, and DX work queue. Production support is reached through Get help or the application workspace. This is a usability order based on the stated use cases, not measured usage analytics or a permission boundary.
+Everyday navigation stays inside a project. The header switcher changes project while
+keeping the current section (Support, Feedback, Ideas, UAT, or Settings). Settings is a
+manager demo stub: naming people is not an access grant, and archive stays blocked.
 
-| Route                             | Purpose                                                                       |
-| --------------------------------- | ----------------------------------------------------------------------------- |
-| `/applications`                   | Application directory, with Beacon Portal as the available sample application |
-| `/help`                           | Symptom-based routing to support, services, learning, UAT, or improvements    |
-| `/projects/beacon-portal/support` | Production support, submission, replies, and retest follow-up                 |
-| `/services`                       | Standard service catalog and service-request intake                           |
-| `/requests`                       | Service requests and their progress                                           |
-| `/operations`                     | Simulated DX service-request triage and fulfillment                           |
-| `/learning`                       | Searchable user guides and onboarding tasks                                   |
-| `/uat`                            | Release testing, scenario results, defects, and acceptance                    |
-| `/improvements`                   | Application enhancements and transformation-demand intake                     |
-| `/status`                         | Manually maintained demo incidents, workarounds, and maintenance              |
+The project registry lives in `modules/projects/lib/applications.ts`. Product design for
+this MVP lives in `docs/product-design/project-workspace-mvp/`.
 
-Production support and service requests are separate collections. UAT records represent pre-release testing, not production incidents. The legacy project Ideas screen remains a read-only sample; new improvement intake lives at `/improvements`.
+| Route                              | Purpose                                                     |
+| ---------------------------------- | ----------------------------------------------------------- |
+| `/`                                | Redirects to Beacon Portal Support                          |
+| `/projects/beacon-portal/support`  | Project support list, intake, detail, and replies           |
+| `/projects/beacon-portal/feedback` | Project feedback list and share/review stubs                |
+| `/projects/beacon-portal/ideas`    | Project ideas list (no votes or roadmap)                    |
+| `/projects/beacon-portal/uat`      | UAT campaigns and scenario results (not release acceptance) |
+| `/projects/beacon-portal/settings` | Manager setup stub                                          |
+
+Support, Feedback, Ideas, and UAT do not share status words. UAT progress is evidence only; it is not release approval.
 
 ## Production work still required
 
-Before using this with employees, implement server-side persistence and validation, corporate SSO, server-enforced roles and record visibility, audit storage, attachment controls, retention policies, and accessible operational error recovery. Integrate identity provisioning, the engineering tracker, communication delivery, and monitoring only through approved systems. Approval is not proof that access has been provisioned. UAT acceptance is not a substitute for security, deployment, or operational readiness approval.
+Before using this with employees, implement server-side persistence and validation, corporate SSO, server-enforced roles and record visibility, audit storage, attachment controls, retention policies, and accessible operational error recovery. Integrate identity provisioning, the engineering tracker, communication delivery, and monitoring only through approved systems.
 
 Service ownership, support hours, escalation routes, service targets, and business approval policies must be agreed with the responsible teams. This frontend does not establish those policies.
 
@@ -86,7 +82,6 @@ Service ownership, support hours, escalation routes, service targets, and busine
 | ------------------- | ---------------------------------------------- |
 | `npm run check`     | Format, lint, stylelint, types, and unit tests |
 | `npm run test:e2e`  | Playwright                                     |
-| `npm run storybook` | Component stories                              |
 | `npm run analyze`   | Production bundle report                       |
 
 Routes stay in `app/`. Feature code goes in `modules/<feature>/`. Helpers used by more than one feature go in `lib/`.

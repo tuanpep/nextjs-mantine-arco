@@ -1,5 +1,10 @@
-import { HomeOverview } from "@/modules/projects/components/home-overview";
+import { redirect } from "next/navigation";
+
+import {
+  DEFAULT_PROJECT_ID,
+  projectSupportPath,
+} from "@/modules/projects/lib/applications";
 
 export default function HomePage() {
-  return <HomeOverview />;
+  redirect(projectSupportPath(DEFAULT_PROJECT_ID));
 }

@@ -6,6 +6,7 @@ import NextTopLoader from "nextjs-toploader";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { ReactNode } from "react";
 
+import { AuthProvider } from "@/modules/account/components/auth-provider";
 import { cssVariablesResolver, theme } from "@/theme";
 
 let browserQueryClient: QueryClient | undefined;
@@ -34,7 +35,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         showForHashAnchor={false}
       />
       <QueryClientProvider client={getQueryClient()}>
-        <NuqsAdapter>{children}</NuqsAdapter>
+        <AuthProvider>
+          <NuqsAdapter>{children}</NuqsAdapter>
+        </AuthProvider>
       </QueryClientProvider>
     </MantineProvider>
   );
