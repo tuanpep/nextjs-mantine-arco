@@ -16,7 +16,10 @@ export function userFromTokenClaims(
 ): CurrentUser {
   const userName = claims?.preferred_username?.trim() ?? "";
   const displayName =
-    claims?.name?.trim() || userName || claims?.email?.trim() || "Signed-in user";
+    claims?.name?.trim() ||
+    userName ||
+    claims?.email?.trim() ||
+    "Signed-in user";
 
   return {
     id: subject?.trim() || claims?.sub?.trim() || "unknown",

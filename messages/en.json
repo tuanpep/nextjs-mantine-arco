@@ -1,14 +1,19 @@
 {
   "Workspace": {
+    "home": "Home",
+    "overview": "Overview",
+    "projects": "Projects",
     "support": "Support",
     "feedback": "Feedback",
     "ideas": "Ideas",
-    "uat": "UAT campaigns",
+    "uat": "UAT",
     "settings": "Settings",
     "workspace": "Workspace",
     "noProjectContext": "Open a project to use Support, Feedback, Ideas, or UAT.",
     "closeNavigation": "Close navigation",
     "openNavigation": "Open navigation",
+    "hideSidebar": "Hide sidebar",
+    "showSidebar": "Show sidebar",
     "lightTheme": "Switch to light theme",
     "darkTheme": "Switch to dark theme",
     "demoAccount": "Jo Lee demo account",
@@ -16,9 +21,9 @@
     "logOut": "Log out",
     "mainNavigation": "Main navigation",
     "workItems": "Work items",
-    "demoNotice": "Demo workspace · Fictional records · Changes reset on reload · Live Keycloak sign-in · No live service fulfillment",
     "language": "Language",
     "languageError": "Could not change language. Please try again.",
-    "switchProject": "Switch project"
+    "switchProject": "Switch project",
+    "skipToContent": "Skip to content"
   }
 }

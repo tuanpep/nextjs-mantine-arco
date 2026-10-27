@@ -522,6 +522,7 @@ export const theme = createTheme({
     },
   },
   radius: {
+    none: "0",
     xs: "1px",
     sm: rem(2),
     md: rem(4),
@@ -529,6 +530,7 @@ export const theme = createTheme({
     xl: rem(12),
     "2xl": rem(16),
     "3xl": rem(24),
+    full: "9999px",
   },
   defaultRadius: "lg",
   spacing: {
@@ -675,6 +677,7 @@ export const theme = createTheme({
     Badge: Badge.extend({
       defaultProps: {
         variant: "light",
+        radius: "full",
       },
       styles: {
         root: {
@@ -778,6 +781,9 @@ export const theme = createTheme({
       },
     }),
     Paper: Paper.extend({
+      defaultProps: {
+        radius: "xl",
+      },
       styles: {
         root: {
           "--paper-border-color": "var(--mantine-color-default-border)",
@@ -891,7 +897,7 @@ export const theme = createTheme({
     Avatar: Avatar.extend({
       defaultProps: {
         size: 32,
-        radius: "50%",
+        radius: "full",
       },
       styles: {
         placeholder: {
@@ -902,7 +908,7 @@ export const theme = createTheme({
     }),
     Progress: Progress.extend({
       defaultProps: {
-        radius: "xl",
+        radius: "full",
         size: 8,
       },
       styles: {

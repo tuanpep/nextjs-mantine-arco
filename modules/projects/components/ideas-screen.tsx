@@ -1,96 +1,52 @@
 "use client";
 
 import {
-  Alert,
+  ActionIcon,
   Badge,
   Box,
   Button,
-  Card,
   Group,
   Paper,
   Stack,
   Text,
-  TextInput,
   Title,
+  Tooltip,
 } from "@mantine/core";
-import { useForm } from "@mantine/form";
 import { useMounted } from "@mantine/hooks";
-import { IconSearch, IconThumbUp } from "@tabler/icons-react";
-import { parseAsString, useQueryState } from "nuqs";
+import { IconBulb, IconPlus, IconThumbUp } from "@tabler/icons-react";
+import Link from "next/link";
+import { useQueryStates } from "nuqs";
 import { useState } from "react";
 
-import { DetailsFormFields } from "@/lib/form-details";
+import { CollectionEmpty } from "@/modules/ui/components/collection-empty";
+import { CollectionToolbar } from "@/modules/ui/components/collection-toolbar";
+import { ModuleTabs } from "@/modules/ui/components/module-tabs";
+import { PageFrame } from "@/modules/ui/components/page-frame";
+import { PageHeader } from "@/modules/ui/components/page-header";
 
-import { getApplication } from "../lib/applications";
-import { ideaIntakeFields } from "../lib/idea-intake-fields";
+import { seedIdeas, type Idea } from "../lib/idea-fixtures";
+import { ideaSearchParams } from "../lib/idea-search-params";
 
-type Idea = {
-  id: string;
-  title: string;
-  problem: string;
-  outcome: string;
-  suggestedChange: string;
-  sponsorCandidate: string;
-  votes: number;
-  votedByMe: boolean;
-  position: string;
-  next: string;
-};
-
-const seedIdeas: Idea[] = [
-  {
-    id: "IDE-024",
-    title: "Remember my last workspace",
-    problem: "After signing in I land on a generic page instead of my project.",
-    outcome: "Return to the workspace I used most recently after signing in.",
-    suggestedChange: "Store last project per account in the shell.",
-    sponsorCandidate: "",
-    votes: 12,
-    votedByMe: false,
-    position: "Under review",
-    next: "Lan Vo to record a decision reason.",
-  },
-  {
-    id: "IDE-019",
-    title: "Make product links easier to find",
-    problem: "Frequently used product links are hard to reach from the workspace.",
-    outcome: "Group frequently used product links inside the project workspace.",
-    suggestedChange: "",
-    sponsorCandidate: "Khoa Dang",
-    votes: 3,
-    votedByMe: false,
-    position: "Received",
-    next: "Lan Vo to review the suggestion.",
-  },
-];
+function matchesIdeaView(idea: Idea, view: string) {
+  if (view === "under-review") return idea.position === "Under review";
+  if (view === "voted") return idea.votedByMe;
+  return true;
+}
 
 export function IdeasScreen({ projectId }: { projectId: string }) {
   const mounted = useMounted();
-  const application = getApplication(projectId);
-  const [query, setQuery] = useQueryState("q", parseAsString.withDefault(""));
-  const [ideas, setIdeas] = useState(seedIdeas);
-  const [composing, setComposing] = useState(false);
-  const [notice, setNotice] = useState("");
-  const form = useForm({
-    initialValues: {
-      title: "",
-      problem: "",
-      outcome: "",
-      suggestedChange: "",
-      sponsorCandidate: "",
-    },
-    validate: {
-      title: (value) => (value.trim() ? null : "Enter a short title."),
-      problem: (value) =>
-        value.trim() ? null : "Describe the problem in plain language.",
-      outcome: (value) =>
-        value.trim() ? null : "Describe the desired outcome.",
-    },
-  });
-  const visible = ideas.filter((idea) =>
-    `${idea.title} ${idea.problem} ${idea.outcome}`
-      .toLowerCase()
-      .includes(query.trim().toLowerCase()),
+  const [filters, setFilters] = useQueryStates(ideaSearchParams);
+  const [ideas, setIdeas] = useState<Idea[]>(seedIdeas);
+  const underReviewCount = ideas.filter(
+    (idea) => idea.position === "Under review",
+  ).length;
+  const votedCount = ideas.filter((idea) => idea.votedByMe).length;
+  const visible = ideas.filter(
+    (idea) =>
+      matchesIdeaView(idea, filters.view) &&
+      `${idea.title} ${idea.problem} ${idea.outcome}`
+        .toLowerCase()
+        .includes(filters.q.trim().toLowerCase()),
   );
 
   function toggleVote(id: string) {
@@ -110,178 +66,109 @@ export function IdeasScreen({ projectId }: { projectId: string }) {
   }
 
   return (
-    <Stack gap="md">
-      <Text size="sm" c="dimmed">
-        {application?.name ?? "Project"} / Ideas
-      </Text>
-      <Group justify="space-between" align="flex-start">
-        <div>
-          <Group gap="sm">
-            <Title order={1} size="h2">
-              Ideas
-            </Title>
-            <Badge variant="light" color="violet" size="sm">
-              Votes are a signal, not a roadmap
-            </Badge>
-          </Group>
-          <Text size="sm" c="dimmed" mt={4}>
-            Describe a problem and desired outcome. Votes show interest. They do
-            not put an idea on a delivery plan. A sponsor candidate is not
-            approval.
-          </Text>
-        </div>
-        <Button
-          disabled={!mounted}
-          onClick={() => {
-            setComposing((open) => !open);
-            setNotice("");
-          }}
+    <PageFrame
+      header={
+        <PageHeader
+          title="Ideas"
+          breadcrumbs={[
+            { title: "Overview", href: `/projects/${projectId}` },
+            { title: "Ideas", href: `/projects/${projectId}/ideas` },
+          ]}
+          actions={
+            <Button
+              component={Link}
+              href={`/projects/${projectId}/ideas/new`}
+              leftSection={<IconPlus size={16} />}
+            >
+              Suggest an idea
+            </Button>
+          }
         >
-          {composing ? "Close form" : "Suggest an idea"}
-        </Button>
-      </Group>
-      {notice && (
-        <Alert role="status" color="teal" title="Saved in this demo">
-          {notice}
-        </Alert>
-      )}
-      {composing && (
-        <Card withBorder p="md" radius="sm">
-          <form
-            onSubmit={form.onSubmit((values) => {
-              const id = `IDE-${String(ideas.length + 25).padStart(3, "0")}`;
-              setIdeas((current) => [
-                {
-                  id,
-                  title: values.title.trim(),
-                  problem: values.problem.trim(),
-                  outcome: values.outcome.trim(),
-                  suggestedChange: values.suggestedChange.trim(),
-                  sponsorCandidate: values.sponsorCandidate.trim(),
-                  votes: 1,
-                  votedByMe: true,
-                  position: "Submitted",
-                  next: "Lan Vo will read the problem. This is not on a delivery plan.",
-                },
-                ...current,
-              ]);
-              form.reset();
-              setComposing(false);
-              setNotice(
-                `${id} saved in this browser session only. Your vote was counted once.`,
-              );
-            })}
-          >
-            <Stack gap="md">
-              <DetailsFormFields
-                fields={ideaIntakeFields}
-                disabled={!mounted}
-                getInputProps={(key) => form.getInputProps(key)}
-              />
-              <Group justify="flex-end">
-                <Button type="submit" disabled={!mounted}>
-                  Send idea in demo
-                </Button>
-              </Group>
-            </Stack>
-          </form>
-        </Card>
-      )}
-      <Paper withBorder radius="sm" style={{ overflow: "hidden" }}>
-        <Box
-          p="sm"
-          style={{
-            borderBottom: "1px solid var(--mantine-color-default-border)",
-          }}
-        >
-          <TextInput
-            aria-label="Search ideas"
-            placeholder="Search ideas…"
-            leftSection={<IconSearch size={16} />}
-            value={query}
-            onChange={(event) =>
-              void setQuery(event.currentTarget.value || null)
-            }
-          />
-        </Box>
-        <Text
-          size="xs"
-          c="dimmed"
-          px="md"
-          py="xs"
-          bg="var(--mantine-color-default-hover)"
-          aria-live="polite"
-        >
-          {visible.length} ideas in this project
-        </Text>
-        {visible.map((idea) => (
-          <Box
-            key={idea.id}
-            px="md"
-            py="sm"
-            style={{
-              borderTop: "1px solid var(--mantine-color-default-border)",
+          <ModuleTabs
+            ariaLabel="Ideas views"
+            value={filters.view}
+            onChange={(value) => {
+              const view = ideaSearchParams.view.parse(value);
+              void setFilters({ view: view ?? "all" });
             }}
-          >
-            <Group justify="space-between" align="flex-start">
-              <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
-                <Group gap="xs">
-                  <Badge variant="light" color="violet" size="xs">
-                    Idea
-                  </Badge>
-                  <Text size="xs" c="dimmed">
-                    {idea.id}
+            items={[
+              { value: "all", label: "All", count: ideas.length },
+              {
+                value: "under-review",
+                label: "Under review",
+                count: underReviewCount,
+              },
+              { value: "voted", label: "I voted", count: votedCount },
+            ]}
+          />
+        </PageHeader>
+      }
+    >
+      <Paper withBorder style={{ overflow: "hidden" }}>
+        <CollectionToolbar
+          searchLabel="Search ideas"
+          searchPlaceholder="Search by title or problem"
+          searchValue={filters.q}
+          onSearchChange={(value) => void setFilters({ q: value })}
+          countLabel={`${visible.length} ideas`}
+        />
+        {visible.length === 0 ? (
+          <CollectionEmpty
+            icon={<IconBulb />}
+            title="No matching ideas"
+            actionLabel="Clear search"
+            onAction={() => void setFilters({ q: "" })}
+          />
+        ) : (
+          visible.map((idea) => (
+            <Box
+              key={idea.id}
+              px="md"
+              py="sm"
+              style={{
+                borderTop: "1px solid var(--mantine-color-default-border)",
+              }}
+            >
+              <Group justify="space-between" align="flex-start">
+                <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
+                  <Group gap="xs">
+                    <Text size="xs" c="dimmed">
+                      {idea.id}
+                    </Text>
+                    <Badge variant="light" color="violet">
+                      {idea.position}
+                    </Badge>
+                  </Group>
+                  <Title order={2} size="sm">
+                    {idea.title}
+                  </Title>
+                </Stack>
+                <Stack gap="xs" align="flex-end">
+                  <Text size="sm" fw={600}>
+                    {idea.votes}
                   </Text>
-                  <Badge variant="light" color="violet">
-                    {idea.position}
-                  </Badge>
-                </Group>
-                <Title order={2} size="sm">
-                  {idea.title}
-                </Title>
-                <Text size="sm">{idea.problem}</Text>
-                <Text size="sm" c="dimmed">
-                  Desired outcome: {idea.outcome}
-                </Text>
-                {idea.suggestedChange ? (
-                  <Text size="sm" c="dimmed">
-                    Suggested change: {idea.suggestedChange}
-                  </Text>
-                ) : null}
-                {idea.sponsorCandidate ? (
-                  <Text size="xs" c="dimmed">
-                    Sponsor candidate: {idea.sponsorCandidate} (not approval)
-                  </Text>
-                ) : null}
-                <Text size="xs" c="dimmed">
-                  Next action: {idea.next}
-                </Text>
-              </Stack>
-              <Stack gap="xs" align="flex-end">
-                <Text size="sm" fw={600}>
-                  {idea.votes} {idea.votes === 1 ? "vote" : "votes"}
-                </Text>
-                <Button
-                  size="compact-sm"
-                  variant={idea.votedByMe ? "filled" : "light"}
-                  leftSection={<IconThumbUp size={14} />}
-                  disabled={!mounted}
-                  onClick={() => toggleVote(idea.id)}
-                >
-                  {idea.votedByMe ? "Remove vote" : "This would help me"}
-                </Button>
-              </Stack>
-            </Group>
-          </Box>
-        ))}
-        {visible.length === 0 && (
-          <Box p="xl" ta="center">
-            <Title order={2} size="lg">
-              No matching ideas
-            </Title>
-          </Box>
+                  <Tooltip
+                    label={
+                      idea.votedByMe ? "Remove vote" : "This would help me"
+                    }
+                  >
+                    <ActionIcon
+                      variant={idea.votedByMe ? "filled" : "light"}
+                      aria-label={
+                        idea.votedByMe ? "Remove vote" : "This would help me"
+                      }
+                      disabled={!mounted}
+                      onClick={() => toggleVote(idea.id)}
+                    >
+                      <IconThumbUp size={16} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Stack>
+              </Group>
+            </Box>
+          ))
         )}
       </Paper>
-    </Stack>
+    </PageFrame>
   );
 }

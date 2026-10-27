@@ -8,9 +8,15 @@ import type { DetailsFieldDef } from "./types";
 type FieldInputProps = {
   value?: string;
   error?: ReactNode;
-  onChange?: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onFocus?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onBlur?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onChange?: (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => void;
+  onFocus?: (
+    event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => void;
+  onBlur?: (
+    event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => void;
 };
 
 export function DetailsFormFields<K extends string>({
@@ -52,10 +58,10 @@ export function DetailsFormFields<K extends string>({
               <Textarea
                 disabled={disabled}
                 label={field.label}
-                description={field.description}
                 required={field.required}
                 rows={field.rows ?? 3}
                 {...getInputProps(field.key)}
+                placeholder={field.placeholder}
               />
             );
           } else if (field.control === "select") {
@@ -63,15 +69,13 @@ export function DetailsFormFields<K extends string>({
               <Select
                 disabled={disabled}
                 label={field.label}
-                description={field.description}
                 required={field.required}
                 clearable={field.clearable}
                 data={field.options ?? []}
                 error={getInputProps(field.key).error}
                 value={getSelectValue?.(field.key) ?? null}
-                onChange={(value) =>
-                  onSelectChange?.(field.key, value ?? "")
-                }
+                onChange={(value) => onSelectChange?.(field.key, value ?? "")}
+                placeholder={field.placeholder}
               />
             );
           } else {
@@ -79,9 +83,9 @@ export function DetailsFormFields<K extends string>({
               <TextInput
                 disabled={disabled}
                 label={field.label}
-                description={field.description}
                 required={field.required}
                 {...getInputProps(field.key)}
+                placeholder={field.placeholder}
               />
             );
           }

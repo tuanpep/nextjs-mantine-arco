@@ -2,10 +2,9 @@
 
 import {
   Alert,
-  Anchor,
   Badge,
   Button,
-  Card,
+  Divider,
   Group,
   Stack,
   Text,
@@ -13,12 +12,13 @@ import {
   Title,
 } from "@mantine/core";
 import { useMounted } from "@mantine/hooks";
-import { IconArrowLeft } from "@tabler/icons-react";
-import Link from "next/link";
 import { useState } from "react";
 
 import { DetailsReadout } from "@/lib/form-details";
 import { getApplication } from "@/modules/projects/lib/applications";
+import { DestinationUnavailable } from "@/modules/ui/components/destination-unavailable";
+import { PageFrame } from "@/modules/ui/components/page-frame";
+import { PageHeader } from "@/modules/ui/components/page-header";
 
 import { feedbackItems, type FeedbackDisposition } from "../lib/fixtures";
 import { feedbackReadoutRows } from "../lib/intake-fields";
@@ -43,39 +43,46 @@ export function FeedbackDetails({
 
   if (!application || !item) {
     return (
-      <Alert color="red" title="This destination is not available">
-        It may not be available to your account.
-      </Alert>
+      <PageFrame>
+        <DestinationUnavailable
+          backHref={`/projects/${projectId}/feedback`}
+          backLabel="Back to Feedback"
+        />
+      </PageFrame>
     );
   }
 
+  const metadataPane = (
+    <Stack gap="sm">
+      <Badge variant="light" color="gray" style={{ alignSelf: "flex-start" }}>
+        {disposition}
+      </Badge>
+      <Text size="sm">Next actor: {item.nextActor}</Text>
+    </Stack>
+  );
+
   return (
-    <Stack gap="md">
-      <Anchor component={Link} href={`/projects/${projectId}/feedback`}>
-        <Group gap={6}>
-          <IconArrowLeft size={16} />
-          All feedback
-        </Group>
-      </Anchor>
-      <Group justify="space-between" align="flex-start">
-        <div>
-          <Text size="sm" c="dimmed">
-            {item.id} · {application.name}
-          </Text>
-          <Title order={1} size="h2">
-            {item.title}
-          </Title>
-        </div>
-        <Badge variant="light" color="gray">
-          {disposition}
-        </Badge>
-      </Group>
-      {notice && (
-        <Alert role="status" color="teal" title="Local change confirmed">
-          {notice}
-        </Alert>
-      )}
-      <Card withBorder p="md" radius="sm">
+    <PageFrame
+      pane={metadataPane}
+      paneLabel="Feedback details"
+      paneNarrow="sheet"
+      header={
+        <PageHeader
+          title={item.title}
+          description={`${item.id} · ${application.name}`}
+          breadcrumbs={[
+            { title: "Feedback", href: `/projects/${projectId}/feedback` },
+            { title: item.id },
+          ]}
+        />
+      }
+    >
+      <Stack gap="lg">
+        {notice && (
+          <Alert role="status" color="teal">
+            {notice}
+          </Alert>
+        )}
         <DetailsReadout
           rows={feedbackReadoutRows({
             observation: item.observation,
@@ -83,16 +90,14 @@ export function FeedbackDetails({
             nextActor: item.nextActor,
           })}
         />
-      </Card>
-      <Card withBorder p="md" radius="sm">
+        <Divider />
         <Stack gap="md">
           <Title order={2} size="h3">
             Reviewer disposition
           </Title>
-          <Text size="sm" c="dimmed">
-            Acknowledgement is not a promise to change the product. There is no
-            convert action.
-          </Text>
+          <Alert color="blue">
+            Acknowledgement is not a promise to change the product.
+          </Alert>
           <Group gap="sm">
             {(
               [
@@ -122,16 +127,12 @@ export function FeedbackDetails({
           <Button
             style={{ alignSelf: "flex-start" }}
             disabled={!mounted || !reason.trim()}
-            onClick={() =>
-              setNotice(
-                `Disposition recorded as ${disposition} in this demo. No product change was promised.`,
-              )
-            }
+            onClick={() => setNotice(`Disposition recorded as ${disposition}.`)}
           >
-            Record disposition in demo
+            Record disposition
           </Button>
         </Stack>
-      </Card>
-    </Stack>
+      </Stack>
+    </PageFrame>
   );
 }

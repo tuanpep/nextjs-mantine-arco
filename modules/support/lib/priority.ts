@@ -19,6 +19,13 @@ export type Urgency = (typeof urgencies)[number];
 export const priorities = ["Low", "Medium", "High", "Critical"] as const;
 export type Priority = (typeof priorities)[number];
 
+export const priorityColor: Record<Priority, string> = {
+  Low: "gray",
+  Medium: "blue",
+  High: "orange",
+  Critical: "red",
+};
+
 export const impactScopeLabels: Record<ImpactScope, string> = {
   "only-me": "Only me",
   "my-team": "My team",
@@ -41,10 +48,7 @@ export function calculatePriority(
   urgency: Urgency | "",
 ): Priority {
   if (urgency === "stopped-now") {
-    if (
-      impactScope === "several-teams" ||
-      impactScope === "whole-project"
-    ) {
+    if (impactScope === "several-teams" || impactScope === "whole-project") {
       return "Critical";
     }
     return "High";

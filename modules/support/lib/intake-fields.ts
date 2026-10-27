@@ -17,11 +17,10 @@ export type MisrouteTarget = (typeof misrouteTargets)[number];
 export const misrouteTargetLabels: Record<MisrouteTarget, string> = {
   feedback: "Feedback",
   ideas: "Ideas",
-  uat: "UAT campaigns",
+  uat: "UAT",
 };
 
 export type IntakeTemplate = {
-  hint: string;
   fields: DetailsFieldDef<IntakeFieldKey>[];
 };
 
@@ -30,11 +29,9 @@ export function intakeTemplate(type: RequestType): IntakeTemplate {
   switch (type) {
     case "broken":
       return {
-        hint: "Broken reports need repro steps, environment, and impact so handlers can reproduce the issue.",
         fields: intakeFields({
           situationLabel: "What happened",
-          situationDescription:
-            "What you were doing when it failed. Keep it factual; you will add numbered steps below.",
+          situationPlaceholder: "What you were doing when it failed.",
           expectedVisible: true,
           expectedRequired: true,
           reproVisible: true,
@@ -46,10 +43,9 @@ export function intakeTemplate(type: RequestType): IntakeTemplate {
       };
     case "question":
       return {
-        hint: "Questions do not need expected behavior or correlation IDs. Prefer a clear goal over a guess at the cause.",
         fields: intakeFields({
           situationLabel: "Goal and what you already tried",
-          situationDescription:
+          situationPlaceholder:
             "What you want to accomplish, and which docs or menus you already checked.",
           expectedVisible: false,
           expectedRequired: false,
@@ -62,10 +58,9 @@ export function intakeTemplate(type: RequestType): IntakeTemplate {
       };
     case "access":
       return {
-        hint: "Sending this ticket does not grant access. An approved access path is still required.",
         fields: intakeFields({
           situationLabel: "Access needed and business reason",
-          situationDescription:
+          situationPlaceholder:
             "Which system or role you need, and why. Do not paste passwords or tokens.",
           expectedVisible: false,
           expectedRequired: false,
@@ -78,11 +73,9 @@ export function intakeTemplate(type: RequestType): IntakeTemplate {
       };
     case "general":
       return {
-        hint: "Prefer a catalog type when you can. Misrouted asks take longer to land with the right team.",
         fields: intakeFields({
           situationLabel: "Situation",
-          situationDescription:
-            "Describe the help you need. If this is a product wish, praise, or pre-release defect, use Ideas, Feedback, or UAT instead.",
+          situationPlaceholder: "Describe the help you need.",
           expectedVisible: true,
           expectedRequired: false,
           reproVisible: false,
@@ -101,7 +94,7 @@ export function intakeTemplate(type: RequestType): IntakeTemplate {
 
 type IntakeVisibility = {
   situationLabel: string;
-  situationDescription: string;
+  situationPlaceholder: string;
   expectedVisible: boolean;
   expectedRequired: boolean;
   reproVisible: boolean;
@@ -111,7 +104,9 @@ type IntakeVisibility = {
   impactRequired: boolean;
 };
 
-function intakeFields(flags: IntakeVisibility): DetailsFieldDef<IntakeFieldKey>[] {
+function intakeFields(
+  flags: IntakeVisibility,
+): DetailsFieldDef<IntakeFieldKey>[] {
   return [
     {
       key: "summary",
@@ -124,7 +119,7 @@ function intakeFields(flags: IntakeVisibility): DetailsFieldDef<IntakeFieldKey>[
       key: "situation",
       control: "textarea",
       label: flags.situationLabel,
-      description: flags.situationDescription,
+      placeholder: flags.situationPlaceholder,
       rows: 4,
       required: true,
       visible: true,
@@ -133,7 +128,7 @@ function intakeFields(flags: IntakeVisibility): DetailsFieldDef<IntakeFieldKey>[
       key: "expected",
       control: "textarea",
       label: "Expected behavior",
-      description: "What should have happened instead?",
+      placeholder: "What should have happened instead?",
       rows: 2,
       required: flags.expectedRequired,
       visible: flags.expectedVisible,
@@ -142,7 +137,7 @@ function intakeFields(flags: IntakeVisibility): DetailsFieldDef<IntakeFieldKey>[
       key: "reproSteps",
       control: "textarea",
       label: "Steps to reproduce",
-      description: "Numbered steps a handler can follow in this project.",
+      placeholder: "1. … 2. … 3. …",
       rows: 4,
       required: flags.reproRequired,
       visible: flags.reproVisible,
@@ -150,9 +145,8 @@ function intakeFields(flags: IntakeVisibility): DetailsFieldDef<IntakeFieldKey>[
     {
       key: "correlationId",
       control: "text",
-      label: "Correlation / error ID (optional)",
-      description:
-        "Paste a request ID, error code, or job ID from the product if you have one. Prefer IDs over raw logs.",
+      label: "Correlation / error ID",
+      placeholder: "Request ID, error code, or job ID",
       required: false,
       visible: flags.correlationVisible,
     },
@@ -167,10 +161,10 @@ function intakeFields(flags: IntakeVisibility): DetailsFieldDef<IntakeFieldKey>[
         value,
         label: impactScopeLabels[value],
       })),
-      section: "How urgent is this",
+      section: flags.impactRequired ? "Impact and urgency" : undefined,
       sectionDescription: flags.impactRequired
-        ? "Required for broken reports so handlers can set priority."
-        : "Optional. These facts help set priority. There is no priority picker on this form.",
+        ? "Handlers use these to set priority. You do not pick a priority."
+        : undefined,
     },
     {
       key: "urgency",
@@ -188,7 +182,7 @@ function intakeFields(flags: IntakeVisibility): DetailsFieldDef<IntakeFieldKey>[
       key: "impact",
       control: "textarea",
       label: "Impact detail",
-      description: "Workaround, deadline, or headcount if you know them.",
+      placeholder: "Workaround, deadline, or headcount if you know them.",
       rows: 2,
       required: false,
       visible: true,
@@ -197,13 +191,54 @@ function intakeFields(flags: IntakeVisibility): DetailsFieldDef<IntakeFieldKey>[
       key: "environment",
       control: "text",
       label: "Version or environment",
-      description: flags.environmentRequired
-        ? "Required for broken reports. Example: production, browser version, and when it started. Report UAT defects in the UAT area."
-        : "Optional. Example: production, browser version, and when it occurred. Report UAT defects in the UAT area.",
+      placeholder: flags.environmentRequired
+        ? "prod · Chrome 129 · when it started"
+        : "Optional: prod · Chrome 129 · when it occurred",
       required: flags.environmentRequired,
       visible: true,
     },
   ];
+}
+
+/** Always above the fold when visible — short fields handlers scan first. */
+const alwaysPrimaryKeys: IntakeFieldKey[] = [
+  "summary",
+  "situation",
+  "correlationId",
+];
+
+/** Required / core fields stay visible; the rest belong behind optional disclosure. */
+export function intakeFormSections(type: RequestType): {
+  primary: DetailsFieldDef<IntakeFieldKey>[];
+  optional: DetailsFieldDef<IntakeFieldKey>[];
+} {
+  const fields = intakeTemplate(type).fields.filter(
+    (field) => field.visible && field.key !== "requestType",
+  );
+  const primary = fields.filter(
+    (field) => field.required || alwaysPrimaryKeys.includes(field.key),
+  );
+  const optional = fields.filter(
+    (field) => !primary.some((item) => item.key === field.key),
+  );
+  return { primary, optional };
+}
+
+export function intakeHint(type: RequestType): string {
+  switch (type) {
+    case "broken":
+      return "Broken reports need repro steps and environment details. You do not set priority.";
+    case "question":
+      return "Say what you want to do and what you already tried. You do not set priority.";
+    case "access":
+      return "Describe the access and business reason. Sending does not grant access.";
+    case "general":
+      return "Describe the help you need. Product wishes, praise, and UAT defects belong elsewhere.";
+    default: {
+      const _exhaustive: never = type;
+      return _exhaustive;
+    }
+  }
 }
 
 /** Compatibility shim for callers that still read visibility flags. */
@@ -215,7 +250,7 @@ export function intakeCopy(type: RequestType) {
 
   return {
     situationLabel: byKey.situation.label,
-    situationDescription: byKey.situation.description ?? "",
+    situationPlaceholder: byKey.situation.placeholder ?? "",
     expectedVisible: byKey.expected.visible,
     expectedRequired: byKey.expected.required,
     reproVisible: byKey.reproSteps.visible,
@@ -223,7 +258,6 @@ export function intakeCopy(type: RequestType) {
     correlationVisible: byKey.correlationId.visible,
     environmentRequired: byKey.environment.required,
     impactRequired: byKey.impactScope.required,
-    hint: template.hint,
   };
 }
 

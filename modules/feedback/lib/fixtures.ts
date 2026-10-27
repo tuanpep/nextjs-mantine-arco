@@ -1,8 +1,5 @@
 export type FeedbackDisposition =
-  | "Not reviewed"
-  | "Acknowledged"
-  | "Needs clarification"
-  | "Noted";
+  "Not reviewed" | "Acknowledged" | "Needs clarification" | "Noted";
 
 export type FeedbackItem = {
   id: string;
@@ -42,7 +39,8 @@ export const feedbackItems: FeedbackItem[] = [
     id: "FB-003",
     projectId: "orchid-reports",
     title: "Export timing surprised me",
-    observation: "The overnight export finished later than the email suggested.",
+    observation:
+      "The overnight export finished later than the email suggested.",
     context: "Weekly report run",
     disposition: "Needs clarification",
     reason: "Need the export job id and the time window you expected.",

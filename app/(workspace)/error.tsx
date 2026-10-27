@@ -16,6 +16,9 @@ export default function WorkspaceError({ reset }: { reset: () => void }) {
         view again.
       </Alert>
       <Button onClick={reset}>Try again</Button>
+      <Button component={Link} href="/" variant="subtle">
+        Back to Home
+      </Button>
       <Button
         component={Link}
         href={projectSupportPath(DEFAULT_PROJECT_ID)}

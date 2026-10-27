@@ -236,9 +236,7 @@ test("csat is recorded once on a resolved request", () => {
     score: 4,
   });
   expect(scored.csat).toBe(4);
-  expect(
-    applySenderAction(scored, { kind: "csat", score: 1 }).csat,
-  ).toBe(4);
+  expect(applySenderAction(scored, { kind: "csat", score: 1 }).csat).toBe(4);
 });
 
 test("collection combines query and status filters", () => {
@@ -251,6 +249,19 @@ test("collection combines query and status filters", () => {
   expect(filterSupport(supportFixtures, "", "all")).toHaveLength(
     supportFixtures.length,
   );
+});
+
+test("collection open and closed views split resolved requests", () => {
+  const openIds = filterSupport(supportFixtures, "", "all", "open").map(
+    (item) => item.id,
+  );
+  const closedIds = filterSupport(supportFixtures, "", "all", "closed").map(
+    (item) => item.id,
+  );
+  expect(openIds).not.toContain("SUP114");
+  expect(closedIds).toContain("SUP114");
+  expect(closedIds.every((id) => !openIds.includes(id))).toBe(true);
+  expect(openIds.length + closedIds.length).toBe(supportFixtures.length);
 });
 
 test("staff takes a new issue through clarification, retest, resolution and reopening", () => {

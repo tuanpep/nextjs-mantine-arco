@@ -5,15 +5,8 @@ import {
   type SupportRequest,
   type TriageDisposition,
 } from "./fixtures";
-import {
-  misrouteTargetLabels,
-  type MisrouteTarget,
-} from "./intake-fields";
-import {
-  calculatePriority,
-  priorities,
-  type Priority,
-} from "./priority";
+import { misrouteTargetLabels, type MisrouteTarget } from "./intake-fields";
+import { calculatePriority, priorities, type Priority } from "./priority";
 import { getApplication } from "@/modules/projects/lib/applications";
 
 function prioritiesIncludes(value: string): value is Priority {
@@ -129,13 +122,21 @@ export function filterSupport(
   items: SupportRequest[],
   query: string,
   status: string,
+  view: "open" | "closed" | "all" = "all",
 ) {
   const search = query.trim().toLowerCase();
-  return items.filter(
-    (item) =>
-      (status === "all" || item.status === status) &&
-      `${item.id} ${item.summary}`.toLowerCase().includes(search),
-  );
+  return items.filter((item) => {
+    const matchesView =
+      view === "all" ||
+      (view === "closed"
+        ? item.status === "Resolved"
+        : item.status !== "Resolved");
+    const matchesStatus = status === "all" || item.status === status;
+    const matchesQuery = `${item.id} ${item.summary}`
+      .toLowerCase()
+      .includes(search);
+    return matchesView && matchesStatus && matchesQuery;
+  });
 }
 
 export type HandlerAction =
@@ -196,7 +197,11 @@ function resolveWithOutcome(
   disposition: TriageDisposition | null,
   extra: Partial<SupportRequest> = {},
 ): SupportRequest {
-  if (!outcome.summary.trim() || !outcome.work.trim() || !outcome.limitations.trim())
+  if (
+    !outcome.summary.trim() ||
+    !outcome.work.trim() ||
+    !outcome.limitations.trim()
+  )
     throw new Error("Record the outcome, work done, and limitations.");
   return {
     ...item,
@@ -454,8 +459,7 @@ export function applyHandlerAction(
     );
   return {
     ...item,
-    status:
-      action.kind === "retest" ? "Waiting for retest" : item.status,
+    status: action.kind === "retest" ? "Waiting for retest" : item.status,
     nextActor: action.kind === "update" ? item.nextActor : "Sender",
     nextAction:
       action.kind === "update" && item.nextActor === "Sender"

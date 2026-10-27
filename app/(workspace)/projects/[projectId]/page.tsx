@@ -1,10 +1,8 @@
 import { Suspense } from "react";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
-import {
-  getApplication,
-  projectSupportPath,
-} from "@/modules/projects/lib/applications";
+import { ProjectHub } from "@/modules/projects/components/project-hub";
+import { getApplication } from "@/modules/projects/lib/applications";
 
 export default function ProjectPage({
   params,
@@ -13,18 +11,17 @@ export default function ProjectPage({
 }) {
   return (
     <Suspense fallback={<p>Loading project...</p>}>
-      <ProjectRedirect params={params} />
+      <ProjectOverview params={params} />
     </Suspense>
   );
 }
 
-async function ProjectRedirect({
+async function ProjectOverview({
   params,
 }: {
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
   if (!getApplication(projectId)) notFound();
-  redirect(projectSupportPath(projectId));
-  return null;
+  return <ProjectHub projectId={projectId} />;
 }

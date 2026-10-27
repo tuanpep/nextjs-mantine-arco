@@ -12,6 +12,7 @@ import {
   NativeSelect,
   Stack,
   Text,
+  Tooltip,
   useMantineColorScheme,
 } from "@mantine/core";
 import { useDisclosure, useMounted } from "@mantine/hooks";
@@ -24,6 +25,10 @@ import {
   IconChecklist,
   IconSettings,
   IconMessageCircle,
+  IconHome,
+  IconLayoutDashboard,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,79 +40,148 @@ import { setLocale } from "@/lib/i18n/actions";
 import { AccountMenu } from "@/modules/account/components/account-menu";
 
 import {
+  applicationPath,
   applications,
-  DEFAULT_PROJECT_ID,
   getApplication,
   projectSectionPath,
-  projectSupportPath,
 } from "../lib/applications";
+import { writeSidebarCollapsedCookie } from "../lib/sidebar-preference";
 
-export function WorkspaceShell({ children }: { children: ReactNode }) {
+export function WorkspaceShell({
+  children,
+  initialDesktopCollapsed = false,
+}: {
+  children: ReactNode;
+  initialDesktopCollapsed?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const application = pathname.startsWith("/projects/")
     ? getApplication(pathname.split("/")[2] ?? "")
     : undefined;
-  const productPath = application
-    ? `/projects/${application.id}`
-    : projectSupportPath(DEFAULT_PROJECT_ID);
-  const homeHref = projectSupportPath(
-    application?.id ?? DEFAULT_PROJECT_ID,
-  );
+  const productPath = application ? `/projects/${application.id}` : undefined;
+  const homeHref = "/";
+  const overviewHref = application
+    ? applicationPath(application.id)
+    : undefined;
+  const settingsHref = productPath ? `${productPath}/settings` : undefined;
   const t = useTranslations("Workspace");
   const locale = useLocale();
   const [pending, startTransition] = useTransition();
   const [languageError, setLanguageError] = useState(false);
   const [opened, { toggle, close }] = useDisclosure();
+  const [desktopCollapsed, setDesktopCollapsed] = useState(
+    initialDesktopCollapsed,
+  );
   const mounted = useMounted();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const projectLinks = [
-    {
-      label: t("support"),
-      href: `${productPath}/support`,
-      icon: IconLifebuoy,
-    },
-    {
-      label: t("feedback"),
-      href: `${productPath}/feedback`,
-      icon: IconMessageCircle,
-    },
-    {
-      label: t("ideas"),
-      href: `${productPath}/ideas`,
-      icon: IconBulb,
-    },
-    {
-      label: t("uat"),
-      href: `${productPath}/uat`,
-      icon: IconChecklist,
-    },
-  ];
-  const settingsHref = `${productPath}/settings`;
+  const projectLinks = productPath
+    ? [
+        {
+          label: t("support"),
+          href: `${productPath}/support`,
+          icon: IconLifebuoy,
+        },
+        {
+          label: t("feedback"),
+          href: `${productPath}/feedback`,
+          icon: IconMessageCircle,
+        },
+        {
+          label: t("ideas"),
+          href: `${productPath}/ideas`,
+          icon: IconBulb,
+        },
+        {
+          label: t("uat"),
+          href: `${productPath}/uat`,
+          icon: IconChecklist,
+        },
+      ]
+    : [];
   const isSectionActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
-  const currentSection =
-    projectLinks.find(({ href }) => isSectionActive(href))?.label ??
-    (isSectionActive(settingsHref) ? t("settings") : (application?.name ?? t("workspace")));
+  const isHomeActive = pathname === "/";
+  const isOverviewActive = Boolean(overviewHref && pathname === overviewHref);
+
+  function toggleDesktopSidebar() {
+    setDesktopCollapsed((current) => {
+      const next = !current;
+      writeSidebarCollapsedCookie(next);
+      return next;
+    });
+  }
 
   return (
     <AppShell
       header={{ height: 48 }}
-      navbar={{ width: 232, breakpoint: "sm", collapsed: { mobile: !opened } }}
+      navbar={{
+        width: 232,
+        breakpoint: "lg",
+        collapsed: { mobile: !opened, desktop: desktopCollapsed },
+      }}
       padding={0}
     >
+      <Anchor
+        href="#main-content"
+        size="sm"
+        style={{
+          position: "absolute",
+          left: 16,
+          top: 8,
+          zIndex: 1000,
+          transform: "translateY(-200%)",
+        }}
+        styles={{
+          root: {
+            "&:focus": {
+              transform: "translateY(0)",
+              background: "var(--mantine-color-body)",
+              padding: "4px 8px",
+              borderRadius: "var(--mantine-radius-md)",
+            },
+          },
+        }}
+      >
+        {t("skipToContent")}
+      </Anchor>
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap" gap="xs">
           <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
             <Burger
-              hiddenFrom="sm"
+              hiddenFrom="lg"
               opened={opened}
               disabled={!mounted}
               onClick={toggle}
               aria-label={opened ? t("closeNavigation") : t("openNavigation")}
               size="sm"
             />
-            <Anchor component={Link} href={homeHref} c="inherit" underline="never">
+            <Tooltip
+              label={desktopCollapsed ? t("showSidebar") : t("hideSidebar")}
+            >
+              <ActionIcon
+                visibleFrom="lg"
+                variant="subtle"
+                c="dimmed"
+                disabled={!mounted}
+                onClick={toggleDesktopSidebar}
+                aria-label={
+                  desktopCollapsed ? t("showSidebar") : t("hideSidebar")
+                }
+              >
+                {desktopCollapsed ? (
+                  <IconLayoutSidebarLeftExpand size={18} />
+                ) : (
+                  <IconLayoutSidebarLeftCollapse size={18} />
+                )}
+              </ActionIcon>
+            </Tooltip>
+            <Anchor
+              component={Link}
+              href={homeHref}
+              c="inherit"
+              underline="never"
+            >
               <Group gap="xs" wrap="nowrap">
                 <IconLifebuoy size={22} color="var(--mantine-color-violet-6)" />
                 <Text fw={600} size="md">
@@ -115,44 +189,36 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                 </Text>
               </Group>
             </Anchor>
-            <Group gap="xs" visibleFrom="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-              <IconChevronRight size={14} color="var(--mantine-color-dimmed)" />
-              {application ? (
-                <>
-                  <NativeSelect
-                    disabled={!mounted}
-                    aria-label={t("switchProject")}
-                    value={application.id}
-                    size="xs"
-                    w={160}
-                    data={applications.map((item) => ({
-                      value: item.id,
-                      label: item.name,
-                    }))}
-                    onChange={(event) => {
-                      router.push(
-                        projectSectionPath(
-                          event.currentTarget.value,
-                          pathname,
-                        ),
-                      );
-                      close();
-                    }}
-                  />
-                  <IconChevronRight
-                    size={14}
-                    color="var(--mantine-color-dimmed)"
-                  />
-                  <Text size="sm" c="dimmed" truncate>
-                    {currentSection}
-                  </Text>
-                </>
-              ) : (
-                <Text size="sm" c="dimmed">
-                  {t("workspace")}
-                </Text>
-              )}
-            </Group>
+            {application ? (
+              <Group
+                gap="xs"
+                visibleFrom="lg"
+                wrap="nowrap"
+                style={{ minWidth: 0 }}
+              >
+                <IconChevronRight
+                  size={14}
+                  color="var(--mantine-color-dimmed)"
+                />
+                <NativeSelect
+                  disabled={!mounted}
+                  aria-label={t("switchProject")}
+                  value={application.id}
+                  size="xs"
+                  w={160}
+                  data={applications.map((item) => ({
+                    value: item.id,
+                    label: item.name,
+                  }))}
+                  onChange={(event) => {
+                    router.push(
+                      projectSectionPath(event.currentTarget.value, pathname),
+                    );
+                    close();
+                  }}
+                />
+              </Group>
+            ) : null}
           </Group>
           <Group gap="sm" wrap="nowrap">
             <NativeSelect
@@ -202,10 +268,22 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
         bg="var(--gl-bg-canvas)"
       >
         <Stack h="100%" gap="sm" style={{ overflowY: "auto" }}>
-          {application ? (
+          <Stack gap={2} style={{ flexShrink: 0 }}>
+            <NavLink
+              component={Link}
+              href={homeHref}
+              label={t("home")}
+              leftSection={<IconHome size={18} />}
+              active={isHomeActive}
+              aria-current={isHomeActive ? "page" : undefined}
+              onClick={close}
+              py={7}
+            />
+          </Stack>
+          {application && overviewHref && settingsHref ? (
             <>
-              <Group px="sm" py="md" gap="sm" wrap="nowrap" hiddenFrom="sm">
-                <Avatar color="blue" radius="md" size={32}>
+              <Group px="sm" py="md" gap="sm" wrap="nowrap" hiddenFrom="lg">
+                <Avatar color="blue" size={32}>
                   {application.initials}
                 </Avatar>
                 <Box style={{ minWidth: 0, flex: 1 }}>
@@ -223,16 +301,25 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                     }))}
                     onChange={(event) => {
                       router.push(
-                        projectSectionPath(
-                          event.currentTarget.value,
-                          pathname,
-                        ),
+                        projectSectionPath(event.currentTarget.value, pathname),
                       );
                       close();
                     }}
                   />
                 </Box>
               </Group>
+              <Stack gap={2} style={{ flexShrink: 0 }}>
+                <NavLink
+                  component={Link}
+                  href={overviewHref}
+                  label={t("overview")}
+                  leftSection={<IconLayoutDashboard size={18} />}
+                  active={isOverviewActive}
+                  aria-current={isOverviewActive ? "page" : undefined}
+                  onClick={close}
+                  py={7}
+                />
+              </Stack>
               <Text size="xs" fw={600} c="dimmed" px="sm" pt="xs">
                 {t("workItems")}
               </Text>
@@ -270,38 +357,41 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               </Box>
             </>
           ) : (
-            <Text size="sm" c="dimmed" px="sm" py="md">
-              {t("noProjectContext")}
-            </Text>
+            <>
+              <Text size="xs" fw={600} c="dimmed" px="sm" pt="xs">
+                {t("projects")}
+              </Text>
+              <Stack gap={2} style={{ flexShrink: 0 }}>
+                {applications.map((item) => {
+                  const href = applicationPath(item.id);
+                  return (
+                    <NavLink
+                      key={item.id}
+                      component={Link}
+                      href={href}
+                      label={item.name}
+                      leftSection={
+                        <Avatar color="blue" size={22}>
+                          {item.initials}
+                        </Avatar>
+                      }
+                      onClick={close}
+                      py={7}
+                    />
+                  );
+                })}
+              </Stack>
+            </>
           )}
         </Stack>
       </AppShell.Navbar>
-      <AppShell.Main>
-        <Box
-          px={{ base: "md", sm: "xl" }}
-          py="lg"
-          maw={1280}
-          mx="auto"
-          style={{ minWidth: 0 }}
-        >
-          {languageError && (
-            <Text role="alert" c="red" size="sm" mb="md">
-              {t("languageError")}
-            </Text>
-          )}
-          {children}
-          <Text
-            size="xs"
-            c="dimmed"
-            mt={48}
-            pt="md"
-            style={{
-              borderTop: "1px solid var(--mantine-color-default-border)",
-            }}
-          >
-            {t("demoNotice")}
+      <AppShell.Main id="main-content" component="main">
+        {languageError && (
+          <Text role="alert" c="red" size="sm" px="md" pt="md">
+            {t("languageError")}
           </Text>
-        </Box>
+        )}
+        {children}
       </AppShell.Main>
     </AppShell>
   );

@@ -31,6 +31,13 @@ describe("application registry", () => {
         "/projects/beacon-portal/support/new",
       ),
     ).toBe("/projects/orchid-reports/support");
-    expect(projectSectionFromPath("/projects/beacon-portal")).toBe("support");
+    expect(projectSectionFromPath("/projects/beacon-portal")).toBe("overview");
+    expect(
+      projectSectionPath("orchid-reports", "/projects/beacon-portal"),
+    ).toBe("/projects/orchid-reports");
+    expect(projectSectionFromPath("/")).toBe("overview");
+    expect(projectSectionPath("orchid-reports", "/")).toBe(
+      "/projects/orchid-reports",
+    );
   });
 });

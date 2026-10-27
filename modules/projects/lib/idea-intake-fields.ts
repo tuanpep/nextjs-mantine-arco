@@ -1,13 +1,9 @@
 import type { DetailsFieldDef } from "@/lib/form-details";
 
 export type IdeaIntakeKey =
-  | "title"
-  | "problem"
-  | "outcome"
-  | "suggestedChange"
-  | "sponsorCandidate";
+  "title" | "problem" | "outcome" | "suggestedChange" | "sponsorCandidate";
 
-export const ideaIntakeFields: DetailsFieldDef<IdeaIntakeKey>[] = [
+export const ideaRequiredFields: DetailsFieldDef<IdeaIntakeKey>[] = [
   {
     key: "title",
     control: "text",
@@ -19,7 +15,7 @@ export const ideaIntakeFields: DetailsFieldDef<IdeaIntakeKey>[] = [
     key: "problem",
     control: "textarea",
     label: "Problem",
-    description: "What is hard today, and for whom.",
+    placeholder: "What is hard today, and for whom.",
     rows: 3,
     required: true,
     visible: true,
@@ -28,15 +24,18 @@ export const ideaIntakeFields: DetailsFieldDef<IdeaIntakeKey>[] = [
     key: "outcome",
     control: "textarea",
     label: "Desired outcome",
-    description: "What good looks like if this idea is pursued.",
+    placeholder: "What good looks like if this idea is pursued.",
     rows: 2,
     required: true,
     visible: true,
   },
+];
+
+export const ideaOptionalFields: DetailsFieldDef<IdeaIntakeKey>[] = [
   {
     key: "suggestedChange",
     control: "textarea",
-    label: "Suggested change (optional)",
+    label: "Suggested change",
     rows: 2,
     required: false,
     visible: true,
@@ -44,10 +43,16 @@ export const ideaIntakeFields: DetailsFieldDef<IdeaIntakeKey>[] = [
   {
     key: "sponsorCandidate",
     control: "text",
-    label: "Sponsor candidate (optional)",
-    description:
+    label: "Sponsor candidate",
+    placeholder:
       "Naming a person does not make them approve or fund this idea.",
     required: false,
     visible: true,
   },
+];
+
+/** @deprecated Prefer ideaRequiredFields + ideaOptionalFields */
+export const ideaIntakeFields: DetailsFieldDef<IdeaIntakeKey>[] = [
+  ...ideaRequiredFields,
+  ...ideaOptionalFields,
 ];

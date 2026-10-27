@@ -14,8 +14,7 @@ export const feedbackIntakeFields: DetailsFieldDef<FeedbackIntakeKey>[] = [
     key: "observation",
     control: "textarea",
     label: "What you observed",
-    description:
-      "Describe the experience in enough detail for a reviewer to understand it. This is not a support ticket or an idea.",
+    placeholder: "Describe the experience in enough detail for a reviewer.",
     rows: 4,
     required: true,
     visible: true,
@@ -23,8 +22,8 @@ export const feedbackIntakeFields: DetailsFieldDef<FeedbackIntakeKey>[] = [
   {
     key: "context",
     control: "textarea",
-    label: "Context (optional)",
-    description:
+    label: "Context",
+    placeholder:
       "Where you were, what you were trying to do, or when it happened.",
     rows: 2,
     required: false,

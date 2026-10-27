@@ -1,24 +1,16 @@
 "use client";
 
-import {
-  Alert,
-  Anchor,
-  Button,
-  Card,
-  Group,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Alert, Button, Group, Stack } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useMounted } from "@mantine/hooks";
-import { IconArrowLeft } from "@tabler/icons-react";
-import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
 import { useState } from "react";
 
 import { DetailsFormFields } from "@/lib/form-details";
 import { getApplication } from "@/modules/projects/lib/applications";
+import { DestinationUnavailable } from "@/modules/ui/components/destination-unavailable";
+import { PageFrame } from "@/modules/ui/components/page-frame";
+import { PageHeader } from "@/modules/ui/components/page-header";
 
 import { feedbackIntakeFields } from "../lib/intake-fields";
 
@@ -42,43 +34,37 @@ export function FeedbackForm({ projectId }: { projectId: string }) {
 
   if (!application) {
     return (
-      <Alert color="red" title="This destination is not available">
-        It may not be available to your account.
-      </Alert>
+      <PageFrame>
+        <DestinationUnavailable backHref="/" backLabel="Back to projects" />
+      </PageFrame>
     );
   }
 
   return (
-    <Stack gap="md">
-      <Anchor component={Link} href={`/projects/${projectId}/feedback`}>
-        <Group gap={6}>
-          <IconArrowLeft size={16} />
-          All feedback
-        </Group>
-      </Anchor>
-      <div>
-        <Title order={1} size="h2">
-          Share feedback
-        </Title>
-        <Text size="sm" c="dimmed">
-          {application.name} · An observation is not a support ticket or an
-          idea.
-        </Text>
-      </div>
-      <Alert color="blue" title="No product promise">
-        Recording feedback does not commit a change. There is no convert action
-        in this release.
-      </Alert>
-      {notice && (
-        <Alert role="status" color="teal" title="Saved in this demo">
-          {notice}
+    <PageFrame
+      header={
+        <PageHeader
+          title="Share feedback"
+          breadcrumbs={[
+            { title: "Feedback", href: `/projects/${projectId}/feedback` },
+            { title: "New feedback" },
+          ]}
+        />
+      }
+    >
+      <Stack gap="md">
+        <Alert color="blue" title="No product promise">
+          Recording feedback does not commit a change.
         </Alert>
-      )}
-      <Card withBorder p="md" radius="sm">
+        {notice && (
+          <Alert role="status" color="teal">
+            {notice}
+          </Alert>
+        )}
         <form
           onSubmit={form.onSubmit(() => {
             setNotice(
-              "Feedback FB-DEMO saved in this browser session only. Lan Vo is the next actor for review.",
+              "Feedback FB-DEMO saved. Lan Vo is the next actor for review.",
             );
             router.push(`/projects/${projectId}/feedback`);
           })}
@@ -91,12 +77,12 @@ export function FeedbackForm({ projectId }: { projectId: string }) {
             />
             <Group justify="flex-end">
               <Button type="submit" disabled={!mounted}>
-                Send feedback in demo
+                Send feedback
               </Button>
             </Group>
           </Stack>
         </form>
-      </Card>
-    </Stack>
+      </Stack>
+    </PageFrame>
   );
 }

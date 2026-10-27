@@ -8,7 +8,25 @@ test("maps pajamas blue 500 to the filled shade", () => {
   expect(theme.primaryShade).toEqual({ light: 5, dark: 5 });
   expect(theme.fontSizes?.md).toBe("calc(0.875rem * var(--mantine-scale))");
   expect(theme.defaultRadius).toBe("lg");
+  expect(theme.radius).toMatchObject({
+    none: "0",
+    xs: "1px",
+    sm: "calc(0.125rem * var(--mantine-scale))",
+    md: "calc(0.25rem * var(--mantine-scale))",
+    lg: "calc(0.5rem * var(--mantine-scale))",
+    xl: "calc(0.75rem * var(--mantine-scale))",
+    "2xl": "calc(1rem * var(--mantine-scale))",
+    "3xl": "calc(1.5rem * var(--mantine-scale))",
+    full: "9999px",
+  });
   expect(theme.components?.Button?.defaultProps?.variant).toBe("default");
+  expect(theme.components?.Card?.defaultProps?.radius).toBe("xl");
+  expect(theme.components?.Paper?.defaultProps?.radius).toBe("xl");
+  expect(theme.components?.Modal?.defaultProps?.radius).toBe("2xl");
+  expect(theme.components?.Alert?.defaultProps?.radius).toBe("lg");
+  expect(theme.components?.Badge?.defaultProps?.radius).toBe("full");
+  expect(theme.components?.Progress?.defaultProps?.radius).toBe("full");
+  expect(theme.components?.Avatar?.defaultProps?.radius).toBe("full");
 });
 
 test("resolves light text and border roles", () => {

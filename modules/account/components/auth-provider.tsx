@@ -76,15 +76,21 @@ function clearSessionState(
   setAuthenticated(false);
 }
 
+const e2eBypass = isE2eAuthBypass();
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const cacheExpiresAt = useRef<number | null>(null);
   const identityRequestId = useRef(0);
-  const [initialized, setInitialized] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [user, setUser] = useState<CurrentUser | null>(null);
-  const [permissions, setPermissions] = useState<AuthorityMap | null>(null);
-  const [ready, setReady] = useState(false);
+  const [initialized, setInitialized] = useState(e2eBypass);
+  const [authenticated, setAuthenticated] = useState(e2eBypass);
+  const [user, setUser] = useState<CurrentUser | null>(
+    e2eBypass ? bypassUser : null,
+  );
+  const [permissions, setPermissions] = useState<AuthorityMap | null>(
+    e2eBypass ? {} : null,
+  );
+  const [ready, setReady] = useState(e2eBypass);
 
   const applyTokenFallback = useCallback(() => {
     const keycloak = getKeycloak();
@@ -116,7 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           nextPermissions ?? nextUser.authority ?? ({} as AuthorityMap);
         setUser(nextUser);
         setPermissions(authority);
-        cacheExpiresAt.current = Date.now() + env.NEXT_PUBLIC_DISPLAY_CACHE_TIME;
+        cacheExpiresAt.current =
+          Date.now() + env.NEXT_PUBLIC_DISPLAY_CACHE_TIME;
       } catch (error) {
         console.error("Failed to load profile/permissions", error);
         if (requestId !== identityRequestId.current) return;
@@ -139,12 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
-    if (isE2eAuthBypass()) {
-      setUser(bypassUser);
-      setPermissions({});
-      setAuthenticated(true);
-      setInitialized(true);
-      setReady(true);
+    if (e2eBypass) {
       return;
     }
 
@@ -193,8 +195,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       markReady();
     };
 
-    const onError = (event: string) => (error: unknown) => {
-      console.error(`Keycloak ${event}`, error);
+    const onError = (event: string) => {
+      console.error(`Keycloak ${event}`);
       if (cancelled) return;
       clearLocalTokens();
       setInitialized(true);
@@ -207,8 +209,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     keycloak.onAuthRefreshSuccess = () =>
       syncAuthenticated("onAuthRefreshSuccess");
     keycloak.onAuthLogout = () => syncAuthenticated("onAuthLogout");
-    keycloak.onAuthError = onError("onAuthError");
-    keycloak.onAuthRefreshError = onError("onAuthRefreshError");
+    keycloak.onAuthError = () => onError("onAuthError");
+    keycloak.onAuthRefreshError = () => onError("onAuthRefreshError");
     keycloak.onTokenExpired = () => {
       void keycloak.updateToken(EXPIRED_TOKEN_MIN_VALIDITY_SEC).catch(() => {
         clearLocalTokens();

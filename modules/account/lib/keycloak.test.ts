@@ -37,8 +37,9 @@ describe("sameOriginRedirectUri", () => {
 
   it("falls back when the candidate is a different origin", () => {
     expect(
-      sameOriginRedirectUri("https://evil.example/phish", () =>
-        window.location.origin,
+      sameOriginRedirectUri(
+        "https://evil.example/phish",
+        () => window.location.origin,
       ),
     ).toBe(window.location.origin);
   });

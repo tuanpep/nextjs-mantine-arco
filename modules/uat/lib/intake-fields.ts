@@ -1,10 +1,6 @@
 import type { DetailsFieldDef, DetailsReadoutRow } from "@/lib/form-details";
 
-export type UatDefectIntakeKey =
-  | "title"
-  | "reproSteps"
-  | "expected"
-  | "actual";
+export type UatDefectIntakeKey = "title" | "reproSteps" | "expected" | "actual";
 
 /** Structured “more details” for UAT defects; joined into `details` on save. */
 export const uatDefectIntakeFields: DetailsFieldDef<UatDefectIntakeKey>[] = [
@@ -19,8 +15,7 @@ export const uatDefectIntakeFields: DetailsFieldDef<UatDefectIntakeKey>[] = [
     key: "reproSteps",
     control: "textarea",
     label: "Steps to reproduce",
-    description:
-      "Numbered steps using sample data, not personal information.",
+    placeholder: "Numbered steps using sample data, not personal information.",
     rows: 3,
     required: true,
     visible: true,
@@ -29,7 +24,7 @@ export const uatDefectIntakeFields: DetailsFieldDef<UatDefectIntakeKey>[] = [
     key: "expected",
     control: "textarea",
     label: "Expected outcome",
-    description: "What should have happened for this scenario.",
+    placeholder: "What should have happened for this scenario.",
     rows: 2,
     required: true,
     visible: true,
@@ -38,7 +33,7 @@ export const uatDefectIntakeFields: DetailsFieldDef<UatDefectIntakeKey>[] = [
     key: "actual",
     control: "textarea",
     label: "What happened",
-    description: "What you observed instead.",
+    placeholder: "What you observed instead.",
     rows: 3,
     required: true,
     visible: true,

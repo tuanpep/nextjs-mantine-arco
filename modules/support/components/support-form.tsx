@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  Anchor,
+  Accordion,
+  ActionIcon,
   Alert,
-  Badge,
+  Anchor,
   Button,
-  Card,
   FileButton,
   Group,
   Select,
@@ -13,15 +13,20 @@ import {
   Stepper,
   Text,
   Title,
+  Tooltip,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useMounted } from "@mantine/hooks";
-import { IconArrowLeft, IconCheck, IconTrash } from "@tabler/icons-react";
+import { IconCheck, IconPaperclip, IconTrash } from "@tabler/icons-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { DetailsFormFields, DetailsReadout } from "@/lib/form-details";
+import { getApplication } from "@/modules/projects/lib/applications";
+import { PageFrame } from "@/modules/ui/components/page-frame";
+import { PageHeader } from "@/modules/ui/components/page-header";
+
 import {
   advanceEvidenceStatus,
   evidencePolicy,
@@ -32,8 +37,9 @@ import {
 import { type SupportContext } from "../lib/fixtures";
 import {
   intakeCopy,
+  intakeFormSections,
+  intakeHint,
   intakeReadoutRows,
-  intakeTemplate,
   validateIntake,
 } from "../lib/intake-fields";
 import { calculatePriority } from "../lib/priority";
@@ -42,12 +48,7 @@ import {
   requestTypeLabels,
   type RequestType,
 } from "../lib/request-catalog";
-import { getApplication } from "@/modules/projects/lib/applications";
-import {
-  SupportIntro,
-  SupportUnavailable,
-  supportPath,
-} from "./support-common";
+import { SupportUnavailable, supportPath } from "./support-common";
 import { useSupport } from "./support-provider";
 
 export function SupportForm({ projectId }: { projectId: string }) {
@@ -82,15 +83,22 @@ export function SupportForm({ projectId }: { projectId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- form identity is stable enough for this demo sync
   }, [initialType]);
 
-  if (!application) return <SupportUnavailable />;
+  if (!application) {
+    return (
+      <PageFrame>
+        <SupportUnavailable />
+      </PageFrame>
+    );
+  }
 
   const copy = intakeCopy(form.values.requestType);
-  const template = intakeTemplate(form.values.requestType);
+  const sections = intakeFormSections(form.values.requestType);
   const suggestedPriority = calculatePriority(
     form.values.impactScope,
     form.values.urgency,
   );
   const title = requestTypeLabels[form.values.requestType];
+  const hint = intakeHint(form.values.requestType);
   const contextValues = (): SupportContext => ({
     ...form.values,
     expected: copy.expectedVisible ? form.values.expected : "",
@@ -142,90 +150,106 @@ export function SupportForm({ projectId }: { projectId: string }) {
     ...intakeReadoutRows(form.values, { includeSummary: true }),
     {
       label: "Suggested priority",
-      value: `${suggestedPriority} (you do not pick this)`,
+      value: suggestedPriority,
     },
     {
       label: "Evidence",
-      value: attachments.map((file) => `${file.name} · ${file.status}`).join("\n"),
+      value:
+        attachments.length === 0
+          ? "None"
+          : attachments
+              .map((file) => `${file.name} · ${file.status}`)
+              .join("\n"),
     },
   ];
 
   return (
-    <Stack gap="md">
-      <Anchor component={Link} href={basePath}>
-        <Group gap={6}>
-          <IconArrowLeft size={16} />
-          All support requests
-        </Group>
-      </Anchor>
-      <SupportIntro title={title} applicationId={projectId} />
-      <Alert color="blue" title="Ask for help">
-        {copy.hint} You do not set priority—handlers use impact and urgency.
-        Sending a request does not grant access or fulfill the ask. Do not
-        include passwords or confidential data.
-      </Alert>
-      {form.values.requestType === "access" && (
-        <Alert color="orange" title="Access is not granted here">
-          This request does not change accounts or permissions. An approved
-          access path is still required after the ticket is recorded.
+    <PageFrame
+      header={
+        <PageHeader
+          title={title}
+          description={`${application.name} · ${hint}`}
+          breadcrumbs={[
+            { title: "Support", href: basePath },
+            { title: "New request" },
+          ]}
+        />
+      }
+    >
+      <Stack gap="md">
+        <Alert color="blue">
+          Do not include passwords or confidential data.
         </Alert>
-      )}
-      {form.values.requestType === "general" && (
-        <Alert color="gray" title="Wrong place?">
-          Product wishes go to{" "}
-          <Anchor component={Link} href={`/projects/${projectId}/ideas`}>
-            Ideas
-          </Anchor>
-          . Praise or friction without a broken flow goes to{" "}
-          <Anchor component={Link} href={`/projects/${projectId}/feedback`}>
-            Feedback
-          </Anchor>
-          . Pre-release defects go to{" "}
-          <Anchor component={Link} href={`/projects/${projectId}/uat`}>
-            UAT campaigns
-          </Anchor>
-          .
-        </Alert>
-      )}
-      <Stepper
-        active={step === "write" ? 0 : step === "review" ? 1 : 2}
-        size="sm"
-      >
-        <Stepper.Step label="Describe" />
-        <Stepper.Step label="Review" />
-        <Stepper.Step label="Created in demo" />
-      </Stepper>
-      {step === "created" ? (
-        <Card withBorder p="md" radius="sm">
-          <Stack>
+        {form.values.requestType === "access" && (
+          <Alert color="orange">
+            Sending does not grant access. An approved access path is still
+            required.
+          </Alert>
+        )}
+        {form.values.requestType === "general" && (
+          <Accordion variant="contained">
+            <Accordion.Item value="wrong-place">
+              <Accordion.Control>Wrong place?</Accordion.Control>
+              <Accordion.Panel>
+                <Text size="sm">
+                  Product wishes go to{" "}
+                  <Anchor
+                    component={Link}
+                    href={`/projects/${projectId}/ideas`}
+                  >
+                    Ideas
+                  </Anchor>
+                  . Praise or friction without a broken flow goes to{" "}
+                  <Anchor
+                    component={Link}
+                    href={`/projects/${projectId}/feedback`}
+                  >
+                    Feedback
+                  </Anchor>
+                  . Pre-release defects go to{" "}
+                  <Anchor component={Link} href={`/projects/${projectId}/uat`}>
+                    UAT
+                  </Anchor>
+                  .
+                </Text>
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
+        )}
+        <Stepper
+          active={step === "write" ? 0 : step === "review" ? 1 : 2}
+          size="sm"
+        >
+          <Stepper.Step label="Describe" />
+          <Stepper.Step label="Review" />
+          <Stepper.Step label="Done" />
+        </Stepper>
+        {step === "created" ? (
+          <Stack gap="md">
             <Group>
-              <IconCheck size={24} />
-              <Title order={2}>Request created in this demo</Title>
+              <IconCheck size={24} aria-hidden />
+              <Title order={2}>Request created</Title>
             </Group>
             <Text size="sm">
               Responsible team: {application.owner} · Handler: Unclaimed ·
-              Priority: {suggestedPriority} (from impact and urgency)
+              Priority: {suggestedPriority}
             </Text>
-            <Button component={Link} href={`${basePath}/${createdId}`}>
+            <Button
+              component={Link}
+              href={`${basePath}/${createdId}`}
+              style={{ alignSelf: "flex-start" }}
+            >
               View request
             </Button>
           </Stack>
-        </Card>
-      ) : step === "review" ? (
-        <Card withBorder p="md" radius="sm">
+        ) : step === "review" ? (
           <Stack gap="lg">
-            <div>
-              <Title order={2}>Review your request</Title>
-            </div>
-            <Text size="sm">
+            <Title order={2}>Review your request</Title>
+            <Text size="sm" c="dimmed">
               Project: {application.name} · Sender: Jo Lee · Type:{" "}
               {requestTypeLabels[form.values.requestType]}
             </Text>
             <DetailsReadout rows={reviewRows} />
-            <Text size="sm" c="dimmed">
-              Sending does not grant access or promise a fix. Priority will be
-              set from impact and urgency.
-            </Text>
             <Group justify="space-between">
               <Button variant="default" onClick={() => setStep("write")}>
                 Back to edit
@@ -236,46 +260,25 @@ export function SupportForm({ projectId }: { projectId: string }) {
                   setStep("created");
                 }}
               >
-                Confirm creation in demo
+                Confirm creation
               </Button>
             </Group>
           </Stack>
-        </Card>
-      ) : (
-        <Card withBorder p="md" radius="sm">
+        ) : (
           <form onSubmit={form.onSubmit(() => setStep("review"))}>
             <Stack gap="md">
-              <Text size="sm" fw={500}>
-                Submitting as Jo Lee · {application.name}
-              </Text>
-              <Group gap="xs">
-                <Text size="sm" fw={600}>
-                  Request type
-                </Text>
-                <Badge variant="light">{title}</Badge>
-                <Button
-                  component={Link}
-                  href={basePath}
-                  variant="subtle"
-                  size="compact-sm"
-                >
-                  Change type
-                </Button>
-              </Group>
               <Select
                 disabled={!mounted}
-                label="Or switch type here"
+                label="Type"
                 data={(
                   Object.entries(requestTypeLabels) as [RequestType, string][]
                 ).map(([value, label]) => ({ value, label }))}
                 value={form.values.requestType}
                 allowDeselect={false}
-                onChange={(value) =>
-                  setRequestType(parseRequestType(value))
-                }
+                onChange={(value) => setRequestType(parseRequestType(value))}
               />
               <DetailsFormFields
-                fields={template.fields}
+                fields={sections.primary}
                 disabled={!mounted}
                 getInputProps={(key) => form.getInputProps(key)}
                 getSelectValue={(key) => {
@@ -287,55 +290,95 @@ export function SupportForm({ projectId }: { projectId: string }) {
                 }
                 afterField={(key) =>
                   key === "urgency" ? (
-                    <Text size="sm" mt="xs">
-                      Suggested priority for handlers:{" "}
-                      <Text span fw={600}>
+                    <Text size="sm" mt="xs" c="dimmed">
+                      Suggested priority:{" "}
+                      <Text span fw={600} c="var(--mantine-color-text)">
                         {suggestedPriority}
                       </Text>
                     </Text>
                   ) : null
                 }
               />
-              <Stack gap="xs">
-                <Text size="sm" fw={600}>
-                  Evidence (optional)
-                </Text>
-                <Text size="xs" c="dimmed">
-                  {evidencePolicy}
-                </Text>
-                <FileButton
-                  disabled={!mounted || attachments.length >= 5}
-                  multiple
-                  accept="image/png,image/jpeg,application/pdf"
-                  onChange={(files) => addFiles(files)}
-                >
-                  {(props) => (
-                    <Button {...props} variant="light" disabled={!mounted}>
-                      Choose files
-                    </Button>
-                  )}
-                </FileButton>
-                {attachments.map((file) => (
-                  <Group key={file.id} justify="space-between">
-                    <Text size="sm">
-                      {file.name} · {file.sizeLabel} · {file.status}
-                    </Text>
-                    <Button
-                      variant="subtle"
-                      color="red"
-                      size="compact-sm"
-                      leftSection={<IconTrash size={14} />}
-                      onClick={() =>
-                        setAttachments((current) =>
-                          current.filter((item) => item.id !== file.id),
-                        )
-                      }
-                    >
-                      Remove
-                    </Button>
-                  </Group>
-                ))}
-              </Stack>
+              <Accordion variant="contained" multiple defaultValue={[]}>
+                <Accordion.Item value="optional">
+                  <Accordion.Control>
+                    Optional details
+                    {attachments.length > 0
+                      ? ` · ${attachments.length} file${attachments.length === 1 ? "" : "s"}`
+                      : ""}
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <Stack gap="md">
+                      {sections.optional.length > 0 ? (
+                        <DetailsFormFields
+                          fields={sections.optional}
+                          disabled={!mounted}
+                          getInputProps={(key) => form.getInputProps(key)}
+                          getSelectValue={(key) => {
+                            const value = form.values[key];
+                            return typeof value === "string" && value
+                              ? value
+                              : null;
+                          }}
+                          onSelectChange={(key, value) =>
+                            form.setFieldValue(
+                              key,
+                              value as SupportContext[typeof key],
+                            )
+                          }
+                        />
+                      ) : null}
+                      <Stack gap="xs">
+                        <Text size="sm" fw={600}>
+                          Evidence
+                        </Text>
+                        <Group gap="xs">
+                          <FileButton
+                            disabled={!mounted || attachments.length >= 5}
+                            multiple
+                            accept="image/png,image/jpeg,application/pdf"
+                            onChange={(files) => addFiles(files)}
+                          >
+                            {(props) => (
+                              <Tooltip label={evidencePolicy}>
+                                <Button
+                                  {...props}
+                                  variant="light"
+                                  disabled={!mounted}
+                                  leftSection={
+                                    <IconPaperclip size={16} aria-hidden />
+                                  }
+                                >
+                                  Choose files
+                                </Button>
+                              </Tooltip>
+                            )}
+                          </FileButton>
+                        </Group>
+                        {attachments.map((file) => (
+                          <Group key={file.id} justify="space-between">
+                            <Text size="sm">
+                              {file.name} · {file.sizeLabel} · {file.status}
+                            </Text>
+                            <ActionIcon
+                              variant="subtle"
+                              color="red"
+                              aria-label={`Remove ${file.name}`}
+                              onClick={() =>
+                                setAttachments((current) =>
+                                  current.filter((item) => item.id !== file.id),
+                                )
+                              }
+                            >
+                              <IconTrash size={16} />
+                            </ActionIcon>
+                          </Group>
+                        ))}
+                      </Stack>
+                    </Stack>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
               <Group justify="flex-end">
                 <Button type="submit" disabled={!mounted}>
                   Review request
@@ -343,8 +386,8 @@ export function SupportForm({ projectId }: { projectId: string }) {
               </Group>
             </Stack>
           </form>
-        </Card>
-      )}
-    </Stack>
+        )}
+      </Stack>
+    </PageFrame>
   );
 }

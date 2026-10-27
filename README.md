@@ -10,7 +10,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:4202. You will be redirected to Keycloak to sign in. After auth, the root path redirects to `/projects/beacon-portal/support`. Playwright sets `NEXT_PUBLIC_E2E_AUTH_BYPASS=1` so browser tests skip SSO.
+Open http://localhost:4202. You will be redirected to Keycloak to sign in. After auth, the root path shows the project list (Home). Playwright sets `NEXT_PUBLIC_E2E_AUTH_BYPASS=1` so browser tests skip SSO.
 
 ## Languages
 
@@ -63,7 +63,8 @@ this MVP lives in `docs/product-design/project-workspace-mvp/`.
 
 | Route                              | Purpose                                                     |
 | ---------------------------------- | ----------------------------------------------------------- |
-| `/`                                | Redirects to Beacon Portal Support                          |
+| `/`                                | Home — choose a project                                     |
+| `/projects/beacon-portal`          | Project overview and section shortcuts                      |
 | `/projects/beacon-portal/support`  | Project support list, intake, detail, and replies           |
 | `/projects/beacon-portal/feedback` | Project feedback list and share/review stubs                |
 | `/projects/beacon-portal/ideas`    | Project ideas list (no votes or roadmap)                    |
@@ -78,10 +79,10 @@ Before using this with employees, implement server-side persistence and validati
 
 Service ownership, support hours, escalation routes, service targets, and business approval policies must be agreed with the responsible teams. This frontend does not establish those policies.
 
-| Script              | Purpose                                        |
-| ------------------- | ---------------------------------------------- |
-| `npm run check`     | Format, lint, stylelint, types, and unit tests |
-| `npm run test:e2e`  | Playwright                                     |
-| `npm run analyze`   | Production bundle report                       |
+| Script             | Purpose                                        |
+| ------------------ | ---------------------------------------------- |
+| `npm run check`    | Format, lint, stylelint, types, and unit tests |
+| `npm run test:e2e` | Playwright                                     |
+| `npm run analyze`  | Production bundle report                       |
 
 Routes stay in `app/`. Feature code goes in `modules/<feature>/`. Helpers used by more than one feature go in `lib/`.

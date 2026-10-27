@@ -6,117 +6,160 @@ import {
   Button,
   Group,
   Paper,
-  Stack,
   Text,
-  TextInput,
   Title,
+  Tooltip,
 } from "@mantine/core";
-import { IconSearch } from "@tabler/icons-react";
+import { IconMessageCircle, IconPlus } from "@tabler/icons-react";
 import Link from "next/link";
-import { parseAsString, useQueryState } from "nuqs";
+import { useQueryStates } from "nuqs";
 
 import { getApplication } from "@/modules/projects/lib/applications";
+import { CollectionEmpty } from "@/modules/ui/components/collection-empty";
+import { CollectionToolbar } from "@/modules/ui/components/collection-toolbar";
+import { DestinationUnavailable } from "@/modules/ui/components/destination-unavailable";
+import { ModuleTabs } from "@/modules/ui/components/module-tabs";
+import { PageFrame } from "@/modules/ui/components/page-frame";
+import { PageHeader } from "@/modules/ui/components/page-header";
 
-import { feedbackItems } from "../lib/fixtures";
+import { feedbackItems, type FeedbackDisposition } from "../lib/fixtures";
+import { feedbackSearchParams, type FeedbackView } from "../lib/search-params";
+
+const needsReview: FeedbackDisposition[] = [
+  "Not reviewed",
+  "Needs clarification",
+];
+const acknowledged: FeedbackDisposition[] = ["Acknowledged", "Noted"];
+
+function matchesView(disposition: FeedbackDisposition, view: FeedbackView) {
+  if (view === "all") return true;
+  if (view === "needs-review") return needsReview.includes(disposition);
+  return acknowledged.includes(disposition);
+}
 
 export function FeedbackCollection({ projectId }: { projectId: string }) {
   const application = getApplication(projectId);
-  const [query, setQuery] = useQueryState("q", parseAsString.withDefault(""));
-  const visible = feedbackItems.filter(
+  const [filters, setFilters] = useQueryStates(feedbackSearchParams);
+
+  if (!application) {
+    return (
+      <PageFrame>
+        <DestinationUnavailable backHref="/" backLabel="Back to projects" />
+      </PageFrame>
+    );
+  }
+
+  const scoped = feedbackItems.filter((item) => item.projectId === projectId);
+  const needsReviewCount = scoped.filter((item) =>
+    needsReview.includes(item.disposition),
+  ).length;
+  const acknowledgedCount = scoped.filter((item) =>
+    acknowledged.includes(item.disposition),
+  ).length;
+  const visible = scoped.filter(
     (item) =>
-      item.projectId === projectId &&
+      matchesView(item.disposition, filters.view) &&
       `${item.title} ${item.observation}`
         .toLowerCase()
-        .includes(query.trim().toLowerCase()),
+        .includes(filters.q.trim().toLowerCase()),
   );
 
   return (
-    <Stack gap="md">
-      <Text size="sm" c="dimmed">
-        {application?.name ?? "Project"} / Feedback
-      </Text>
-      <Group justify="space-between" align="flex-start">
-        <div>
-          <Title order={1} size="h2">
-            Feedback
-          </Title>
-          <Text size="sm" c="dimmed">
-            Share an observation. Acknowledgement is not a promise to change the
-            product.
-          </Text>
-        </div>
-        <Button component={Link} href={`/projects/${projectId}/feedback/new`}>
-          Share feedback
-        </Button>
-      </Group>
-      <Paper withBorder radius="sm" style={{ overflow: "hidden" }}>
-        <Box
-          p="sm"
-          style={{
-            borderBottom: "1px solid var(--mantine-color-default-border)",
-          }}
+    <PageFrame
+      header={
+        <PageHeader
+          title="Feedback"
+          breadcrumbs={[
+            { title: "Overview", href: `/projects/${projectId}` },
+            { title: "Feedback", href: `/projects/${projectId}/feedback` },
+          ]}
+          actions={
+            <Button
+              component={Link}
+              href={`/projects/${projectId}/feedback/new`}
+              leftSection={<IconPlus size={16} />}
+            >
+              Share feedback
+            </Button>
+          }
         >
-          <TextInput
-            aria-label="Search feedback"
-            placeholder="Search feedback…"
-            leftSection={<IconSearch size={16} />}
-            value={query}
-            onChange={(event) =>
-              void setQuery(event.currentTarget.value || null)
-            }
-          />
-        </Box>
-        <Text
-          size="xs"
-          c="dimmed"
-          px="md"
-          py="xs"
-          bg="var(--mantine-color-default-hover)"
-          aria-live="polite"
-        >
-          {visible.length} observations in this project
-        </Text>
-        {visible.map((item) => (
-          <Box
-            key={item.id}
-            component={Link}
-            href={`/projects/${projectId}/feedback/${item.id}`}
-            px="md"
-            py="sm"
-            display="block"
-            c="inherit"
-            td="none"
-            style={{
-              borderTop: "1px solid var(--mantine-color-default-border)",
+          <ModuleTabs
+            ariaLabel="Feedback views"
+            value={filters.view}
+            onChange={(value) => {
+              const view = feedbackSearchParams.view.parse(value);
+              void setFilters({ view: view ?? "needs-review" });
             }}
-          >
-            <Group justify="space-between">
-              <Text size="xs" c="dimmed">
-                {item.id}
+            items={[
+              {
+                value: "needs-review",
+                label: "Needs review",
+                count: needsReviewCount,
+              },
+              {
+                value: "acknowledged",
+                label: "Acknowledged",
+                count: acknowledgedCount,
+              },
+              { value: "all", label: "All", count: scoped.length },
+            ]}
+          />
+        </PageHeader>
+      }
+    >
+      <Paper withBorder style={{ overflow: "hidden" }}>
+        <CollectionToolbar
+          searchLabel="Search feedback"
+          searchPlaceholder="Search by title or observation"
+          searchValue={filters.q}
+          onSearchChange={(value) => void setFilters({ q: value })}
+          countLabel={`${visible.length} observations`}
+        />
+        {visible.length === 0 ? (
+          <CollectionEmpty
+            icon={<IconMessageCircle />}
+            title="No matching feedback"
+            actionLabel="Clear search"
+            onAction={() => void setFilters({ q: "" })}
+          />
+        ) : (
+          visible.map((item) => (
+            <Box
+              key={item.id}
+              component={Link}
+              href={`/projects/${projectId}/feedback/${item.id}`}
+              px="md"
+              py="sm"
+              display="block"
+              c="inherit"
+              td="none"
+              style={{
+                borderTop: "1px solid var(--mantine-color-default-border)",
+              }}
+            >
+              <Group justify="space-between">
+                <Text size="xs" c="dimmed">
+                  {item.id}
+                </Text>
+                <Badge variant="light" color="gray">
+                  {item.disposition}
+                </Badge>
+              </Group>
+              <Title order={2} size="sm" mt={4}>
+                {item.title}
+              </Title>
+              <Tooltip label={item.observation} multiline maw={360}>
+                <Text size="sm" mt={4} lineClamp={2}>
+                  {item.observation}
+                </Text>
+              </Tooltip>
+              <Text size="xs" c="dimmed" mt={6}>
+                Next actor: {item.nextActor}
               </Text>
-              <Badge variant="light" color="gray">
-                {item.disposition}
-              </Badge>
-            </Group>
-            <Title order={2} size="sm" mt={4}>
-              {item.title}
-            </Title>
-            <Text size="sm" mt={4} lineClamp={2}>
-              {item.observation}
-            </Text>
-            <Text size="xs" c="dimmed" mt={6}>
-              Next actor: {item.nextActor}
-            </Text>
-          </Box>
-        ))}
-        {visible.length === 0 && (
-          <Box p="xl" ta="center">
-            <Title order={2} size="lg">
-              No matching feedback
-            </Title>
-          </Box>
+            </Box>
+          ))
         )}
       </Paper>
-    </Stack>
+    </PageFrame>
   );
 }

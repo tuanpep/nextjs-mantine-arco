@@ -19,9 +19,9 @@ test("review and create a local request, then open its unclaimed detail", async 
     page.getByRole("textbox", { name: "Brief summary" }),
   ).toHaveValue("Unable to open the workspace");
   await page.getByRole("button", { name: "Review request" }).click();
-  await page.getByRole("button", { name: "Confirm creation in demo" }).click();
+  await page.getByRole("button", { name: "Confirm creation" }).click();
   await expect(
-    page.getByRole("heading", { name: "Request created in this demo" }),
+    page.getByRole("heading", { name: "Request created" }),
   ).toBeVisible();
   await page.getByRole("link", { name: "View request" }).click();
   await expect(
@@ -39,13 +39,11 @@ test("sender clarification reply returns the next action to the handler", async 
   await page
     .getByRole("textbox")
     .fill("This happens in the test workspace after signing in.");
-  await page.getByRole("button", { name: "Send reply in demo" }).click();
+  await page.getByRole("button", { name: "Send reply" }).click();
   await expect(
     page.getByText("This happens in the test workspace after signing in.", {
       exact: true,
     }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Send reply in demo" }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Send reply" })).toHaveCount(0);
 });

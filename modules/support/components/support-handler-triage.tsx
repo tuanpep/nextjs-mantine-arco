@@ -8,7 +8,6 @@ import {
   Group,
   Select,
   Stack,
-  Text,
   Textarea,
   TextInput,
   Title,
@@ -56,9 +55,7 @@ export function SupportHandlerTriage({
       switch (disposition) {
         case "needs-info":
           handle(item.id, { kind: "needs-info", text: note });
-          onNotice(
-            "Marked needs more info. The sender has the next action in this demo.",
-          );
+          onNotice("Marked needs more info. The sender has the next action.");
           break;
         case "duplicate":
           handle(item.id, {
@@ -67,7 +64,7 @@ export function SupportHandlerTriage({
             text: note,
           });
           onNotice(
-            `Marked duplicate of ${relatedId.trim().toUpperCase()} and resolved in this demo.`,
+            `Marked duplicate of ${relatedId.trim().toUpperCase()} and resolved.`,
           );
           break;
         case "linked-eng":
@@ -88,8 +85,8 @@ export function SupportHandlerTriage({
           });
           onNotice(
             keepOpen
-              ? "Workaround shared. Waiting for the sender in this demo."
-              : "Resolved with workaround in this demo.",
+              ? "Workaround shared. Waiting for the sender."
+              : "Resolved with workaround.",
           );
           break;
         case "misroute":
@@ -99,7 +96,7 @@ export function SupportHandlerTriage({
             text: note,
           });
           onNotice(
-            `Redirected to ${misrouteTargetLabels[misrouteTarget]} and closed this support request in the demo.`,
+            `Redirected to ${misrouteTargetLabels[misrouteTarget]} and closed this support request.`,
           );
           break;
         default: {
@@ -116,19 +113,14 @@ export function SupportHandlerTriage({
   }
 
   return (
-    <Card withBorder p="md" radius="sm">
+    <Card withBorder p="md">
       <Stack gap="sm">
         <Title order={2} size="h3">
-          Demo handler triage
+          Triage
         </Title>
-        <Text size="sm" c="dimmed">
-          Dispositions from the Cursor-style intake research: ask for info,
-          link duplicates, pause auto-close when engineering is tracking the
-          bug, share a workaround, or send the ask to another project area.
-        </Text>
         {!item.handler && (
-          <Alert color="blue" title="Unclaimed">
-            Applying triage will assign Demo DX operator first in this demo.
+          <Alert color="blue">
+            Applying triage will assign Demo DX operator first.
           </Alert>
         )}
         <Select
@@ -220,7 +212,7 @@ export function SupportHandlerTriage({
         />
         <Group>
           <Button disabled={!mounted} onClick={applyTriage}>
-            Apply disposition in demo
+            Apply
           </Button>
         </Group>
       </Stack>

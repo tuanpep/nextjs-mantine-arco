@@ -27,7 +27,10 @@ export function resolveApiUrl(path: string): string {
   }
 
   if (target.origin !== allowed.origin) {
-    throw new ApiError("Refusing to send credentials to an untrusted host", 400);
+    throw new ApiError(
+      "Refusing to send credentials to an untrusted host",
+      400,
+    );
   }
 
   return path;

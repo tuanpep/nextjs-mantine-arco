@@ -1,42 +1,38 @@
 "use client";
 
 import {
-  Anchor,
-  Badge,
   Box,
   Button,
-  Card,
   Group,
-  Select,
-  SimpleGrid,
-  Stack,
+  Menu,
+  Paper,
   Text,
-  TextInput,
-  ThemeIcon,
   Title,
-  UnstyledButton,
+  Tooltip,
 } from "@mantine/core";
-import {
-  IconArrowRight,
-  IconPlus,
-  IconSearch,
-  IconLifebuoy,
-} from "@tabler/icons-react";
+import { IconChevronDown, IconLifebuoy, IconPlus } from "@tabler/icons-react";
 import Link from "next/link";
 import { useQueryStates } from "nuqs";
+
+import { getApplication } from "@/modules/projects/lib/applications";
+import { CollectionEmpty } from "@/modules/ui/components/collection-empty";
+import { CollectionToolbar } from "@/modules/ui/components/collection-toolbar";
+import { ModuleTabs } from "@/modules/ui/components/module-tabs";
+import { PageFrame } from "@/modules/ui/components/page-frame";
+import { PageHeader } from "@/modules/ui/components/page-header";
 
 import { supportStatuses } from "../lib/fixtures";
 import {
   requestCatalogCards,
-  requestTypeLabels,
+  requestTypeShortLabels,
 } from "../lib/request-catalog";
-import { getApplication } from "@/modules/projects/lib/applications";
-import { supportSearchParams } from "../lib/search-params";
+import { supportSearchParams, type SupportView } from "../lib/search-params";
 import { filterSupport } from "../lib/support-state";
 import {
-  SupportIntro,
+  SupportPriorityBadge,
   SupportStatusBadge,
   SupportUnavailable,
+  supportAttention,
   supportPath,
 } from "./support-common";
 import { useSupport } from "./support-provider";
@@ -44,169 +40,198 @@ import { useSupport } from "./support-provider";
 export function SupportCollection({ projectId }: { projectId?: string }) {
   const { requests } = useSupport();
   const [filters, setFilters] = useQueryStates(supportSearchParams);
-  if (projectId && !getApplication(projectId)) return <SupportUnavailable />;
+  if (projectId && !getApplication(projectId)) {
+    return (
+      <PageFrame>
+        <SupportUnavailable />
+      </PageFrame>
+    );
+  }
   const basePath = supportPath(projectId ?? null);
-  const items = filterSupport(requests.filter((item) => !projectId || item.applicationId === projectId), filters.q, filters.status);
+  const overviewHref = projectId ? `/projects/${projectId}` : undefined;
+  const scoped = requests.filter(
+    (item) => !projectId || item.applicationId === projectId,
+  );
+  const openCount = scoped.filter((item) => item.status !== "Resolved").length;
+  const closedCount = scoped.filter(
+    (item) => item.status === "Resolved",
+  ).length;
+  const items = filterSupport(
+    scoped,
+    filters.q,
+    filters.view === "closed" ? "all" : filters.status,
+    filters.view,
+  );
+  const openStatuses = supportStatuses.filter(
+    (status) => status !== "Resolved",
+  );
+  const waitingOnYouCount = items.filter(
+    (item) => item.nextActor === "Sender" && item.status !== "Resolved",
+  ).length;
+
   return (
-    <Stack gap="md">
-      <SupportIntro title="Your support requests" applicationId={projectId ?? null} />
-      <Group justify="space-between" align="flex-end">
-        <div>
-          <Title order={2} size="h3">
-            Requests from Jo Lee
-          </Title>
-        </div>
-        <Button
-          component={Link}
-          href={`${basePath}/new?type=general`}
-          leftSection={<IconPlus size={16} />}
+    <PageFrame
+      header={
+        <PageHeader
+          title="Support"
+          description="Track requests that need a reply, a retest, or a handler."
+          breadcrumbs={[
+            ...(overviewHref
+              ? [{ title: "Overview", href: overviewHref }]
+              : []),
+            { title: "Support", href: basePath },
+          ]}
+          actions={
+            <Menu position="bottom-end" withinPortal>
+              <Menu.Target>
+                <Button
+                  leftSection={<IconPlus size={16} aria-hidden />}
+                  rightSection={<IconChevronDown size={14} aria-hidden />}
+                >
+                  New request
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>Request type</Menu.Label>
+                {requestCatalogCards.map((card) => (
+                  <Menu.Item
+                    key={card.type}
+                    component={Link}
+                    href={`${basePath}/new?type=${card.type}`}
+                  >
+                    <Text size="sm" fw={card.primary ? 600 : 400}>
+                      {card.title}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {card.description}
+                    </Text>
+                  </Menu.Item>
+                ))}
+              </Menu.Dropdown>
+            </Menu>
+          }
         >
-          Ask for help
-        </Button>
-      </Group>
-      <Stack gap="xs">
-        <Text size="sm" fw={600}>
-          Request catalog in this project
-        </Text>
-        <Text size="xs" c="dimmed">
-          Known types route to the default handler when configured. Something
-          else remains the catch-all. Choosing a type does not fulfill the
-          request.
-        </Text>
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="sm">
-          {requestCatalogCards.map((card) => (
-            <UnstyledButton
-              key={card.type}
-              component={Link}
-              href={`${basePath}/new?type=${card.type}`}
-              style={{ display: "block" }}
-            >
-              <Card withBorder padding="sm" radius="sm" h="100%">
-                <Text fw={600} size="sm">
-                  {card.title}
-                </Text>
-                <Text size="xs" c="dimmed" mt={4}>
-                  {card.description}
-                </Text>
-              </Card>
-            </UnstyledButton>
-          ))}
-        </SimpleGrid>
-      </Stack>
-      <Card withBorder p={0} radius="sm">
-        <Group
-          align="flex-end"
-          p="sm"
-          style={{
-            borderBottom: "1px solid var(--mantine-color-default-border)",
-          }}
-        >
-          <TextInput
-            style={{ flex: "1 1 260px" }}
-            label="Search requests"
-            placeholder="Search by summary or reference"
-            leftSection={<IconSearch size={16} />}
-            value={filters.q}
-            onChange={(event) =>
-              void setFilters({ q: event.currentTarget.value })
+          <ModuleTabs
+            ariaLabel="Support views"
+            value={filters.view}
+            onChange={(value) => {
+              const view = supportSearchParams.view.parse(value) as SupportView;
+              void setFilters({
+                view: view ?? "open",
+                status: value === "closed" ? "all" : filters.status,
+              });
+            }}
+            items={[
+              { value: "open", label: "Open", count: openCount },
+              { value: "closed", label: "Closed", count: closedCount },
+            ]}
+          />
+        </PageHeader>
+      }
+    >
+      <Paper withBorder style={{ overflow: "hidden" }}>
+        <CollectionToolbar
+          searchLabel="Search requests"
+          searchPlaceholder="Search by summary or reference"
+          searchValue={filters.q}
+          onSearchChange={(value) => void setFilters({ q: value })}
+          statusLabel={filters.view === "open" ? "Status" : undefined}
+          statusValue={filters.status}
+          statusOptions={
+            filters.view === "open"
+              ? [
+                  { value: "all", label: "All open statuses" },
+                  ...openStatuses.map((status) => ({
+                    value: status,
+                    label: status,
+                  })),
+                ]
+              : undefined
+          }
+          onStatusChange={
+            filters.view === "open"
+              ? (value) => {
+                  const status = supportSearchParams.status.parse(value);
+                  void setFilters({ status: status ?? "all" });
+                }
+              : undefined
+          }
+          countLabel={
+            waitingOnYouCount > 0
+              ? `${items.length} matching · ${waitingOnYouCount} waiting on you`
+              : `${items.length} matching ${items.length === 1 ? "request" : "requests"}`
+          }
+        />
+        {items.length === 0 ? (
+          <CollectionEmpty
+            icon={<IconLifebuoy />}
+            title="No requests match"
+            actionLabel="Clear filters"
+            onAction={() =>
+              void setFilters({ q: "", status: "all", view: filters.view })
             }
           />
-          <Select
-            style={{ flex: "0 1 220px" }}
-            label="Status"
-            value={filters.status}
-            allowDeselect={false}
-            data={[
-              { value: "all", label: "All statuses" },
-              ...supportStatuses.map((status) => ({
-                value: status,
-                label: status,
-              })),
-            ]}
-            onChange={(value) => {
-              const status = supportSearchParams.status.parse(value ?? "all");
-              void setFilters({ status: status ?? "all" });
-            }}
-          />
-        </Group>
-        <Text
-          size="xs"
-          c="dimmed"
-          aria-live="polite"
-          px="md"
-          py="xs"
-          bg="var(--mantine-color-default-hover)"
-        >
-          {items.length} matching {items.length === 1 ? "request" : "requests"}
-        </Text>
-        {items.length === 0 ? (
-          <Box p="xl">
-            <Stack align="center">
-              <ThemeIcon size="xl" variant="light">
-                <IconLifebuoy />
-              </ThemeIcon>
-              <Title order={2} size="h3">
-                No requests match
-              </Title>
-              <Button
-                variant="light"
-                onClick={() => void setFilters({ q: "", status: "all" })}
-              >
-                Clear filters
-              </Button>
-            </Stack>
-          </Box>
         ) : (
-          <Stack gap={0}>
-            {items.map((item) => (
+          items.map((item) => {
+            const attention = supportAttention(item);
+            return (
               <Box
                 key={item.id}
+                component={Link}
+                href={`${supportPath(item.applicationId)}/${item.id}`}
                 px="md"
                 py="sm"
+                display="block"
+                c="inherit"
+                td="none"
                 style={{
                   borderTop: "1px solid var(--mantine-color-default-border)",
                 }}
               >
-                <Group justify="space-between" align="flex-start">
-                  <Stack gap={4} style={{ flex: "1 1 240px", minWidth: 0 }}>
-                    <Group gap="xs">
-                      <Badge variant="light" color="gray" size="xs">
-                        Support
-                      </Badge>
-                      <Text size="xs" c="dimmed">
-                        {item.id}
-                      </Text>
-                    </Group>
-                    <Anchor
-                      component={Link}
-                      href={`${supportPath(item.applicationId)}/${item.id}`}
-                      fw={600}
-                      size="sm"
-                      style={{ overflowWrap: "anywhere" }}
-                    >
-                      {item.summary}
-                    </Anchor>
-                    <Text size="sm" c="dimmed">
-                      {getApplication(item.applicationId ?? "")?.name ??
-                        "Application not identified"}{" "}
-                      · {requestTypeLabels[item.requestType]} · Priority{" "}
-                      {item.priority} · {item.handler ?? "Unclaimed"} · Next:{" "}
-                      {item.nextActor}
-                    </Text>
-                  </Stack>
-                  <Group gap="sm">
-                    <Badge variant="light" color="grape" size="sm">
-                      {item.priority}
-                    </Badge>
+                <Group justify="space-between" align="flex-start" gap="sm">
+                  <Text size="xs" c="dimmed">
+                    {item.id}
+                  </Text>
+                  <Group gap="xs">
+                    <SupportPriorityBadge priority={item.priority} />
                     <SupportStatusBadge status={item.status} />
-                    <IconArrowRight size={18} aria-hidden="true" />
                   </Group>
                 </Group>
+                <Title
+                  order={2}
+                  size="sm"
+                  mt={4}
+                  style={{ overflowWrap: "anywhere" }}
+                >
+                  {item.summary}
+                </Title>
+                <Group gap="xs" mt={6} wrap="wrap">
+                  <Text size="xs" c="dimmed">
+                    {requestTypeShortLabels[item.requestType]}
+                  </Text>
+                  <Text size="xs" c="dimmed" aria-hidden>
+                    ·
+                  </Text>
+                  <Text
+                    size="xs"
+                    fw={attention.waitingOnYou ? 600 : 400}
+                    c={attention.waitingOnYou ? "orange" : "dimmed"}
+                  >
+                    {attention.label}
+                  </Text>
+                </Group>
+                {attention.detail ? (
+                  <Tooltip label={attention.detail} multiline maw={360}>
+                    <Text size="sm" mt={4} lineClamp={1}>
+                      {attention.detail}
+                    </Text>
+                  </Tooltip>
+                ) : null}
               </Box>
-            ))}
-          </Stack>
+            );
+          })
         )}
-      </Card>
-    </Stack>
+      </Paper>
+    </PageFrame>
   );
 }

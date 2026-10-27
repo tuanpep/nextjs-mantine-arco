@@ -33,7 +33,7 @@ const PROJECT_SECTIONS = [
   "settings",
 ] as const;
 
-export type ProjectSection = (typeof PROJECT_SECTIONS)[number];
+export type ProjectSection = (typeof PROJECT_SECTIONS)[number] | "overview";
 
 export function getApplication(id: string): Application | undefined {
   return applications.find((application) => application.id === id);
@@ -48,12 +48,15 @@ export function projectSupportPath(id: string): string {
 }
 
 export function projectSectionFromPath(pathname: string): ProjectSection {
-  const match = pathname.match(/^\/projects\/[^/]+\/([^/]+)/);
-  const section = match?.[1];
-  if (
-    section &&
-    (PROJECT_SECTIONS as readonly string[]).includes(section)
-  ) {
+  const match = pathname.match(/^\/projects\/[^/]+(?:\/([^/]+))?/);
+  if (!match) {
+    return "overview";
+  }
+  const section = match[1];
+  if (!section) {
+    return "overview";
+  }
+  if ((PROJECT_SECTIONS as readonly string[]).includes(section)) {
     return section as ProjectSection;
   }
   return "support";
@@ -61,5 +64,8 @@ export function projectSectionFromPath(pathname: string): ProjectSection {
 
 export function projectSectionPath(id: string, pathname: string): string {
   const section = projectSectionFromPath(pathname);
+  if (section === "overview") {
+    return applicationPath(id);
+  }
   return `/projects/${id}/${section}`;
 }

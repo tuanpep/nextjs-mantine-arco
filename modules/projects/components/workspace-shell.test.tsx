@@ -45,19 +45,31 @@ describe("workspace navigation", () => {
       "href",
       "/projects/orchid-reports/ideas",
     );
-    expect(screen.getByRole("link", { name: "UAT campaigns" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "UAT" })).toHaveAttribute(
       "href",
       "/projects/orchid-reports/uat",
     );
+    expect(
+      screen.getByRole("button", { name: "Hide sidebar" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
       "href",
       "/projects/orchid-reports/settings",
+    );
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
+      "href",
+      "/projects/orchid-reports",
     );
     expect(
       screen.queryByRole("link", { name: "My requests" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: "Home" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("link", { name: "Skip to content" }),
+    ).toHaveAttribute("href", "#main-content");
+    expect(document.getElementById("main-content")?.tagName).toBe("MAIN");
   });
 });

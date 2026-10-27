@@ -13,6 +13,8 @@ export default function UnavailablePage() {
         It may not be available to your account. No restricted details are
         shown.
       </p>
+      <Link href="/">Back to Home</Link>
+      {" · "}
       <Link href={projectSupportPath(DEFAULT_PROJECT_ID)}>Back to Support</Link>
     </section>
   );

@@ -4,7 +4,7 @@ export type DetailsFieldDef<K extends string = string> = {
   key: K;
   control: DetailsControl;
   label: string;
-  description?: string;
+  placeholder?: string;
   rows?: number;
   required: boolean;
   visible: boolean;

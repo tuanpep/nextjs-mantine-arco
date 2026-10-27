@@ -27,7 +27,10 @@ const SupportContextStore = createContext<SupportStore | null>(null);
 export function SupportProvider({ children }: { children: ReactNode }) {
   const [requests, setRequests] = useState(supportFixtures);
 
-  function create(context: SupportContext, applicationId: string | null = "beacon-portal") {
+  function create(
+    context: SupportContext,
+    applicationId: string | null = "beacon-portal",
+  ) {
     const id = `SUP-${crypto.randomUUID()}`;
     const item = createSupportRequest(id, context, applicationId);
     setRequests((current) => [item, ...current]);

@@ -38,9 +38,7 @@ export function validateEvidenceFile(file: File): string | null {
 }
 
 /** Demo-only: advances Selected → Uploading → Scanning → Ready without a backend. */
-export function advanceEvidenceStatus(
-  status: EvidenceStatus,
-): EvidenceStatus {
+export function advanceEvidenceStatus(status: EvidenceStatus): EvidenceStatus {
   switch (status) {
     case "Selected":
       return "Uploading";

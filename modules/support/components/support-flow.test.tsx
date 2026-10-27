@@ -49,6 +49,7 @@ test("a project route cannot display another project's request", () => {
 });
 
 test("review does not create; explicit confirmation creates an in-memory request", () => {
+  search.type = "general";
   render(
     <SupportProvider>
       <SupportForm projectId="beacon-portal" />
@@ -74,11 +75,9 @@ test("review does not create; explicit confirmation creates an in-memory request
     "Help finding a report",
   );
   fireEvent.click(screen.getByRole("button", { name: "Review request" }));
-  fireEvent.click(
-    screen.getByRole("button", { name: "Confirm creation in demo" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Confirm creation" }));
   expect(
-    screen.getByRole("heading", { name: "Request created in this demo" }),
+    screen.getByRole("heading", { name: "Request created" }),
   ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "View request" })).toHaveAttribute(
     "href",
@@ -94,9 +93,7 @@ test("broken intake shows repro and correlation fields", () => {
     </SupportProvider>,
   );
   expect(screen.getByLabelText(/Steps to reproduce/)).toBeInTheDocument();
-  expect(
-    screen.getByLabelText(/Correlation \/ error ID/),
-  ).toBeInTheDocument();
+  expect(screen.getByLabelText(/Correlation \/ error ID/)).toBeInTheDocument();
   expect(
     screen.getByText(/Broken reports need repro steps/i),
   ).toBeInTheDocument();
@@ -116,9 +113,7 @@ test("demo handler triage can mark needs more info", () => {
       target: { value: "Which filter values reset after navigation?" },
     },
   );
-  fireEvent.click(
-    screen.getByRole("button", { name: "Apply disposition in demo" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Apply" }));
   expect(screen.getByRole("status")).toHaveTextContent("needs more info");
   expect(screen.getByText("Waiting for sender")).toBeInTheDocument();
 });
@@ -132,13 +127,13 @@ test("sender reply updates responsibility and removes stale reply controls", () 
   fireEvent.change(screen.getByLabelText(/Your reply/), {
     target: { value: "April, with no filter." },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Send reply in demo" }));
+  fireEvent.click(screen.getByRole("button", { name: "Send reply" }));
   expect(screen.getByText("April, with no filter.")).toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent(
     "The handler has the next action",
   );
   expect(
-    screen.queryByRole("button", { name: "Send reply in demo" }),
+    screen.queryByRole("button", { name: "Send reply" }),
   ).not.toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: /claim|assign|resolve|handover/i }),
@@ -151,9 +146,7 @@ test("retest pass records a result without resolving the request", () => {
       <SupportDetails projectId="beacon-portal" supportId="SUP113" />
     </SupportProvider>,
   );
-  fireEvent.click(
-    screen.getByRole("button", { name: "Confirm retest result in demo" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Confirm retest" }));
   expect(screen.getByText("Retest: Pass")).toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent(
     "This does not resolve the request or approve UAT",
@@ -170,9 +163,7 @@ test("sender reopening keeps the official outcome as superseded history", () => 
   fireEvent.change(screen.getByLabelText(/Reason for reopening/), {
     target: { value: "The same totals mismatch returned." },
   });
-  fireEvent.click(
-    screen.getByRole("button", { name: "Confirm reopening in demo" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
   expect(
     screen.getByText("Prior outcome · superseded on reopening"),
   ).toBeInTheDocument();

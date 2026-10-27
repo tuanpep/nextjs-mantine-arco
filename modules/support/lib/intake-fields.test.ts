@@ -78,8 +78,8 @@ describe("type-specific intake", () => {
       "Impact detail",
       "Version or environment",
     ]);
-    expect(
-      questionRows.some((row) => row.label === "Steps to reproduce"),
-    ).toBe(false);
+    expect(questionRows.some((row) => row.label === "Steps to reproduce")).toBe(
+      false,
+    );
   });
 });
