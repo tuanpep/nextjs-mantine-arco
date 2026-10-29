@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { FeedbackCollection } from "@/modules/feedback/components/feedback-collection";
 import { getApplication } from "@/modules/projects/lib/applications";
+import { CollectionPageSkeleton } from "@/modules/ui/components/page-skeletons";
 
 export default function FeedbackPage({
   params,
@@ -10,7 +11,15 @@ export default function FeedbackPage({
   params: Promise<{ projectId: string }>;
 }) {
   return (
-    <Suspense fallback={<p>Loading feedback...</p>}>
+    <Suspense
+      fallback={
+        <CollectionPageSkeleton
+          tabCount={3}
+          withStatus={false}
+          withDescription={false}
+        />
+      }
+    >
       <FeedbackContent params={params} />
     </Suspense>
   );

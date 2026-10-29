@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { FeedbackDetails } from "@/modules/feedback/components/feedback-details";
 import { getApplication } from "@/modules/projects/lib/applications";
+import { DetailPageSkeleton } from "@/modules/ui/components/page-skeletons";
 
 export default function FeedbackDetailPage({
   params,
@@ -10,7 +11,7 @@ export default function FeedbackDetailPage({
   params: Promise<{ projectId: string; feedbackId: string }>;
 }) {
   return (
-    <Suspense fallback={<p>Loading feedback...</p>}>
+    <Suspense fallback={<DetailPageSkeleton />}>
       <FeedbackDetailContent params={params} />
     </Suspense>
   );

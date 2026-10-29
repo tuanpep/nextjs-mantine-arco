@@ -24,6 +24,7 @@
     "language": "Language",
     "languageError": "Could not change language. Please try again.",
     "switchProject": "Switch project",
+    "noProjectsFound": "No projects found",
     "skipToContent": "Skip to content"
   }
 }

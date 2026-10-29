@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { IdeasForm } from "@/modules/projects/components/ideas-form";
 import { getApplication } from "@/modules/projects/lib/applications";
+import { FormPageSkeleton } from "@/modules/ui/components/page-skeletons";
 
 export default function NewIdeaPage({
   params,
@@ -10,7 +11,7 @@ export default function NewIdeaPage({
   params: Promise<{ projectId: string }>;
 }) {
   return (
-    <Suspense fallback={<p>Loading idea form...</p>}>
+    <Suspense fallback={<FormPageSkeleton fields={4} />}>
       <NewIdeaContent params={params} />
     </Suspense>
   );

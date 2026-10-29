@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ProjectSettings } from "@/modules/projects/components/project-settings";
 import { getApplication } from "@/modules/projects/lib/applications";
+import { SettingsPageSkeleton } from "@/modules/ui/components/page-skeletons";
 
 export default function ProjectSettingsPage({
   params,
@@ -10,7 +11,7 @@ export default function ProjectSettingsPage({
   params: Promise<{ projectId: string }>;
 }) {
   return (
-    <Suspense fallback={<p>Loading settings...</p>}>
+    <Suspense fallback={<SettingsPageSkeleton />}>
       <SettingsContent params={params} />
     </Suspense>
   );

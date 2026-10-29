@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { FeedbackForm } from "@/modules/feedback/components/feedback-form";
 import { getApplication } from "@/modules/projects/lib/applications";
+import { FormPageSkeleton } from "@/modules/ui/components/page-skeletons";
 
 export default function NewFeedbackPage({
   params,
@@ -10,7 +11,7 @@ export default function NewFeedbackPage({
   params: Promise<{ projectId: string }>;
 }) {
   return (
-    <Suspense fallback={<p>Loading feedback form...</p>}>
+    <Suspense fallback={<FormPageSkeleton fields={3} />}>
       <NewFeedbackContent params={params} />
     </Suspense>
   );

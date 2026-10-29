@@ -24,6 +24,7 @@
     "language": "Ngôn ngữ",
     "languageError": "Không thể đổi ngôn ngữ. Vui lòng thử lại.",
     "switchProject": "Chuyển dự án",
+    "noProjectsFound": "Không tìm thấy dự án",
     "skipToContent": "Bỏ qua đến nội dung"
   }
 }

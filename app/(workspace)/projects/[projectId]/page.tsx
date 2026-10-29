@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ProjectHub } from "@/modules/projects/components/project-hub";
 import { getApplication } from "@/modules/projects/lib/applications";
+import { OverviewPageSkeleton } from "@/modules/ui/components/page-skeletons";
 
 export default function ProjectPage({
   params,
@@ -10,7 +11,7 @@ export default function ProjectPage({
   params: Promise<{ projectId: string }>;
 }) {
   return (
-    <Suspense fallback={<p>Loading project...</p>}>
+    <Suspense fallback={<OverviewPageSkeleton />}>
       <ProjectOverview params={params} />
     </Suspense>
   );

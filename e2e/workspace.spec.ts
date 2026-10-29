@@ -20,10 +20,8 @@ test("header switcher keeps the current section in another project", async ({
   page,
 }) => {
   await page.goto("/projects/beacon-portal/feedback");
-  await page
-    .getByRole("combobox", { name: "Switch project" })
-    .first()
-    .selectOption("orchid-reports");
+  await page.getByRole("combobox", { name: "Switch project" }).first().click();
+  await page.getByRole("option", { name: "Orchid Reports" }).click();
   await expect(page).toHaveURL("/projects/orchid-reports/feedback");
   await expect(
     page.getByRole("heading", { name: "Feedback", exact: true }),

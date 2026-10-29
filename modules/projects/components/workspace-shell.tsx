@@ -7,6 +7,8 @@ import {
   Avatar,
   Box,
   Burger,
+  Button,
+  ComboboxPopover,
   Group,
   NavLink,
   NativeSelect,
@@ -21,6 +23,7 @@ import {
   IconBulb,
   IconMoon,
   IconSun,
+  IconChevronDown,
   IconChevronRight,
   IconChecklist,
   IconSettings,
@@ -46,6 +49,72 @@ import {
   projectSectionPath,
 } from "../lib/applications";
 import { writeSidebarCollapsedCookie } from "../lib/sidebar-preference";
+
+const projectOptions = applications.map((item) => ({
+  value: item.id,
+  label: item.name,
+}));
+
+function ProjectSwitcher({
+  value,
+  disabled,
+  label,
+  nothingFound,
+  onChange,
+  fullWidth,
+}: {
+  value: string;
+  disabled?: boolean;
+  label: string;
+  nothingFound: string;
+  onChange: (projectId: string) => void;
+  fullWidth?: boolean;
+}) {
+  const selected = getApplication(value);
+
+  return (
+    <ComboboxPopover
+      value={value}
+      allowDeselect={false}
+      searchable
+      nothingFoundMessage={nothingFound}
+      data={projectOptions}
+      comboboxProps={{ width: 280, position: "bottom-start" }}
+      onChange={(next) => {
+        if (typeof next !== "string" || next === value) return;
+        onChange(next);
+      }}
+      renderOption={({ option }) => {
+        const project = getApplication(option.value);
+        return (
+          <Group gap="xs" wrap="nowrap">
+            <Avatar color="blue" size={22}>
+              {project?.initials ?? option.label.slice(0, 2)}
+            </Avatar>
+            <Text size="sm">{option.label}</Text>
+          </Group>
+        );
+      }}
+    >
+      <ComboboxPopover.Target>
+        <Button
+          variant="default"
+          size="compact-xs"
+          disabled={disabled}
+          aria-label={label}
+          fullWidth={fullWidth}
+          justify="space-between"
+          rightSection={<IconChevronDown size={14} aria-hidden />}
+          maw={fullWidth ? undefined : 160}
+        >
+          <Text component="span" size="xs" truncate>
+            {selected?.name ?? value}
+          </Text>
+        </Button>
+      </ComboboxPopover.Target>
+    </ComboboxPopover>
+  );
+}
 
 export function WorkspaceShell({
   children,
@@ -200,20 +269,13 @@ export function WorkspaceShell({
                   size={14}
                   color="var(--mantine-color-dimmed)"
                 />
-                <NativeSelect
+                <ProjectSwitcher
                   disabled={!mounted}
-                  aria-label={t("switchProject")}
+                  label={t("switchProject")}
+                  nothingFound={t("noProjectsFound")}
                   value={application.id}
-                  size="xs"
-                  w={160}
-                  data={applications.map((item) => ({
-                    value: item.id,
-                    label: item.name,
-                  }))}
-                  onChange={(event) => {
-                    router.push(
-                      projectSectionPath(event.currentTarget.value, pathname),
-                    );
+                  onChange={(projectId) => {
+                    router.push(projectSectionPath(projectId, pathname));
                     close();
                   }}
                 />
@@ -290,22 +352,19 @@ export function WorkspaceShell({
                   <Text fw={600} size="sm" truncate>
                     {application.name}
                   </Text>
-                  <NativeSelect
-                    disabled={!mounted}
-                    aria-label={t("switchProject")}
-                    value={application.id}
-                    mt="xs"
-                    data={applications.map((item) => ({
-                      value: item.id,
-                      label: item.name,
-                    }))}
-                    onChange={(event) => {
-                      router.push(
-                        projectSectionPath(event.currentTarget.value, pathname),
-                      );
-                      close();
-                    }}
-                  />
+                  <Box mt="xs">
+                    <ProjectSwitcher
+                      disabled={!mounted}
+                      label={t("switchProject")}
+                      nothingFound={t("noProjectsFound")}
+                      value={application.id}
+                      fullWidth
+                      onChange={(projectId) => {
+                        router.push(projectSectionPath(projectId, pathname));
+                        close();
+                      }}
+                    />
+                  </Box>
                 </Box>
               </Group>
               <Stack gap={2} style={{ flexShrink: 0 }}>

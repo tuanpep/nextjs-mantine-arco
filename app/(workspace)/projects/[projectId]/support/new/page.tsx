@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { SupportForm } from "@/modules/support/components/support-form";
+import { FormPageSkeleton } from "@/modules/ui/components/page-skeletons";
 
 export default function NewSupportPage({
   params,
@@ -8,7 +9,7 @@ export default function NewSupportPage({
   params: Promise<{ projectId: string }>;
 }) {
   return (
-    <Suspense fallback={<p>Loading support form...</p>}>
+    <Suspense fallback={<FormPageSkeleton fields={6} />}>
       <NewSupportContent params={params} />
     </Suspense>
   );

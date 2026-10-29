@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import { getApplication } from "@/modules/projects/lib/applications";
+import { UatPageSkeleton } from "@/modules/ui/components/page-skeletons";
 import { UatScreen } from "@/modules/uat/components/uat-screen";
 
 export default function ProjectUatPage({
@@ -10,7 +11,7 @@ export default function ProjectUatPage({
   params: Promise<{ projectId: string }>;
 }) {
   return (
-    <Suspense fallback={<p>Loading UAT...</p>}>
+    <Suspense fallback={<UatPageSkeleton />}>
       <UatContent params={params} />
     </Suspense>
   );

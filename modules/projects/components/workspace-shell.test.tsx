@@ -30,8 +30,13 @@ describe("workspace navigation", () => {
     });
     const switcher = switchers[0];
     await waitFor(() => expect(switcher).toBeEnabled());
-    expect(switcher).toHaveValue("orchid-reports");
-    fireEvent.change(switcher, { target: { value: "beacon-portal" } });
+    expect(switcher).toHaveTextContent("Orchid Reports");
+    fireEvent.click(switcher);
+    const options = await screen.findAllByRole("option", {
+      name: /Beacon Portal/,
+      hidden: true,
+    });
+    fireEvent.click(options[0]);
     expect(push).toHaveBeenCalledWith("/projects/beacon-portal/support");
     expect(screen.getByRole("link", { name: "Support" })).toHaveAttribute(
       "href",

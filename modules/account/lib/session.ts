@@ -14,7 +14,6 @@ export type Impersonator = {
 
 /**
  * Kernel current-user profile (`GET /kernel/v1/users/current`).
- * Field set mirrors `@cmc-dx` User / UserState used across xSpace apps.
  */
 export type CurrentUser = {
   id: string;

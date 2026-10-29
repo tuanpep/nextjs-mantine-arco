@@ -2,7 +2,7 @@
 
 An interactive frontend for a **project workspace MVP**: Support, Feedback, Ideas, and UAT campaigns inside one project context, with a header project switcher. Built with Next.js App Router and the existing Mantine theme.
 
-Feature records are fictional and held in browser memory (they reset on reload). Sign-in uses corporate Keycloak SSO; copy `.env.example` to `.env.local` for local values. Feature tickets still use demo fixtures — there is no live intake, notification delivery, or access provisioning through this UI. Never enter real employee, customer, credential, or confidential business data into demo forms.
+Feature records are fictional and held in browser memory (they reset on reload). Sign-in uses Keycloak SSO. Copy `.env.example` to `.env.local` and replace the example URLs, realm, and client ID with your own configuration before starting the app. Feature tickets still use demo fixtures — there is no live intake, notification delivery, or access provisioning through this UI. Never enter real employee, customer, credential, or confidential business data into demo forms.
 
 ```bash
 npm install

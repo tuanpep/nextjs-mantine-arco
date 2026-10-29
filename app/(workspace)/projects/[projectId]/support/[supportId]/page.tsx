@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { SupportDetails } from "@/modules/support/components/support-details";
+import { DetailPageSkeleton } from "@/modules/ui/components/page-skeletons";
 
 export default function SupportDetailsPage({
   params,
@@ -8,7 +9,7 @@ export default function SupportDetailsPage({
   params: Promise<{ projectId: string; supportId: string }>;
 }) {
   return (
-    <Suspense fallback={<p>Loading support...</p>}>
+    <Suspense fallback={<DetailPageSkeleton />}>
       <SupportDetailsContent params={params} />
     </Suspense>
   );

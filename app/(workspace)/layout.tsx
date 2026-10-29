@@ -7,7 +7,7 @@ import {
   sidebarCollapsedCookie,
 } from "@/modules/projects/lib/sidebar-preference";
 import { SupportProvider } from "@/modules/support/components/support-provider";
-import WorkspaceLoading from "./loading";
+import { WorkspaceShellSkeleton } from "@/modules/ui/components/page-skeletons";
 
 export default async function WorkspaceLayout({
   children,
@@ -21,7 +21,7 @@ export default async function WorkspaceLayout({
 
   return (
     <SupportProvider>
-      <Suspense fallback={<WorkspaceLoading />}>
+      <Suspense fallback={<WorkspaceShellSkeleton />}>
         <WorkspaceShell initialDesktopCollapsed={initialDesktopCollapsed}>
           {children}
         </WorkspaceShell>

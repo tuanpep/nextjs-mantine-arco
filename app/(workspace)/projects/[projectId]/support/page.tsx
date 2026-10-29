@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { SupportCollection } from "@/modules/support/components/support-collection";
+import { CollectionPageSkeleton } from "@/modules/ui/components/page-skeletons";
 
 export default function SupportPage({
   params,
@@ -8,7 +9,7 @@ export default function SupportPage({
   params: Promise<{ projectId: string }>;
 }) {
   return (
-    <Suspense fallback={<p>Loading support...</p>}>
+    <Suspense fallback={<CollectionPageSkeleton />}>
       <SupportContent params={params} />
     </Suspense>
   );
