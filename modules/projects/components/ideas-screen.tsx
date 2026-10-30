@@ -27,6 +27,11 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { seedIdeas, type Idea } from "../lib/idea-fixtures";
 import { ideaSearchParams } from "../lib/idea-search-params";
 
+const positionLabels: Record<Idea["position"], string> = {
+  "Under review": "Đang xem xét",
+  Received: "Đã tiếp nhận",
+};
+
 function matchesIdeaView(idea: Idea, view: string) {
   if (view === "under-review") return idea.position === "Under review";
   if (view === "voted") return idea.votedByMe;
@@ -69,10 +74,10 @@ export function IdeasScreen({ projectId }: { projectId: string }) {
     <PageFrame
       header={
         <PageHeader
-          title="Ideas"
+          title="Ý tưởng"
           breadcrumbs={[
-            { title: "Overview", href: `/projects/${projectId}` },
-            { title: "Ideas", href: `/projects/${projectId}/ideas` },
+            { title: "Tổng quan", href: `/projects/${projectId}` },
+            { title: "Ý tưởng", href: `/projects/${projectId}/ideas` },
           ]}
           actions={
             <Button
@@ -80,25 +85,25 @@ export function IdeasScreen({ projectId }: { projectId: string }) {
               href={`/projects/${projectId}/ideas/new`}
               leftSection={<IconPlus size={16} />}
             >
-              Suggest an idea
+              Đề xuất ý tưởng
             </Button>
           }
         >
           <ModuleTabs
-            ariaLabel="Ideas views"
+            ariaLabel="Chế độ xem ý tưởng"
             value={filters.view}
             onChange={(value) => {
               const view = ideaSearchParams.view.parse(value);
               void setFilters({ view: view ?? "all" });
             }}
             items={[
-              { value: "all", label: "All", count: ideas.length },
+              { value: "all", label: "Tất cả", count: ideas.length },
               {
                 value: "under-review",
-                label: "Under review",
+                label: "Đang xem xét",
                 count: underReviewCount,
               },
-              { value: "voted", label: "I voted", count: votedCount },
+              { value: "voted", label: "Tôi đã bình chọn", count: votedCount },
             ]}
           />
         </PageHeader>
@@ -106,17 +111,17 @@ export function IdeasScreen({ projectId }: { projectId: string }) {
     >
       <Paper withBorder style={{ overflow: "hidden" }}>
         <CollectionToolbar
-          searchLabel="Search ideas"
-          searchPlaceholder="Search by title or problem"
+          searchLabel="Tìm ý tưởng"
+          searchPlaceholder="Tìm theo tiêu đề hoặc vấn đề"
           searchValue={filters.q}
           onSearchChange={(value) => void setFilters({ q: value })}
-          countLabel={`${visible.length} ideas`}
+          countLabel={`${visible.length} ý tưởng`}
         />
         {visible.length === 0 ? (
           <CollectionEmpty
             icon={<IconBulb />}
-            title="No matching ideas"
-            actionLabel="Clear search"
+            title="Không có ý tưởng phù hợp"
+            actionLabel="Xóa tìm kiếm"
             onAction={() => void setFilters({ q: "" })}
           />
         ) : (
@@ -136,7 +141,7 @@ export function IdeasScreen({ projectId }: { projectId: string }) {
                       {idea.id}
                     </Text>
                     <Badge variant="light" color="violet">
-                      {idea.position}
+                      {positionLabels[idea.position]}
                     </Badge>
                   </Group>
                   <Title order={2} size="sm">
@@ -149,13 +154,17 @@ export function IdeasScreen({ projectId }: { projectId: string }) {
                   </Text>
                   <Tooltip
                     label={
-                      idea.votedByMe ? "Remove vote" : "This would help me"
+                      idea.votedByMe
+                        ? "Bỏ bình chọn"
+                        : "Ý tưởng này hữu ích với tôi"
                     }
                   >
                     <ActionIcon
                       variant={idea.votedByMe ? "filled" : "light"}
                       aria-label={
-                        idea.votedByMe ? "Remove vote" : "This would help me"
+                        idea.votedByMe
+                          ? "Bỏ bình chọn"
+                          : "Ý tưởng này hữu ích với tôi"
                       }
                       disabled={!mounted}
                       onClick={() => toggleVote(idea.id)}

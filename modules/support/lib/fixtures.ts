@@ -14,6 +14,26 @@ export const supportStatuses = [
 ] as const;
 export type SupportStatus = (typeof supportStatuses)[number];
 
+export const supportStatusLabels: Record<SupportStatus, string> = {
+  Unclaimed: "Chưa tiếp nhận",
+  Handling: "Đang xử lý",
+  "Waiting for sender": "Chờ người gửi",
+  "Waiting for retest": "Chờ kiểm tra lại",
+  Resolved: "Đã giải quyết",
+};
+
+export const nextActorLabels = {
+  Sender: "Người gửi",
+  Handler: "Người xử lý",
+  "Responsible team": "Nhóm phụ trách",
+};
+
+export const retestResultLabels = {
+  Pass: "Đạt",
+  Fail: "Không đạt",
+  Unable: "Không thể kiểm tra",
+};
+
 export const triageDispositions = [
   "needs-info",
   "duplicate",
@@ -24,11 +44,11 @@ export const triageDispositions = [
 export type TriageDisposition = (typeof triageDispositions)[number];
 
 export const triageDispositionLabels: Record<TriageDisposition, string> = {
-  "needs-info": "Needs more info",
-  duplicate: "Duplicate of another request",
-  "linked-eng": "Linked to engineering tracker",
-  workaround: "Known workaround",
-  misroute: "Misrouted (send to another area)",
+  "needs-info": "Cần thêm thông tin",
+  duplicate: "Trùng với yêu cầu khác",
+  "linked-eng": "Đã liên kết công việc kỹ thuật",
+  workaround: "Có giải pháp tạm thời",
+  misroute: "Gửi sai nơi, chuyển sang mục khác",
 };
 
 export type SupportContext = {
@@ -71,14 +91,14 @@ export type SupportRequest = SupportContext & {
 };
 
 const context: SupportContext = {
-  summary: "Help with the monthly report export",
+  summary: "Hỗ trợ xuất báo cáo tháng",
   situation:
-    "I opened the monthly report and selected Export. The file did not include the final row.",
-  expected: "All visible rows should appear in the exported file.",
-  impact: "I need to compare the totals before sharing the report.",
-  environment: "Beacon Portal demo, desktop browser",
+    "Tôi mở báo cáo tháng và chọn xuất tệp. Tệp không có dòng cuối cùng.",
+  expected: "Tất cả các dòng hiển thị phải có trong tệp xuất.",
+  impact: "Tôi cần đối chiếu tổng số trước khi chia sẻ báo cáo.",
+  environment: "Beacon Portal bản thử nghiệm, trình duyệt máy tính",
   reproSteps:
-    "1. Open monthly report\n2. Choose Export\n3. Compare row count to the on-screen table",
+    "1. Mở báo cáo tháng\n2. Chọn xuất tệp\n3. Đối chiếu số dòng với bảng trên màn hình",
   correlationId: "",
   requestType: "broken",
   impactScope: "my-team",
@@ -105,12 +125,11 @@ export const supportFixtures: SupportRequest[] = [
     status: "Waiting for sender",
     handler: "Mai Tran",
     nextActor: "Sender",
-    nextAction:
-      "Which report period did you select, and did you apply a filter?",
+    nextAction: "Bạn đã chọn kỳ báo cáo nào và có áp dụng bộ lọc không?",
     conversation: [
       {
         author: "Mai Tran",
-        text: "Which report period did you select, and did you apply a filter? Please describe the settings without sharing report data.",
+        text: "Bạn đã chọn kỳ báo cáo nào và có áp dụng bộ lọc không? Hãy mô tả thiết lập, không chia sẻ dữ liệu báo cáo.",
       },
     ],
     outcomes: [],
@@ -124,17 +143,17 @@ export const supportFixtures: SupportRequest[] = [
     applicationId: "beacon-portal",
     responsibleTeam: "Product Services",
     id: "SUP113",
-    summary: "Retest the report export",
+    summary: "Kiểm tra lại việc xuất báo cáo",
     sender,
     status: "Waiting for retest",
     handler: "Mai Tran",
     nextActor: "Sender",
     nextAction:
-      "The export row selection was corrected in the demo. Open the monthly report in the demo environment, choose the same period, export again and compare the row count. Do not upload the file.",
+      "Đã sửa việc chọn dòng khi xuất trong bản thử nghiệm. Mở báo cáo tháng trong môi trường thử nghiệm, chọn cùng kỳ, xuất lại và đối chiếu số dòng. Không tải tệp lên.",
     conversation: [
       {
         author: "Mai Tran",
-        text: "The demo export row selection has been corrected. Please try the export again using the same period and compare the row count.",
+        text: "Đã sửa việc chọn dòng khi xuất trong bản thử nghiệm. Hãy xuất lại cùng kỳ và đối chiếu số dòng.",
       },
     ],
     outcomes: [],
@@ -147,22 +166,22 @@ export const supportFixtures: SupportRequest[] = [
     applicationId: "beacon-portal",
     responsibleTeam: "Product Services",
     id: "SUP114",
-    summary: "Report totals display correctly again",
+    summary: "Tổng số trong báo cáo đã hiển thị đúng",
     sender,
     status: "Resolved",
     handler: "Mai Tran",
     nextActor: "Sender",
     nextAction:
-      "Read the outcome. If the same issue returns, explain why you need to reopen it.",
+      "Đọc kết quả xử lý. Nếu lỗi tái diễn, hãy giải thích lý do cần mở lại yêu cầu.",
     conversation: [
-      { author: sender, text: "The totals now match in the demo." },
+      { author: sender, text: "Tổng số trong bản thử nghiệm đã khớp." },
     ],
     outcomes: [
       {
-        summary: "Report totals corrected",
-        work: "Updated the demo report calculation and checked the example totals.",
+        summary: "Đã sửa tổng số báo cáo",
+        work: "Đã cập nhật phép tính báo cáo thử nghiệm và kiểm tra tổng số mẫu.",
         limitations:
-          "Checked with fictional demo data only. This is not UAT approval.",
+          "Chỉ kiểm tra với dữ liệu giả lập. Đây không phải phê duyệt UAT.",
         superseded: false,
       },
     ],
@@ -175,9 +194,9 @@ export const supportFixtures: SupportRequest[] = [
     applicationId: "beacon-portal",
     responsibleTeam: "Product Services",
     id: "SUP115",
-    summary: "Where can I find report guidance?",
+    summary: "Tìm hướng dẫn báo cáo ở đâu?",
     situation:
-      "I need the monthly report location. I checked the home page and search.",
+      "Tôi cần tìm báo cáo tháng. Tôi đã kiểm tra trang chủ và tìm kiếm.",
     expected: "",
     reproSteps: "",
     requestType: "question",
@@ -187,8 +206,7 @@ export const supportFixtures: SupportRequest[] = [
     status: "Unclaimed",
     handler: null,
     nextActor: "Responsible team",
-    nextAction:
-      "An eligible handler needs to review this request and take responsibility.",
+    nextAction: "Người xử lý phù hợp cần xem xét và tiếp nhận yêu cầu này.",
     conversation: [],
     outcomes: [],
     priority: "Low",
@@ -200,17 +218,17 @@ export const supportFixtures: SupportRequest[] = [
     applicationId: "beacon-portal",
     responsibleTeam: "Product Services",
     id: "SUP116",
-    summary: "Report filters reset on navigation",
+    summary: "Bộ lọc báo cáo bị đặt lại khi chuyển trang",
     sender,
     status: "Handling",
     handler: "Sam Rivera",
     nextActor: "Handler",
     nextAction:
-      "Sam Rivera will investigate the filter reset and share the next step.",
+      "Sam Rivera sẽ kiểm tra việc bộ lọc bị đặt lại và thông báo bước tiếp theo.",
     conversation: [
       {
         author: "Sam Rivera",
-        text: "I am checking the navigation behavior in the demo.",
+        text: "Tôi đang kiểm tra hành vi chuyển trang trong bản thử nghiệm.",
       },
     ],
     outcomes: [],
@@ -226,15 +244,15 @@ export const supportFixtures: SupportRequest[] = [
     applicationId: "orchid-reports",
     responsibleTeam: "Business Analytics",
     id: "SUP201",
-    summary: "Scheduled report did not arrive",
-    situation: "The fictional weekly report is missing from the demo inbox.",
-    environment: "Orchid Reports demo",
+    summary: "Chưa nhận được báo cáo theo lịch",
+    situation: "Không thấy báo cáo tuần giả lập trong hộp thư thử nghiệm.",
+    environment: "Orchid Reports bản thử nghiệm",
     requestType: "broken",
     sender,
     status: "Unclaimed",
     handler: null,
     nextActor: "Responsible team",
-    nextAction: "Business Analytics needs to review the scheduled delivery.",
+    nextAction: "Business Analytics cần kiểm tra việc gửi báo cáo theo lịch.",
     conversation: [],
     outcomes: [],
     priority: "Medium",

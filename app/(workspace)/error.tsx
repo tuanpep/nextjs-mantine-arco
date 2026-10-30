@@ -11,20 +11,20 @@ import {
 export default function WorkspaceError({ reset }: { reset: () => void }) {
   return (
     <Stack align="flex-start">
-      <Alert color="red" title="The workspace could not be loaded">
-        This is a loading failure, not an empty collection. Try loading this
-        view again.
+      <Alert color="red" title="Không thể tải không gian làm việc">
+        Đã xảy ra lỗi tải dữ liệu, không phải danh sách trống. Vui lòng tải lại
+        trang này.
       </Alert>
-      <Button onClick={reset}>Try again</Button>
+      <Button onClick={reset}>Thử lại</Button>
       <Button component={Link} href="/" variant="subtle">
-        Back to Home
+        Về trang chủ
       </Button>
       <Button
         component={Link}
         href={projectSupportPath(DEFAULT_PROJECT_ID)}
         variant="subtle"
       >
-        Back to Support
+        Về hỗ trợ
       </Button>
     </Stack>
   );

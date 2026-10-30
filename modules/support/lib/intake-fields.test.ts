@@ -53,7 +53,7 @@ describe("type-specific intake", () => {
   test("template drives type-specific labels and hides unused fields", () => {
     const broken = intakeTemplate("broken").fields;
     expect(broken.find((field) => field.key === "situation")?.label).toBe(
-      "What happened",
+      "Điều gì đã xảy ra",
     );
     expect(broken.find((field) => field.key === "reproSteps")?.visible).toBe(
       true,
@@ -72,13 +72,13 @@ describe("type-specific intake", () => {
       urgency: "",
     });
     expect(questionRows.map((row) => row.label)).toEqual([
-      "Goal and what you already tried",
-      "Who is affected",
-      "How soon is work blocked",
-      "Impact detail",
-      "Version or environment",
+      "Mục tiêu và những cách đã thử",
+      "Đối tượng bị ảnh hưởng",
+      "Công việc cần được xử lý sớm đến mức nào",
+      "Chi tiết ảnh hưởng",
+      "Phiên bản hoặc môi trường",
     ]);
-    expect(questionRows.some((row) => row.label === "Steps to reproduce")).toBe(
+    expect(questionRows.some((row) => row.label === "Các bước tái hiện")).toBe(
       false,
     );
   });

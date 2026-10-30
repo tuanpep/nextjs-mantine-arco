@@ -8,14 +8,14 @@ import {
 export default function UnavailablePage() {
   return (
     <section>
-      <h1>This destination is not available</h1>
+      <h1>Không thể truy cập trang này</h1>
       <p>
-        It may not be available to your account. No restricted details are
-        shown.
+        Tài khoản của bạn có thể không có quyền truy cập. Thông tin bị hạn chế
+        sẽ không được hiển thị.
       </p>
-      <Link href="/">Back to Home</Link>
+      <Link href="/">Về trang chủ</Link>
       {" · "}
-      <Link href={projectSupportPath(DEFAULT_PROJECT_ID)}>Back to Support</Link>
+      <Link href={projectSupportPath(DEFAULT_PROJECT_ID)}>Về hỗ trợ</Link>
     </section>
   );
 }

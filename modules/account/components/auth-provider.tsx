@@ -53,10 +53,10 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 function AuthLoading() {
   return (
     <Center mih="100vh">
-      <Stack align="center" gap="sm" role="status" aria-label="Loading">
+      <Stack align="center" gap="sm" role="status" aria-label="Đang tải">
         <Loader size="sm" />
         <Text size="sm" c="dimmed">
-          Loading…
+          Đang tải…
         </Text>
       </Stack>
     </Center>

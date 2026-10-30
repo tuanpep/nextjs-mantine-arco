@@ -6,15 +6,15 @@ export const feedbackIntakeFields: DetailsFieldDef<FeedbackIntakeKey>[] = [
   {
     key: "title",
     control: "text",
-    label: "Short title",
+    label: "Tiêu đề ngắn",
     required: true,
     visible: true,
   },
   {
     key: "observation",
     control: "textarea",
-    label: "What you observed",
-    placeholder: "Describe the experience in enough detail for a reviewer.",
+    label: "Điều bạn quan sát được",
+    placeholder: "Mô tả trải nghiệm đủ chi tiết để người xem xét có thể hiểu.",
     rows: 4,
     required: true,
     visible: true,
@@ -22,9 +22,9 @@ export const feedbackIntakeFields: DetailsFieldDef<FeedbackIntakeKey>[] = [
   {
     key: "context",
     control: "textarea",
-    label: "Context",
+    label: "Bối cảnh",
     placeholder:
-      "Where you were, what you were trying to do, or when it happened.",
+      "Bạn đang ở đâu, muốn thực hiện việc gì hoặc sự việc xảy ra khi nào.",
     rows: 2,
     required: false,
     visible: true,
@@ -37,8 +37,8 @@ export function feedbackReadoutRows(values: {
   nextActor: string;
 }): DetailsReadoutRow[] {
   return [
-    { label: "Observation", value: values.observation },
-    { label: "Context", value: values.context },
-    { label: "Next actor", value: values.nextActor },
+    { label: "Nội dung quan sát", value: values.observation },
+    { label: "Bối cảnh", value: values.context },
+    { label: "Người xử lý tiếp theo", value: values.nextActor },
   ];
 }

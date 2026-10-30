@@ -30,6 +30,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import {
   advanceEvidenceStatus,
   evidencePolicy,
+  evidenceStatusLabels,
   formatFileSize,
   validateEvidenceFile,
   type EvidenceAttachment,
@@ -42,7 +43,7 @@ import {
   intakeReadoutRows,
   validateIntake,
 } from "../lib/intake-fields";
-import { calculatePriority } from "../lib/priority";
+import { calculatePriority, priorityLabels } from "../lib/priority";
 import {
   parseRequestType,
   requestTypeLabels,
@@ -129,6 +130,7 @@ export function SupportForm({ projectId }: { projectId: string }) {
           name: file.name,
           sizeLabel: formatFileSize(file.size),
           status: error ? "Rejected" : "Selected",
+          ...(error ? { error } : {}),
         };
         next.push(attachment);
         if (!error) {
@@ -149,16 +151,19 @@ export function SupportForm({ projectId }: { projectId: string }) {
   const reviewRows = [
     ...intakeReadoutRows(form.values, { includeSummary: true }),
     {
-      label: "Suggested priority",
-      value: suggestedPriority,
+      label: "Mức ưu tiên đề xuất",
+      value: priorityLabels[suggestedPriority],
     },
     {
-      label: "Evidence",
+      label: "Minh chứng",
       value:
         attachments.length === 0
-          ? "None"
+          ? "Không có"
           : attachments
-              .map((file) => `${file.name} · ${file.status}`)
+              .map(
+                (file) =>
+                  `${file.name} · ${evidenceStatusLabels[file.status]}${file.error ? ` · ${file.error}` : ""}`,
+              )
               .join("\n"),
     },
   ];
@@ -170,43 +175,45 @@ export function SupportForm({ projectId }: { projectId: string }) {
           title={title}
           description={`${application.name} · ${hint}`}
           breadcrumbs={[
-            { title: "Support", href: basePath },
-            { title: "New request" },
+            { title: "Hỗ trợ", href: basePath },
+            { title: "Tạo yêu cầu" },
           ]}
         />
       }
     >
       <Stack gap="md">
         <Alert color="blue">
-          Do not include passwords or confidential data.
+          Chỉ dùng dữ liệu hư cấu, không cung cấp mật khẩu hoặc dữ liệu mật.
+          Thay đổi chỉ được giữ trong phiên minh họa và sẽ mất khi tải lại ứng
+          dụng. Không có yêu cầu hoặc thông báo thực được gửi.
         </Alert>
         {form.values.requestType === "access" && (
           <Alert color="orange">
-            Sending does not grant access. An approved access path is still
-            required.
+            Gửi yêu cầu không đồng nghĩa với được cấp quyền. Bạn vẫn cần thực
+            hiện quy trình cấp quyền đã được phê duyệt.
           </Alert>
         )}
         {form.values.requestType === "general" && (
           <Accordion variant="contained">
             <Accordion.Item value="wrong-place">
-              <Accordion.Control>Wrong place?</Accordion.Control>
+              <Accordion.Control>Chưa đúng nơi?</Accordion.Control>
               <Accordion.Panel>
                 <Text size="sm">
-                  Product wishes go to{" "}
+                  Gửi đề xuất sản phẩm đến mục{" "}
                   <Anchor
                     component={Link}
                     href={`/projects/${projectId}/ideas`}
                   >
-                    Ideas
+                    Ý tưởng
                   </Anchor>
-                  . Praise or friction without a broken flow goes to{" "}
+                  . Gửi lời khen hoặc khó khăn không liên quan đến lỗi đến mục{" "}
                   <Anchor
                     component={Link}
                     href={`/projects/${projectId}/feedback`}
                   >
-                    Feedback
+                    Phản hồi
                   </Anchor>
-                  . Pre-release defects go to{" "}
+                  . Gửi lỗi trước khi phát hành đến mục{" "}
                   <Anchor component={Link} href={`/projects/${projectId}/uat`}>
                     UAT
                   </Anchor>
@@ -220,39 +227,56 @@ export function SupportForm({ projectId }: { projectId: string }) {
           active={step === "write" ? 0 : step === "review" ? 1 : 2}
           size="sm"
         >
-          <Stepper.Step label="Describe" />
-          <Stepper.Step label="Review" />
-          <Stepper.Step label="Done" />
+          <Stepper.Step label="Mô tả" />
+          <Stepper.Step label="Xem lại" />
+          <Stepper.Step label="Hoàn tất" />
         </Stepper>
         {step === "created" ? (
           <Stack gap="md">
             <Group>
               <IconCheck size={24} aria-hidden />
-              <Title order={2}>Request created</Title>
+              <Title order={2}>Đã tạo yêu cầu</Title>
             </Group>
             <Text size="sm">
-              Responsible team: {application.owner} · Handler: Unclaimed ·
-              Priority: {suggestedPriority}
+              Nhóm phụ trách: {application.owner} · Người xử lý: Chưa tiếp nhận
+              · Mức ưu tiên: {priorityLabels[suggestedPriority]}
+            </Text>
+            <Text fw={600}>{form.values.summary}</Text>
+            <Text size="sm">
+              Dự án: {application.name} · {createdId}
+            </Text>
+            <Text size="sm">
+              Bước tiếp theo: nhóm phụ trách tiếp nhận trong quy trình minh họa.
+              Yêu cầu chỉ được ghi nhận trong phiên này, không phải gửi đến dịch
+              vụ thực.
             </Text>
             <Button
               component={Link}
               href={`${basePath}/${createdId}`}
               style={{ alignSelf: "flex-start" }}
             >
-              View request
+              Xem yêu cầu
+            </Button>
+            <Button
+              component={Link}
+              href={basePath}
+              variant="default"
+              style={{ alignSelf: "flex-start" }}
+            >
+              Quay lại Hỗ trợ
             </Button>
           </Stack>
         ) : step === "review" ? (
           <Stack gap="lg">
-            <Title order={2}>Review your request</Title>
+            <Title order={2}>Xem lại yêu cầu</Title>
             <Text size="sm" c="dimmed">
-              Project: {application.name} · Sender: Jo Lee · Type:{" "}
+              Dự án: {application.name} · Người gửi: Jo Lee · Loại:{" "}
               {requestTypeLabels[form.values.requestType]}
             </Text>
             <DetailsReadout rows={reviewRows} />
             <Group justify="space-between">
               <Button variant="default" onClick={() => setStep("write")}>
-                Back to edit
+                Quay lại chỉnh sửa
               </Button>
               <Button
                 onClick={() => {
@@ -260,7 +284,7 @@ export function SupportForm({ projectId }: { projectId: string }) {
                   setStep("created");
                 }}
               >
-                Confirm creation
+                Xác nhận tạo yêu cầu
               </Button>
             </Group>
           </Stack>
@@ -269,7 +293,7 @@ export function SupportForm({ projectId }: { projectId: string }) {
             <Stack gap="md">
               <Select
                 disabled={!mounted}
-                label="Type"
+                label="Loại yêu cầu"
                 data={(
                   Object.entries(requestTypeLabels) as [RequestType, string][]
                 ).map(([value, label]) => ({ value, label }))}
@@ -291,9 +315,9 @@ export function SupportForm({ projectId }: { projectId: string }) {
                 afterField={(key) =>
                   key === "urgency" ? (
                     <Text size="sm" mt="xs" c="dimmed">
-                      Suggested priority:{" "}
+                      Mức ưu tiên đề xuất:{" "}
                       <Text span fw={600} c="var(--mantine-color-text)">
-                        {suggestedPriority}
+                        {priorityLabels[suggestedPriority]}
                       </Text>
                     </Text>
                   ) : null
@@ -302,9 +326,9 @@ export function SupportForm({ projectId }: { projectId: string }) {
               <Accordion variant="contained" multiple defaultValue={[]}>
                 <Accordion.Item value="optional">
                   <Accordion.Control>
-                    Optional details
+                    Chi tiết không bắt buộc
                     {attachments.length > 0
-                      ? ` · ${attachments.length} file${attachments.length === 1 ? "" : "s"}`
+                      ? ` · ${attachments.length} tệp`
                       : ""}
                   </Accordion.Control>
                   <Accordion.Panel>
@@ -330,7 +354,7 @@ export function SupportForm({ projectId }: { projectId: string }) {
                       ) : null}
                       <Stack gap="xs">
                         <Text size="sm" fw={600}>
-                          Evidence
+                          Minh chứng
                         </Text>
                         <Group gap="xs">
                           <FileButton
@@ -349,7 +373,7 @@ export function SupportForm({ projectId }: { projectId: string }) {
                                     <IconPaperclip size={16} aria-hidden />
                                   }
                                 >
-                                  Choose files
+                                  Chọn tệp
                                 </Button>
                               </Tooltip>
                             )}
@@ -358,12 +382,14 @@ export function SupportForm({ projectId }: { projectId: string }) {
                         {attachments.map((file) => (
                           <Group key={file.id} justify="space-between">
                             <Text size="sm">
-                              {file.name} · {file.sizeLabel} · {file.status}
+                              {file.name} · {file.sizeLabel} ·{" "}
+                              {evidenceStatusLabels[file.status]}
+                              {file.error ? ` · ${file.error}` : ""}
                             </Text>
                             <ActionIcon
                               variant="subtle"
                               color="red"
-                              aria-label={`Remove ${file.name}`}
+                              aria-label={`Xóa ${file.name}`}
                               onClick={() =>
                                 setAttachments((current) =>
                                   current.filter((item) => item.id !== file.id),
@@ -381,7 +407,7 @@ export function SupportForm({ projectId }: { projectId: string }) {
               </Accordion>
               <Group justify="flex-end">
                 <Button type="submit" disabled={!mounted}>
-                  Review request
+                  Xem lại yêu cầu
                 </Button>
               </Group>
             </Stack>

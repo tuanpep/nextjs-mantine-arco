@@ -11,8 +11,8 @@ export type DestinationUnavailableProps = {
 };
 
 export function DestinationUnavailable({
-  title = "This destination is not available",
-  description = "It may not exist or you may not have access.",
+  title = "Không thể truy cập trang này",
+  description = "Trang có thể không tồn tại hoặc bạn không có quyền truy cập.",
   backHref,
   backLabel,
 }: DestinationUnavailableProps) {

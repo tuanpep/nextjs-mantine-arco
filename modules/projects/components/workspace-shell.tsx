@@ -28,7 +28,7 @@ import {
   IconChecklist,
   IconSettings,
   IconMessageCircle,
-  IconHome,
+  IconFolders,
   IconLayoutDashboard,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
@@ -47,19 +47,36 @@ import {
   applications,
   getApplication,
   projectSectionPath,
+  type ProjectSection,
 } from "../lib/applications";
 import { writeSidebarCollapsedCookie } from "../lib/sidebar-preference";
+import { useProjectSettings } from "./project-settings-provider";
 
 const projectOptions = applications.map((item) => ({
   value: item.id,
   label: item.name,
 }));
 
+const projectNavigation = [
+  { section: "overview", label: "overview", icon: IconLayoutDashboard },
+  { section: "support", label: "support", icon: IconLifebuoy },
+  { section: "feedback", label: "feedback", icon: IconMessageCircle },
+  { section: "ideas", label: "ideas", icon: IconBulb },
+  { section: "uat", label: "uat", icon: IconChecklist },
+  { section: "settings", label: "projectSettings", icon: IconSettings },
+] as const;
+
+function sectionPath(projectId: string, section: ProjectSection) {
+  const base = applicationPath(projectId);
+  return section === "overview" ? base : `${base}/${section}`;
+}
+
 function ProjectSwitcher({
   value,
   disabled,
   label,
   nothingFound,
+  placeholder,
   onChange,
   fullWidth,
 }: {
@@ -67,6 +84,7 @@ function ProjectSwitcher({
   disabled?: boolean;
   label: string;
   nothingFound: string;
+  placeholder: string;
   onChange: (projectId: string) => void;
   fullWidth?: boolean;
 }) {
@@ -108,7 +126,7 @@ function ProjectSwitcher({
           maw={fullWidth ? undefined : 160}
         >
           <Text component="span" size="xs" truncate>
-            {selected?.name ?? value}
+            {selected?.name ?? placeholder}
           </Text>
         </Button>
       </ComboboxPopover.Target>
@@ -125,15 +143,11 @@ export function WorkspaceShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { confirmLeave } = useProjectSettings();
   const application = pathname.startsWith("/projects/")
     ? getApplication(pathname.split("/")[2] ?? "")
     : undefined;
-  const productPath = application ? `/projects/${application.id}` : undefined;
   const homeHref = "/";
-  const overviewHref = application
-    ? applicationPath(application.id)
-    : undefined;
-  const settingsHref = productPath ? `${productPath}/settings` : undefined;
   const t = useTranslations("Workspace");
   const locale = useLocale();
   const [pending, startTransition] = useTransition();
@@ -144,34 +158,9 @@ export function WorkspaceShell({
   );
   const mounted = useMounted();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const projectLinks = productPath
-    ? [
-        {
-          label: t("support"),
-          href: `${productPath}/support`,
-          icon: IconLifebuoy,
-        },
-        {
-          label: t("feedback"),
-          href: `${productPath}/feedback`,
-          icon: IconMessageCircle,
-        },
-        {
-          label: t("ideas"),
-          href: `${productPath}/ideas`,
-          icon: IconBulb,
-        },
-        {
-          label: t("uat"),
-          href: `${productPath}/uat`,
-          icon: IconChecklist,
-        },
-      ]
-    : [];
   const isSectionActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
   const isHomeActive = pathname === "/";
-  const isOverviewActive = Boolean(overviewHref && pathname === overviewHref);
 
   function toggleDesktopSidebar() {
     setDesktopCollapsed((current) => {
@@ -179,6 +168,41 @@ export function WorkspaceShell({
       writeSidebarCollapsedCookie(next);
       return next;
     });
+  }
+
+  function switchProject(projectId: string) {
+    if (!getApplication(projectId)) return;
+    if (application && !confirmLeave(application.id)) return;
+    router.push(projectSectionPath(projectId, pathname));
+    close();
+  }
+
+  function guardNavigation(event: { preventDefault: () => void }) {
+    if (application && !confirmLeave(application.id)) {
+      event.preventDefault();
+      return;
+    }
+    close();
+  }
+
+  function renderProjectDestination(item: (typeof projectNavigation)[number]) {
+    const Icon = item.icon;
+    if (!application) return null;
+    const href = sectionPath(application.id, item.section);
+    const active =
+      item.section === "overview" ? pathname === href : isSectionActive(href);
+    return (
+      <NavLink
+        key={item.section}
+        component={Link}
+        href={href}
+        label={t(item.label)}
+        leftSection={<Icon size={20} aria-hidden />}
+        active={active}
+        aria-current={active ? "page" : undefined}
+        onNavigate={guardNavigation}
+      />
+    );
   }
 
   return (
@@ -248,6 +272,7 @@ export function WorkspaceShell({
             <Anchor
               component={Link}
               href={homeHref}
+              onNavigate={guardNavigation}
               c="inherit"
               underline="never"
             >
@@ -258,35 +283,28 @@ export function WorkspaceShell({
                 </Text>
               </Group>
             </Anchor>
-            {application ? (
-              <Group
-                gap="xs"
-                visibleFrom="lg"
-                wrap="nowrap"
-                style={{ minWidth: 0 }}
-              >
-                <IconChevronRight
-                  size={14}
-                  color="var(--mantine-color-dimmed)"
-                />
-                <ProjectSwitcher
-                  disabled={!mounted}
-                  label={t("switchProject")}
-                  nothingFound={t("noProjectsFound")}
-                  value={application.id}
-                  onChange={(projectId) => {
-                    router.push(projectSectionPath(projectId, pathname));
-                    close();
-                  }}
-                />
-              </Group>
-            ) : null}
+            <Group
+              gap="xs"
+              visibleFrom="lg"
+              wrap="nowrap"
+              style={{ minWidth: 0 }}
+            >
+              <IconChevronRight size={14} color="var(--mantine-color-dimmed)" />
+              <ProjectSwitcher
+                disabled={!mounted}
+                label={application ? t("switchProject") : t("chooseProject")}
+                placeholder={t("chooseProject")}
+                nothingFound={t("noProjectsFound")}
+                value={application?.id ?? ""}
+                onChange={switchProject}
+              />
+            </Group>
           </Group>
           <Group gap="sm" wrap="nowrap">
             <NativeSelect
               aria-label={t("language")}
               value={locale}
-              disabled={pending}
+              disabled={!mounted || pending}
               size="xs"
               w={110}
               data={[
@@ -323,123 +341,51 @@ export function WorkspaceShell({
           </Group>
         </Group>
       </AppShell.Header>
-      <AppShell.Navbar
-        p="xs"
-        component="nav"
-        aria-label={t("mainNavigation")}
-        bg="var(--gl-bg-canvas)"
-      >
+      <AppShell.Navbar p="xs" component="nav" aria-label={t("mainNavigation")}>
         <Stack h="100%" gap="sm" style={{ overflowY: "auto" }}>
-          <Stack gap={2} style={{ flexShrink: 0 }}>
+          {application && (
+            <Box px="sm" py="xs">
+              <Text visibleFrom="lg" size="sm" fw={600} truncate>
+                {application.name}
+              </Text>
+              <Box hiddenFrom="lg">
+                <ProjectSwitcher
+                  disabled={!mounted}
+                  label={application ? t("switchProject") : t("chooseProject")}
+                  placeholder={t("chooseProject")}
+                  nothingFound={t("noProjectsFound")}
+                  value={application?.id ?? ""}
+                  fullWidth
+                  onChange={switchProject}
+                />
+              </Box>
+            </Box>
+          )}
+          {!application && (
             <NavLink
               component={Link}
               href={homeHref}
-              label={t("home")}
-              leftSection={<IconHome size={18} />}
+              onNavigate={guardNavigation}
+              label={t("projects")}
+              leftSection={<IconFolders size={20} aria-hidden />}
               active={isHomeActive}
               aria-current={isHomeActive ? "page" : undefined}
-              onClick={close}
-              py={7}
             />
-          </Stack>
-          {application && overviewHref && settingsHref ? (
+          )}
+          {application && (
             <>
-              <Group px="sm" py="md" gap="sm" wrap="nowrap" hiddenFrom="lg">
-                <Avatar color="blue" size={32}>
-                  {application.initials}
-                </Avatar>
-                <Box style={{ minWidth: 0, flex: 1 }}>
-                  <Text fw={600} size="sm" truncate>
-                    {application.name}
-                  </Text>
-                  <Box mt="xs">
-                    <ProjectSwitcher
-                      disabled={!mounted}
-                      label={t("switchProject")}
-                      nothingFound={t("noProjectsFound")}
-                      value={application.id}
-                      fullWidth
-                      onChange={(projectId) => {
-                        router.push(projectSectionPath(projectId, pathname));
-                        close();
-                      }}
-                    />
-                  </Box>
-                </Box>
-              </Group>
-              <Stack gap={2} style={{ flexShrink: 0 }}>
-                <NavLink
-                  component={Link}
-                  href={overviewHref}
-                  label={t("overview")}
-                  leftSection={<IconLayoutDashboard size={18} />}
-                  active={isOverviewActive}
-                  aria-current={isOverviewActive ? "page" : undefined}
-                  onClick={close}
-                  py={7}
-                />
+              <Stack gap="xs" style={{ flexShrink: 0 }}>
+                <Stack gap={2} style={{ flexShrink: 0 }}>
+                  {projectNavigation
+                    .filter((item) => item.section !== "settings")
+                    .map(renderProjectDestination)}
+                </Stack>
               </Stack>
-              <Text size="xs" fw={600} c="dimmed" px="sm" pt="xs">
-                {t("workItems")}
-              </Text>
-              <Stack gap={2} style={{ flexShrink: 0 }}>
-                {projectLinks.map(({ label, href, icon: Icon }) => {
-                  const active = isSectionActive(href);
-                  return (
-                    <NavLink
-                      key={href}
-                      component={Link}
-                      href={href}
-                      label={label}
-                      leftSection={<Icon size={18} />}
-                      active={active}
-                      aria-current={active ? "page" : undefined}
-                      onClick={close}
-                      py={7}
-                    />
-                  );
-                })}
-              </Stack>
-              <Box mt="auto" pt="sm" style={{ flexShrink: 0 }}>
-                <NavLink
-                  component={Link}
-                  href={settingsHref}
-                  label={t("settings")}
-                  leftSection={<IconSettings size={18} />}
-                  active={isSectionActive(settingsHref)}
-                  aria-current={
-                    isSectionActive(settingsHref) ? "page" : undefined
-                  }
-                  onClick={close}
-                  py={7}
-                />
+              <Box mt="auto" pt="sm">
+                {projectNavigation
+                  .filter((item) => item.section === "settings")
+                  .map(renderProjectDestination)}
               </Box>
-            </>
-          ) : (
-            <>
-              <Text size="xs" fw={600} c="dimmed" px="sm" pt="xs">
-                {t("projects")}
-              </Text>
-              <Stack gap={2} style={{ flexShrink: 0 }}>
-                {applications.map((item) => {
-                  const href = applicationPath(item.id);
-                  return (
-                    <NavLink
-                      key={item.id}
-                      component={Link}
-                      href={href}
-                      label={item.name}
-                      leftSection={
-                        <Avatar color="blue" size={22}>
-                          {item.initials}
-                        </Avatar>
-                      }
-                      onClick={close}
-                      py={7}
-                    />
-                  );
-                })}
-              </Stack>
             </>
           )}
         </Stack>

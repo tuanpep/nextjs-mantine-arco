@@ -7,7 +7,7 @@ import {
   urgencyLabels,
   urgencies,
 } from "./priority";
-import type { RequestType } from "./request-catalog";
+import { requestTypeLabels, type RequestType } from "./request-catalog";
 
 export type IntakeFieldKey = keyof Omit<SupportContext, "attachments">;
 
@@ -15,8 +15,8 @@ export const misrouteTargets = ["feedback", "ideas", "uat"] as const;
 export type MisrouteTarget = (typeof misrouteTargets)[number];
 
 export const misrouteTargetLabels: Record<MisrouteTarget, string> = {
-  feedback: "Feedback",
-  ideas: "Ideas",
+  feedback: "Phản hồi",
+  ideas: "Ý tưởng",
   uat: "UAT",
 };
 
@@ -30,8 +30,8 @@ export function intakeTemplate(type: RequestType): IntakeTemplate {
     case "broken":
       return {
         fields: intakeFields({
-          situationLabel: "What happened",
-          situationPlaceholder: "What you were doing when it failed.",
+          situationLabel: "Điều gì đã xảy ra",
+          situationPlaceholder: "Bạn đang làm gì khi xảy ra lỗi?",
           expectedVisible: true,
           expectedRequired: true,
           reproVisible: true,
@@ -44,9 +44,9 @@ export function intakeTemplate(type: RequestType): IntakeTemplate {
     case "question":
       return {
         fields: intakeFields({
-          situationLabel: "Goal and what you already tried",
+          situationLabel: "Mục tiêu và những cách đã thử",
           situationPlaceholder:
-            "What you want to accomplish, and which docs or menus you already checked.",
+            "Bạn muốn làm gì và đã xem những tài liệu hoặc trình đơn nào?",
           expectedVisible: false,
           expectedRequired: false,
           reproVisible: false,
@@ -59,9 +59,9 @@ export function intakeTemplate(type: RequestType): IntakeTemplate {
     case "access":
       return {
         fields: intakeFields({
-          situationLabel: "Access needed and business reason",
+          situationLabel: "Quyền truy cập cần cấp và lý do công việc",
           situationPlaceholder:
-            "Which system or role you need, and why. Do not paste passwords or tokens.",
+            "Bạn cần hệ thống hoặc vai trò nào, vì sao? Không dán mật khẩu hoặc mã truy cập.",
           expectedVisible: false,
           expectedRequired: false,
           reproVisible: false,
@@ -74,8 +74,8 @@ export function intakeTemplate(type: RequestType): IntakeTemplate {
     case "general":
       return {
         fields: intakeFields({
-          situationLabel: "Situation",
-          situationPlaceholder: "Describe the help you need.",
+          situationLabel: "Tình huống",
+          situationPlaceholder: "Mô tả nội dung cần hỗ trợ.",
           expectedVisible: true,
           expectedRequired: false,
           reproVisible: false,
@@ -111,7 +111,7 @@ function intakeFields(
     {
       key: "summary",
       control: "text",
-      label: "Brief summary",
+      label: "Tóm tắt ngắn gọn",
       required: true,
       visible: true,
     },
@@ -127,8 +127,8 @@ function intakeFields(
     {
       key: "expected",
       control: "textarea",
-      label: "Expected behavior",
-      placeholder: "What should have happened instead?",
+      label: "Kết quả mong đợi",
+      placeholder: "Kết quả đúng phải như thế nào?",
       rows: 2,
       required: flags.expectedRequired,
       visible: flags.expectedVisible,
@@ -136,7 +136,7 @@ function intakeFields(
     {
       key: "reproSteps",
       control: "textarea",
-      label: "Steps to reproduce",
+      label: "Các bước tái hiện",
       placeholder: "1. … 2. … 3. …",
       rows: 4,
       required: flags.reproRequired,
@@ -145,15 +145,15 @@ function intakeFields(
     {
       key: "correlationId",
       control: "text",
-      label: "Correlation / error ID",
-      placeholder: "Request ID, error code, or job ID",
+      label: "Mã tương quan / mã lỗi",
+      placeholder: "Mã yêu cầu, mã lỗi hoặc mã tác vụ",
       required: false,
       visible: flags.correlationVisible,
     },
     {
       key: "impactScope",
       control: "select",
-      label: "Who is affected",
+      label: "Đối tượng bị ảnh hưởng",
       required: flags.impactRequired,
       visible: true,
       clearable: true,
@@ -161,15 +161,17 @@ function intakeFields(
         value,
         label: impactScopeLabels[value],
       })),
-      section: flags.impactRequired ? "Impact and urgency" : undefined,
+      section: flags.impactRequired
+        ? "Ảnh hưởng và mức độ khẩn cấp"
+        : undefined,
       sectionDescription: flags.impactRequired
-        ? "Handlers use these to set priority. You do not pick a priority."
+        ? "Người xử lý dựa vào thông tin này để đặt mức ưu tiên. Bạn không chọn mức ưu tiên."
         : undefined,
     },
     {
       key: "urgency",
       control: "select",
-      label: "How soon is work blocked",
+      label: "Công việc cần được xử lý sớm đến mức nào",
       required: flags.impactRequired,
       visible: true,
       clearable: true,
@@ -181,8 +183,9 @@ function intakeFields(
     {
       key: "impact",
       control: "textarea",
-      label: "Impact detail",
-      placeholder: "Workaround, deadline, or headcount if you know them.",
+      label: "Chi tiết ảnh hưởng",
+      placeholder:
+        "Giải pháp tạm thời, thời hạn hoặc số người bị ảnh hưởng nếu biết.",
       rows: 2,
       required: false,
       visible: true,
@@ -190,10 +193,10 @@ function intakeFields(
     {
       key: "environment",
       control: "text",
-      label: "Version or environment",
+      label: "Phiên bản hoặc môi trường",
       placeholder: flags.environmentRequired
-        ? "prod · Chrome 129 · when it started"
-        : "Optional: prod · Chrome 129 · when it occurred",
+        ? "Môi trường chính thức · Chrome 129 · thời điểm bắt đầu"
+        : "Không bắt buộc: môi trường chính thức · Chrome 129 · thời điểm xảy ra",
       required: flags.environmentRequired,
       visible: true,
     },
@@ -227,13 +230,13 @@ export function intakeFormSections(type: RequestType): {
 export function intakeHint(type: RequestType): string {
   switch (type) {
     case "broken":
-      return "Broken reports need repro steps and environment details. You do not set priority.";
+      return "Báo lỗi cần các bước tái hiện và thông tin môi trường. Bạn không đặt mức ưu tiên.";
     case "question":
-      return "Say what you want to do and what you already tried. You do not set priority.";
+      return "Nêu mục tiêu và những cách bạn đã thử. Bạn không đặt mức ưu tiên.";
     case "access":
-      return "Describe the access and business reason. Sending does not grant access.";
+      return "Mô tả quyền truy cập và lý do công việc. Gửi yêu cầu không đồng nghĩa với được cấp quyền.";
     case "general":
-      return "Describe the help you need. Product wishes, praise, and UAT defects belong elsewhere.";
+      return "Mô tả nội dung cần hỗ trợ. Đề xuất sản phẩm, lời khen và lỗi UAT thuộc các mục khác.";
     default: {
       const _exhaustive: never = type;
       return _exhaustive;
@@ -271,7 +274,7 @@ export function formatIntakeValue(
     case "urgency":
       return values.urgency ? urgencyLabels[values.urgency] : "";
     case "requestType":
-      return values.requestType;
+      return requestTypeLabels[values.requestType];
     case "summary":
     case "situation":
     case "expected":
@@ -313,33 +316,33 @@ export function validateIntake(
   const errors: Partial<Record<IntakeFieldKey, string>> = {};
 
   if (!values.summary.trim()) {
-    errors.summary = "Enter a brief summary.";
+    errors.summary = "Nhập tóm tắt ngắn gọn.";
   }
   if (!values.situation.trim()) {
     errors.situation =
       values.requestType === "question"
-        ? "Describe your goal and what you already tried."
+        ? "Mô tả mục tiêu và những cách bạn đã thử."
         : values.requestType === "access"
-          ? "Describe the access you need and why."
-          : "Describe what you were trying to do and what happened.";
+          ? "Mô tả quyền truy cập cần cấp và lý do."
+          : "Mô tả thao tác bạn muốn thực hiện và điều đã xảy ra.";
   }
   if (copy.expectedRequired && !values.expected.trim()) {
-    errors.expected = "Say what should have happened instead.";
+    errors.expected = "Nêu kết quả đúng mà bạn mong đợi.";
   }
   if (copy.reproRequired && !values.reproSteps.trim()) {
     errors.reproSteps =
-      "List numbered steps so a handler can reproduce the failure.";
+      "Liệt kê các bước theo thứ tự để người xử lý có thể tái hiện lỗi.";
   }
   if (copy.environmentRequired && !values.environment.trim()) {
     errors.environment =
-      "Add version or environment (for example production, browser, when it started).";
+      "Thêm phiên bản hoặc môi trường, ví dụ môi trường chính thức, trình duyệt, thời điểm bắt đầu.";
   }
   if (copy.impactRequired) {
     if (!values.impactScope) {
-      errors.impactScope = "Say who is affected.";
+      errors.impactScope = "Nêu đối tượng bị ảnh hưởng.";
     }
     if (!values.urgency) {
-      errors.urgency = "Say how soon work is blocked.";
+      errors.urgency = "Nêu mức độ cấp bách của công việc.";
     }
   }
   return errors;

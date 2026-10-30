@@ -1,4 +1,23 @@
 export type Result = "Not run" | "Pass" | "Fail" | "Blocked";
+
+export const resultLabels: Record<Result, string> = {
+  "Not run": "Chưa chạy",
+  Pass: "Đạt",
+  Fail: "Không đạt",
+  Blocked: "Bị chặn",
+};
+
+export const defectStatusLabels: Record<Defect["status"], string> = {
+  Open: "Đang mở",
+  Retesting: "Đang kiểm thử lại",
+  Resolved: "Đã xử lý",
+};
+
+export const severityOptions = [
+  { value: "Critical", label: "Nghiêm trọng" },
+  { value: "Major", label: "Cao" },
+  { value: "Minor", label: "Thấp" },
+];
 export type Scenario = {
   id: string;
   title: string;
@@ -24,38 +43,38 @@ export const initialCampaign: Campaign = {
   scenarios: [
     {
       id: "UAT-01",
-      title: "Find the right project",
+      title: "Tìm đúng dự án",
       steps: [
-        "Confirm the project name in the header switcher.",
-        "Switch to Beacon Portal if needed.",
-        "Open Support and confirm you are still in Beacon Portal.",
+        "Kiểm tra tên dự án trong bộ chuyển đổi ở đầu trang.",
+        "Chuyển sang Beacon Portal nếu cần.",
+        "Mở mục Hỗ trợ và xác nhận bạn vẫn đang ở Beacon Portal.",
       ],
       expected:
-        "The header shows Beacon Portal and Support stays in that project.",
+        "Đầu trang hiển thị Beacon Portal và mục Hỗ trợ vẫn thuộc dự án này.",
       result: "Not run",
     },
     {
       id: "UAT-02",
-      title: "Submit a support request",
+      title: "Gửi yêu cầu hỗ trợ",
       steps: [
-        "Open the project's new support request form.",
-        "Enter a summary and a reproducible situation using sample data.",
-        "Review the request, confirm creation, and open its detail.",
+        "Mở biểu mẫu tạo yêu cầu hỗ trợ của dự án.",
+        "Nhập tóm tắt và tình huống có thể tái hiện bằng dữ liệu mẫu.",
+        "Xem lại yêu cầu, xác nhận tạo và mở trang chi tiết.",
       ],
       expected:
-        "The request detail shows the summary and initial status without losing the entered information.",
+        "Trang chi tiết hiển thị tóm tắt và trạng thái ban đầu, không làm mất thông tin đã nhập.",
       result: "Not run",
     },
     {
       id: "UAT-03",
-      title: "Record a failed scenario",
+      title: "Ghi nhận kịch bản không đạt",
       steps: [
-        "Open an assigned UAT campaign in this project.",
-        "Mark a scenario as Fail with a short note.",
-        "Confirm the campaign still shows the fail and does not treat it as a pass.",
+        "Mở đợt UAT được giao trong dự án này.",
+        "Đánh dấu một kịch bản là Không đạt kèm ghi chú ngắn.",
+        "Xác nhận đợt kiểm thử vẫn hiển thị kết quả Không đạt và không coi là Đạt.",
       ],
       expected:
-        "The fail result remains visible and is not treated as release approval.",
+        "Kết quả Không đạt vẫn hiển thị và không được coi là phê duyệt phát hành.",
       result: "Not run",
     },
   ],

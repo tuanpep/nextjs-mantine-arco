@@ -1,12 +1,18 @@
 import {
   sender,
+  retestResultLabels,
   type Outcome,
   type SupportContext,
   type SupportRequest,
   type TriageDisposition,
 } from "./fixtures";
 import { misrouteTargetLabels, type MisrouteTarget } from "./intake-fields";
-import { calculatePriority, priorities, type Priority } from "./priority";
+import {
+  calculatePriority,
+  priorities,
+  priorityLabels,
+  type Priority,
+} from "./priority";
 import { getApplication } from "@/modules/projects/lib/applications";
 
 function prioritiesIncludes(value: string): value is Priority {
@@ -28,11 +34,11 @@ export function createSupportRequest(
   const application =
     applicationId === null ? undefined : getApplication(applicationId);
   if (applicationId !== null && !application)
-    throw new Error("Unknown application.");
+    throw new Error("Ứng dụng không xác định.");
   return {
     ...context,
     applicationId,
-    responsibleTeam: application?.owner ?? "DX triage",
+    responsibleTeam: application?.owner ?? "Nhóm phân loại DX",
     summary: context.summary.trim(),
     situation: context.situation.trim(),
     expected: context.expected.trim(),
@@ -51,8 +57,7 @@ export function createSupportRequest(
     status: "Unclaimed",
     handler: null,
     nextActor: "Responsible team",
-    nextAction:
-      "An eligible handler needs to review this request and take responsibility.",
+    nextAction: "Người xử lý phù hợp cần xem xét và tiếp nhận yêu cầu này.",
     conversation: [],
     outcomes: [],
     priority: calculatePriority(context.impactScope, context.urgency),
@@ -101,15 +106,15 @@ export function applySenderAction(
     return item;
   const message =
     action.kind === "retest"
-      ? `Retest: ${action.result}${text ? `. ${text}` : ""}`
+      ? `Kiểm tra lại: ${retestResultLabels[action.result]}${text ? `. ${text}` : ""}`
       : action.kind === "reopen"
-        ? `Reopen reason: ${text}`
+        ? `Lý do mở lại: ${text}`
         : text;
   return {
     ...item,
     status: "Handling",
     nextActor: "Handler",
-    nextAction: `${item.handler} will review ${action.kind === "reopen" ? "the reopening reason" : action.kind === "retest" ? "the retest result" : "your reply"} and decide the next step.`,
+    nextAction: `${item.handler} sẽ xem xét ${action.kind === "reopen" ? "lý do mở lại" : action.kind === "retest" ? "kết quả kiểm tra lại" : "phản hồi của bạn"} và quyết định bước tiếp theo.`,
     conversation: [...item.conversation, { author: sender, text: message }],
     outcomes:
       action.kind === "reopen"
@@ -122,7 +127,7 @@ export function filterSupport(
   items: SupportRequest[],
   query: string,
   status: string,
-  view: "open" | "closed" | "all" = "all",
+  view: "open" | "closed" | "needs-action" | "all" = "all",
 ) {
   const search = query.trim().toLowerCase();
   return items.filter((item) => {
@@ -130,7 +135,8 @@ export function filterSupport(
       view === "all" ||
       (view === "closed"
         ? item.status === "Resolved"
-        : item.status !== "Resolved");
+        : item.status !== "Resolved" &&
+          (view !== "needs-action" || item.nextActor === "Sender"));
     const matchesStatus = status === "all" || item.status === status;
     const matchesQuery = `${item.id} ${item.summary}`
       .toLowerCase()
@@ -164,14 +170,14 @@ function withDisposition(
 }
 
 function requireHandler(item: SupportRequest): string {
-  if (!item.handler) throw new Error("Assign a handler first.");
+  if (!item.handler) throw new Error("Hãy phân công người xử lý trước.");
   return item.handler;
 }
 
 /** Demo triage may claim an unclaimed ticket in the same action. */
 function ensureHandler(
   item: SupportRequest,
-  fallback = "Demo DX operator",
+  fallback = "Người vận hành DX thử nghiệm",
 ): { item: SupportRequest; handler: string } {
   if (item.handler) return { item, handler: item.handler };
   return {
@@ -182,7 +188,10 @@ function ensureHandler(
       nextActor: item.status === "Unclaimed" ? "Handler" : item.nextActor,
       conversation: [
         ...item.conversation,
-        { author: "Demo DX operator", text: `Assigned to ${fallback}.` },
+        {
+          author: "Người vận hành DX thử nghiệm",
+          text: `Đã phân công cho ${fallback}.`,
+        },
       ],
     },
     handler: fallback,
@@ -202,14 +211,14 @@ function resolveWithOutcome(
     !outcome.work.trim() ||
     !outcome.limitations.trim()
   )
-    throw new Error("Record the outcome, work done, and limitations.");
+    throw new Error("Ghi nhận kết quả, công việc đã thực hiện và giới hạn.");
   return {
     ...item,
     ...extra,
     status: "Resolved",
     nextActor: "Sender",
     nextAction:
-      "Read the outcome. If the same issue returns, explain why you need to reopen it.",
+      "Đọc kết quả xử lý. Nếu lỗi tái diễn, hãy giải thích lý do cần mở lại yêu cầu.",
     lastDisposition: disposition,
     outcomes: [
       ...item.outcomes,
@@ -232,10 +241,10 @@ export function applyHandlerAction(
   action: HandlerAction,
 ): SupportRequest {
   if (item.status === "Resolved")
-    throw new Error("Reopen this issue before making changes.");
+    throw new Error("Mở lại yêu cầu này trước khi thay đổi.");
   if (action.kind === "set-priority") {
     if (!prioritiesIncludes(action.priority)) {
-      throw new Error("Choose a valid priority.");
+      throw new Error("Chọn mức ưu tiên hợp lệ.");
     }
     if (item.priority === action.priority) return item;
     return {
@@ -244,38 +253,40 @@ export function applyHandlerAction(
       conversation: [
         ...item.conversation,
         {
-          author: item.handler ?? "Demo DX operator",
-          text: `Priority set to ${action.priority}.`,
+          author: item.handler ?? "Người vận hành DX thử nghiệm",
+          text: `Đã đặt mức ưu tiên: ${priorityLabels[action.priority]}.`,
         },
       ],
     };
   }
   if (action.kind === "route") {
     const application = getApplication(action.applicationId);
-    if (!application) throw new Error("Choose a known application.");
+    if (!application) throw new Error("Chọn ứng dụng đã có.");
     if (item.applicationId !== null)
-      throw new Error("Only unidentified requests can be routed from triage.");
+      throw new Error(
+        "Chỉ có thể chuyển yêu cầu chưa xác định ứng dụng từ bước phân loại.",
+      );
     if (item.status !== "Unclaimed" || item.handler !== null)
-      throw new Error("Identify the application before assigning a handler.");
+      throw new Error("Xác định ứng dụng trước khi phân công người xử lý.");
     return {
       ...item,
       applicationId: application.id,
       responsibleTeam: application.owner,
-      nextAction: `${application.owner} needs to review this request and assign a handler.`,
+      nextAction: `${application.owner} cần xem xét yêu cầu và phân công người xử lý.`,
       conversation: [
         ...item.conversation,
         {
-          author: "Demo DX operator",
-          text: `Identified application: ${application.name}. Routed to ${application.owner}.`,
+          author: "Người vận hành DX thử nghiệm",
+          text: `Đã xác định ứng dụng: ${application.name}. Đã chuyển đến ${application.owner}.`,
         },
       ],
     };
   }
   if (action.kind === "assign") {
     const handler = action.handler.trim();
-    if (!handler) throw new Error("Choose a handler.");
+    if (!handler) throw new Error("Chọn người xử lý.");
     if (item.handler === handler)
-      throw new Error("This handler is already assigned.");
+      throw new Error("Người xử lý này đã được phân công.");
     return {
       ...item,
       handler,
@@ -284,21 +295,24 @@ export function applyHandlerAction(
       nextAction:
         item.nextActor === "Sender"
           ? item.nextAction
-          : `${handler} will investigate and share the next step.`,
+          : `${handler} sẽ kiểm tra và thông báo bước tiếp theo.`,
       conversation: [
         ...item.conversation,
-        { author: "Demo DX operator", text: `Assigned to ${handler}.` },
+        {
+          author: "Người vận hành DX thử nghiệm",
+          text: `Đã phân công cho ${handler}.`,
+        },
       ],
     };
   }
 
   if (action.kind === "needs-info" || action.kind === "clarify") {
     const text = action.text.trim();
-    if (!text) throw new Error("Add a progress note or instructions.");
+    if (!text) throw new Error("Thêm ghi chú tiến độ hoặc hướng dẫn.");
     const claimed = ensureHandler(item);
     if (claimed.item.status !== "Handling")
       throw new Error(
-        "Wait for the employee's response before requesting another action.",
+        "Chờ phản hồi của nhân viên trước khi yêu cầu thao tác khác.",
       );
     return withDisposition(
       {
@@ -318,27 +332,24 @@ export function applyHandlerAction(
   if (action.kind === "duplicate") {
     const relatedRequestId = action.relatedRequestId.trim().toUpperCase();
     const text = action.text.trim();
-    if (!relatedRequestId)
-      throw new Error("Enter the related support request ID.");
-    if (!text) throw new Error("Explain why this is a duplicate.");
+    if (!relatedRequestId) throw new Error("Nhập mã yêu cầu hỗ trợ liên quan.");
+    if (!text) throw new Error("Giải thích lý do yêu cầu bị trùng.");
     const claimed = ensureHandler(item);
     if (
       claimed.item.status !== "Handling" &&
       claimed.item.status !== "Unclaimed"
     )
-      throw new Error(
-        "Mark duplicates while the request is still being handled.",
-      );
+      throw new Error("Đánh dấu trùng khi yêu cầu vẫn đang được xử lý.");
     return resolveWithOutcome(
       claimed.item,
       claimed.handler,
       {
-        summary: `Duplicate of ${relatedRequestId}`,
+        summary: `Trùng với ${relatedRequestId}`,
         work: text,
         limitations:
-          "No separate fix on this ticket. Follow the related request for progress.",
+          "Không có bản sửa riêng cho yêu cầu này. Theo dõi tiến độ ở yêu cầu liên quan.",
       },
-      `Marked duplicate of ${relatedRequestId}: ${text}`,
+      `Đã đánh dấu trùng với ${relatedRequestId}: ${text}`,
       "duplicate",
       { relatedRequestId, autoClosePaused: false },
     );
@@ -347,8 +358,8 @@ export function applyHandlerAction(
   if (action.kind === "link-eng") {
     const engTrackerId = action.engTrackerId.trim();
     const text = action.text.trim();
-    if (!engTrackerId) throw new Error("Enter an engineering tracker ID.");
-    if (!text) throw new Error("Add a short note for the requester.");
+    if (!engTrackerId) throw new Error("Nhập mã công việc kỹ thuật.");
+    if (!text) throw new Error("Thêm ghi chú ngắn cho người gửi yêu cầu.");
     const claimed = ensureHandler(item);
     return withDisposition(
       {
@@ -365,7 +376,7 @@ export function applyHandlerAction(
           ...claimed.item.conversation,
           {
             author: claimed.handler,
-            text: `Linked engineering work ${engTrackerId}. Auto-close paused. ${text}`,
+            text: `Đã liên kết công việc kỹ thuật ${engTrackerId}. Đã tạm dừng tự động đóng. ${text}`,
           },
         ],
       },
@@ -375,13 +386,11 @@ export function applyHandlerAction(
 
   if (action.kind === "workaround") {
     const text = action.text.trim();
-    if (!text) throw new Error("Describe the workaround.");
+    if (!text) throw new Error("Mô tả giải pháp tạm thời.");
     const claimed = ensureHandler(item);
     if (action.keepOpen) {
       if (claimed.item.status !== "Handling")
-        throw new Error(
-          "Share a workaround while actively handling the request.",
-        );
+        throw new Error("Chia sẻ giải pháp tạm thời khi đang xử lý yêu cầu.");
       return withDisposition(
         {
           ...claimed.item,
@@ -390,7 +399,7 @@ export function applyHandlerAction(
           status: "Waiting for sender",
           conversation: [
             ...claimed.item.conversation,
-            { author: claimed.handler, text: `Workaround: ${text}` },
+            { author: claimed.handler, text: `Giải pháp tạm thời: ${text}` },
           ],
         },
         "workaround",
@@ -398,37 +407,36 @@ export function applyHandlerAction(
     }
     if (claimed.item.status !== "Handling")
       throw new Error(
-        "Review the employee's response before resolving this issue.",
+        "Xem xét phản hồi của nhân viên trước khi giải quyết yêu cầu này.",
       );
     return resolveWithOutcome(
       claimed.item,
       claimed.handler,
       {
-        summary: "Workaround provided",
+        summary: "Đã cung cấp giải pháp tạm thời",
         work: text,
         limitations:
-          "Root cause may remain. Reopen if the workaround fails or the defect returns.",
+          "Nguyên nhân gốc có thể vẫn còn. Mở lại nếu giải pháp tạm thời không hiệu quả hoặc lỗi tái diễn.",
       },
-      `Resolved with workaround: ${text}`,
+      `Đã giải quyết bằng giải pháp tạm thời: ${text}`,
       "workaround",
     );
   }
 
   if (action.kind === "misroute") {
     const text = action.text.trim();
-    if (!text) throw new Error("Explain where the sender should go next.");
+    if (!text) throw new Error("Giải thích nơi người gửi cần chuyển đến.");
     const label = misrouteTargetLabels[action.target];
     const claimed = ensureHandler(item);
     return resolveWithOutcome(
       claimed.item,
       claimed.handler,
       {
-        summary: `Redirected to ${label}`,
+        summary: `Đã chuyển đến ${label}`,
         work: text,
-        limitations:
-          "This support request does not fulfill the ask in the other area.",
+        limitations: "Yêu cầu hỗ trợ này không thay thế yêu cầu tại mục khác.",
       },
-      `Misrouted to ${label}: ${text}`,
+      `Chuyển yêu cầu gửi sai nơi đến ${label}: ${text}`,
       "misroute",
       { misrouteTarget: action.target, autoClosePaused: false },
     );
@@ -439,23 +447,23 @@ export function applyHandlerAction(
   if (action.kind === "resolve") {
     if (item.status !== "Handling")
       throw new Error(
-        "Review the employee's response before resolving this issue.",
+        "Xem xét phản hồi của nhân viên trước khi giải quyết yêu cầu này.",
       );
     const { summary, work, limitations } = action.outcome;
     return resolveWithOutcome(
       item,
       handler,
       { summary, work, limitations },
-      `Resolved in demo: ${summary.trim()}`,
+      `Đã giải quyết trong bản thử nghiệm: ${summary.trim()}`,
       item.lastDisposition,
     );
   }
 
   const text = action.text.trim();
-  if (!text) throw new Error("Add a progress note or instructions.");
+  if (!text) throw new Error("Thêm ghi chú tiến độ hoặc hướng dẫn.");
   if (action.kind !== "update" && item.status !== "Handling")
     throw new Error(
-      "Wait for the employee's response before requesting another action.",
+      "Chờ phản hồi của nhân viên trước khi yêu cầu thao tác khác.",
     );
   return {
     ...item,

@@ -7,18 +7,18 @@ export const requestTypes = [
 export type RequestType = (typeof requestTypes)[number];
 
 export const requestTypeLabels: Record<RequestType, string> = {
-  broken: "Report a bug",
-  question: "Ask a question",
-  access: "Request access",
-  general: "Something else",
+  broken: "Báo lỗi",
+  question: "Đặt câu hỏi",
+  access: "Yêu cầu quyền truy cập",
+  general: "Yêu cầu khác",
 };
 
 /** Compact labels for collection rows and filters. */
 export const requestTypeShortLabels: Record<RequestType, string> = {
-  broken: "Bug",
-  question: "Question",
-  access: "Access",
-  general: "Other",
+  broken: "Lỗi",
+  question: "Câu hỏi",
+  access: "Quyền truy cập",
+  general: "Khác",
 };
 
 export const requestCatalogCards: {
@@ -29,24 +29,26 @@ export const requestCatalogCards: {
 }[] = [
   {
     type: "broken",
-    title: "Report a bug",
-    description: "A feature failed or looks wrong. Repro steps help most.",
+    title: "Báo lỗi",
+    description:
+      "Tính năng bị lỗi hoặc hiển thị sai. Hãy cung cấp các bước tái hiện.",
     primary: true,
   },
   {
     type: "question",
-    title: "Ask a question",
-    description: "How do I do something in this project?",
+    title: "Đặt câu hỏi",
+    description: "Hỏi cách thực hiện một thao tác trong dự án này.",
   },
   {
     type: "access",
-    title: "Request access",
-    description: "Ask for access. Sending does not grant it.",
+    title: "Yêu cầu quyền truy cập",
+    description:
+      "Đề nghị cấp quyền. Gửi yêu cầu không đồng nghĩa với được cấp quyền.",
   },
   {
     type: "general",
-    title: "Something else",
-    description: "Any other help request in this project.",
+    title: "Yêu cầu khác",
+    description: "Các yêu cầu hỗ trợ khác trong dự án này.",
   },
 ];
 

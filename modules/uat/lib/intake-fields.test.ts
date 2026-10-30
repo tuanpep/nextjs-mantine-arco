@@ -21,11 +21,27 @@ describe("uat defect intake", () => {
     });
   });
 
+  test("keeps stored detail markers and translates structured readout labels", () => {
+    const details = composeUatDetails({
+      reproSteps: "Mở UAT",
+      expected: "Hiện kết quả",
+      actual: "Không có kết quả",
+    });
+    expect(details).toBe(
+      "Steps:\nMở UAT\n\nExpected:\nHiện kết quả\n\nActual:\nKhông có kết quả",
+    );
+    expect(uatDefectReadoutRows(details)).toEqual([
+      { label: "Các bước tái hiện", value: "Mở UAT" },
+      { label: "Kết quả mong đợi", value: "Hiện kết quả" },
+      { label: "Kết quả thực tế", value: "Không có kết quả" },
+    ]);
+  });
+
   test("readout falls back for legacy free-text details", () => {
     expect(uatDefectReadoutRows("Clicked export and nothing happened")).toEqual(
       [
         {
-          label: "Steps and actual behavior",
+          label: "Các bước và hành vi thực tế",
           value: "Clicked export and nothing happened",
         },
       ],
@@ -41,10 +57,10 @@ describe("uat defect intake", () => {
         actual: "",
       }),
     ).toEqual({
-      title: "Enter a defect summary.",
-      reproSteps: "List the steps to reproduce.",
-      expected: "Say what should have happened.",
-      actual: "Describe what happened instead.",
+      title: "Nhập tóm tắt lỗi.",
+      reproSteps: "Liệt kê các bước tái hiện.",
+      expected: "Mô tả kết quả mong đợi.",
+      actual: "Mô tả kết quả thực tế.",
     });
   });
 });

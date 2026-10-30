@@ -55,7 +55,9 @@ export function SupportHandlerTriage({
       switch (disposition) {
         case "needs-info":
           handle(item.id, { kind: "needs-info", text: note });
-          onNotice("Marked needs more info. The sender has the next action.");
+          onNotice(
+            "Đã đánh dấu cần thêm thông tin. Người gửi sẽ thực hiện bước tiếp theo.",
+          );
           break;
         case "duplicate":
           handle(item.id, {
@@ -64,7 +66,7 @@ export function SupportHandlerTriage({
             text: note,
           });
           onNotice(
-            `Marked duplicate of ${relatedId.trim().toUpperCase()} and resolved.`,
+            `Đã đánh dấu trùng với ${relatedId.trim().toUpperCase()} và giải quyết.`,
           );
           break;
         case "linked-eng":
@@ -74,7 +76,7 @@ export function SupportHandlerTriage({
             text: note,
           });
           onNotice(
-            `Linked ${engId.trim()}. Auto-close paused while engineering work is tracked.`,
+            `Đã liên kết ${engId.trim()}. Tạm dừng tự động đóng trong khi theo dõi công việc kỹ thuật.`,
           );
           break;
         case "workaround":
@@ -85,8 +87,8 @@ export function SupportHandlerTriage({
           });
           onNotice(
             keepOpen
-              ? "Workaround shared. Waiting for the sender."
-              : "Resolved with workaround.",
+              ? "Đã chia sẻ giải pháp tạm thời. Chờ người gửi phản hồi."
+              : "Đã giải quyết bằng giải pháp tạm thời.",
           );
           break;
         case "misroute":
@@ -96,7 +98,7 @@ export function SupportHandlerTriage({
             text: note,
           });
           onNotice(
-            `Redirected to ${misrouteTargetLabels[misrouteTarget]} and closed this support request.`,
+            `Đã chuyển đến ${misrouteTargetLabels[misrouteTarget]} và đóng yêu cầu hỗ trợ này.`,
           );
           break;
         default: {
@@ -107,7 +109,9 @@ export function SupportHandlerTriage({
       setNote("");
     } catch (caught) {
       setError(
-        caught instanceof Error ? caught.message : "Could not apply triage.",
+        caught instanceof Error
+          ? caught.message
+          : "Không thể áp dụng phân loại.",
       );
     }
   }
@@ -116,16 +120,16 @@ export function SupportHandlerTriage({
     <Card withBorder p="md">
       <Stack gap="sm">
         <Title order={2} size="h3">
-          Triage
+          Phân loại xử lý
         </Title>
         {!item.handler && (
           <Alert color="blue">
-            Applying triage will assign Demo DX operator first.
+            Áp dụng phân loại sẽ phân công người vận hành DX thử nghiệm trước.
           </Alert>
         )}
         <Select
           disabled={!mounted}
-          label="Disposition"
+          label="Hướng xử lý"
           allowDeselect={false}
           data={triageDispositions.map((value) => ({
             value,
@@ -148,7 +152,7 @@ export function SupportHandlerTriage({
         {disposition === "duplicate" && (
           <TextInput
             disabled={!mounted}
-            label="Related request ID"
+            label="Mã yêu cầu liên quan"
             placeholder="SUP116"
             value={relatedId}
             onChange={(event) => setRelatedId(event.currentTarget.value)}
@@ -157,7 +161,7 @@ export function SupportHandlerTriage({
         {disposition === "linked-eng" && (
           <TextInput
             disabled={!mounted}
-            label="Engineering tracker ID"
+            label="Mã công việc kỹ thuật"
             placeholder="DEMO-4821"
             value={engId}
             onChange={(event) => setEngId(event.currentTarget.value)}
@@ -166,7 +170,7 @@ export function SupportHandlerTriage({
         {disposition === "misroute" && (
           <Select
             disabled={!mounted}
-            label="Send sender to"
+            label="Chuyển người gửi đến"
             allowDeselect={false}
             data={misrouteTargets.map((value) => ({
               value,
@@ -187,7 +191,7 @@ export function SupportHandlerTriage({
         {disposition === "workaround" && (
           <Checkbox
             disabled={!mounted}
-            label="Keep open and wait for the sender"
+            label="Giữ yêu cầu mở và chờ người gửi"
             checked={keepOpen}
             onChange={(event) => setKeepOpen(event.currentTarget.checked)}
           />
@@ -196,10 +200,10 @@ export function SupportHandlerTriage({
           disabled={!mounted}
           label={
             disposition === "needs-info"
-              ? "What do you still need from the sender?"
+              ? "Bạn còn cần thông tin gì từ người gửi?"
               : disposition === "workaround"
-                ? "Workaround instructions"
-                : "Note for the conversation"
+                ? "Hướng dẫn giải pháp tạm thời"
+                : "Ghi chú trao đổi"
           }
           required
           rows={3}
@@ -212,7 +216,7 @@ export function SupportHandlerTriage({
         />
         <Group>
           <Button disabled={!mounted} onClick={applyTriage}>
-            Apply
+            Áp dụng
           </Button>
         </Group>
       </Stack>

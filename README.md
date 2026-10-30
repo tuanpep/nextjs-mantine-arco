@@ -54,24 +54,45 @@ from `next/navigation`.
 
 ## Project workspace
 
+The sidebar has a fixed order on the project directory and project pages:
+Projects, Overview, Support, Feedback, Ideas, UAT, and Project settings. Project
+names appear in the directory and separate selector, not as replacement menu items.
+The selector stays in the desktop header and at the top of the mobile drawer.
+Without a valid project context, project destinations ask for a project and then
+open the chosen section. Cancel keeps the current page; no project is chosen by default.
+
 Everyday navigation stays inside a project. The header switcher changes project while
-keeping the current section (Support, Feedback, Ideas, UAT, or Settings). Settings is a
-manager demo stub: naming people is not an access grant, and archive stays blocked.
+keeping the current section (Support, Feedback, Ideas, UAT, or Settings). Settings shows
+read-only project identity and project-scoped demo responsibility references. Review
+old/new values before applying; cancel or discard restores the last applied value.
+Applied references survive client navigation but reset on reload. They never assign
+new or active work, grant access, notify anyone, or establish duty. Archive stays blocked.
 
 The project registry lives in `modules/projects/lib/applications.ts`. Product design for
-this MVP lives in `docs/product-design/project-workspace-mvp/`.
+the standardization work lives in `docs/product-design/dx-support-standardization/`.
+Implementation progress and remaining work are recorded in `docs/agent-progress.md`.
 
-| Route                              | Purpose                                                     |
-| ---------------------------------- | ----------------------------------------------------------- |
-| `/`                                | Home — choose a project                                     |
-| `/projects/beacon-portal`          | Project overview and section shortcuts                      |
-| `/projects/beacon-portal/support`  | Project support list, intake, detail, and replies           |
-| `/projects/beacon-portal/feedback` | Project feedback list and share/review stubs                |
-| `/projects/beacon-portal/ideas`    | Project ideas list (no votes or roadmap)                    |
-| `/projects/beacon-portal/uat`      | UAT campaigns and scenario results (not release acceptance) |
-| `/projects/beacon-portal/settings` | Manager setup stub                                          |
+| Route                              | Purpose                                                       |
+| ---------------------------------- | ------------------------------------------------------------- |
+| `/`                                | Home — choose a project                                       |
+| `/projects/beacon-portal`          | Project overview and section shortcuts                        |
+| `/projects/beacon-portal/support`  | Project support list, intake, detail, and replies             |
+| `/projects/beacon-portal/feedback` | Project feedback list and share/review stubs                  |
+| `/projects/beacon-portal/ideas`    | Project ideas list (no votes or roadmap)                      |
+| `/projects/beacon-portal/uat`      | UAT campaigns and scenario results (not release acceptance)   |
+| `/projects/beacon-portal/settings` | Read-only identity and reviewed, session-only demo references |
 
 Support, Feedback, Ideas, and UAT do not share status words. UAT progress is evidence only; it is not release approval.
+
+Settings prompts before discarding unsaved references through the project switcher,
+workspace links, or the Overview breadcrumb. Reload/close uses the browser's unsaved
+changes warning where supported. Drafts are held per project in memory, not durable
+storage. Setup summaries use applied references and do not establish operational readiness.
+
+Verify the foundation with `npm run test:run -- modules/projects` and
+`npm run test:e2e -- e2e/project-settings.spec.ts e2e/workspace.spec.ts`.
+Browser tests need the environment variables in `.env.example` and the installed
+Playwright Chromium browser, available through `npx playwright install chromium`.
 
 ## Production work still required
 

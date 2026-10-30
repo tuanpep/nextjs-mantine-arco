@@ -19,6 +19,13 @@ export type Urgency = (typeof urgencies)[number];
 export const priorities = ["Low", "Medium", "High", "Critical"] as const;
 export type Priority = (typeof priorities)[number];
 
+export const priorityLabels: Record<Priority, string> = {
+  Low: "Thấp",
+  Medium: "Trung bình",
+  High: "Cao",
+  Critical: "Khẩn cấp",
+};
+
 export const priorityColor: Record<Priority, string> = {
   Low: "gray",
   Medium: "blue",
@@ -27,19 +34,19 @@ export const priorityColor: Record<Priority, string> = {
 };
 
 export const impactScopeLabels: Record<ImpactScope, string> = {
-  "only-me": "Only me",
-  "my-team": "My team",
-  "several-teams": "Several teams",
-  "whole-project": "Whole project",
-  unsure: "I'm not sure",
+  "only-me": "Chỉ tôi",
+  "my-team": "Nhóm của tôi",
+  "several-teams": "Nhiều nhóm",
+  "whole-project": "Toàn bộ dự án",
+  unsure: "Chưa rõ",
 };
 
 export const urgencyLabels: Record<Urgency, string> = {
-  "can-wait": "Can wait",
-  "this-week": "Needed this week",
-  today: "Needed today",
-  "stopped-now": "Work stopped now",
-  unsure: "I'm not sure",
+  "can-wait": "Có thể chờ",
+  "this-week": "Cần trong tuần này",
+  today: "Cần trong hôm nay",
+  "stopped-now": "Công việc đang bị đình trệ",
+  unsure: "Chưa rõ",
 };
 
 /** Proposed demo matrix. Owner must confirm for production SLAs. */

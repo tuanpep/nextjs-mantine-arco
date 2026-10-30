@@ -14,11 +14,23 @@ function fixture(id: string) {
   return item;
 }
 
+test("needs-action view includes only open requester handoffs", () => {
+  const items = filterSupport(supportFixtures, "", "all", "needs-action");
+  expect(items.length).toBeGreaterThan(0);
+  expect(
+    items.every(
+      (item) => item.nextActor === "Sender" && item.status !== "Resolved",
+    ),
+  ).toBe(true);
+  expect(items.some((item) => item.id === "SUP112")).toBe(true);
+  expect(items.some((item) => item.id === "SUP113")).toBe(true);
+});
+
 describe("application triage", () => {
   test("unidentified intake is routed without replacing the request or conversation", () => {
     const draft = createSupportRequest("SUP-unknown", fixture("SUP112"), null);
     expect(draft.applicationId).toBeNull();
-    expect(draft.responsibleTeam).toBe("DX triage");
+    expect(draft.responsibleTeam).toBe("Nhóm phân loại DX");
     const routed = applyHandlerAction(draft, {
       kind: "route",
       applicationId: "orchid-reports",
@@ -34,13 +46,13 @@ describe("application triage", () => {
     const draft = createSupportRequest("SUP-unknown", fixture("SUP112"), null);
     expect(() =>
       applyHandlerAction(draft, { kind: "route", applicationId: "missing" }),
-    ).toThrow("Choose a known application");
+    ).toThrow("Chọn ứng dụng đã có");
     expect(() =>
       applyHandlerAction(fixture("SUP112"), {
         kind: "route",
         applicationId: "orchid-reports",
       }),
-    ).toThrow("Only unidentified requests");
+    ).toThrow("Chỉ có thể chuyển yêu cầu chưa xác định ứng dụng");
   });
 });
 
@@ -164,7 +176,7 @@ describe("handler triage dispositions", () => {
       kind: "needs-info",
       text: "Which guide did you open?",
     });
-    expect(item.handler).toBe("Demo DX operator");
+    expect(item.handler).toBe("Người vận hành DX thử nghiệm");
     expect(item.status).toBe("Waiting for sender");
     expect(item.lastDisposition).toBe("needs-info");
     expect(item.nextAction).toBe("Which guide did you open?");
@@ -190,7 +202,7 @@ describe("handler triage dispositions", () => {
     });
     expect(duplicate.status).toBe("Resolved");
     expect(duplicate.relatedRequestId).toBe("SUP112");
-    expect(duplicate.outcomes.at(-1)?.summary).toBe("Duplicate of SUP112");
+    expect(duplicate.outcomes.at(-1)?.summary).toBe("Trùng với SUP112");
 
     const misrouted = applyHandlerAction(fixture("SUP115"), {
       kind: "misroute",
@@ -217,7 +229,9 @@ describe("handler triage dispositions", () => {
       keepOpen: false,
     });
     expect(closed.status).toBe("Resolved");
-    expect(closed.outcomes.at(-1)?.summary).toBe("Workaround provided");
+    expect(closed.outcomes.at(-1)?.summary).toBe(
+      "Đã cung cấp giải pháp tạm thời",
+    );
   });
 });
 
@@ -308,22 +322,22 @@ test("staff actions reject missing ownership, empty instructions and premature r
       kind: "update",
       text: "Investigating",
     }),
-  ).toThrow("Assign a handler");
+  ).toThrow("Hãy phân công người xử lý");
   expect(() =>
     applyHandlerAction(fixture("SUP116"), { kind: "clarify", text: " " }),
-  ).toThrow("Add a progress note");
+  ).toThrow("Thêm ghi chú tiến độ");
   expect(() =>
     applyHandlerAction(fixture("SUP113"), {
       kind: "resolve",
       outcome: { summary: "Done", work: "Checked", limitations: "None" },
     }),
-  ).toThrow("Review the employee");
+  ).toThrow("Xem xét phản hồi của nhân viên");
   expect(() =>
     applyHandlerAction(fixture("SUP114"), {
       kind: "assign",
       handler: "Sam Rivera",
     }),
-  ).toThrow("Reopen");
+  ).toThrow("Mở lại");
 });
 
 test("employee updates preserve the current responsibility without replying or reopening", () => {

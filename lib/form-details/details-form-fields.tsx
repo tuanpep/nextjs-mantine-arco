@@ -71,6 +71,7 @@ export function DetailsFormFields<K extends string>({
                 label={field.label}
                 required={field.required}
                 clearable={field.clearable}
+                clearButtonProps={{ "aria-label": "Xóa lựa chọn" }}
                 data={field.options ?? []}
                 error={getInputProps(field.key).error}
                 value={getSelectValue?.(field.key) ?? null}

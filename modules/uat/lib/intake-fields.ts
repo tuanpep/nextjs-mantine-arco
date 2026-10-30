@@ -7,15 +7,16 @@ export const uatDefectIntakeFields: DetailsFieldDef<UatDefectIntakeKey>[] = [
   {
     key: "title",
     control: "text",
-    label: "Defect summary",
+    label: "Tóm tắt lỗi",
     required: true,
     visible: true,
   },
   {
     key: "reproSteps",
     control: "textarea",
-    label: "Steps to reproduce",
-    placeholder: "Numbered steps using sample data, not personal information.",
+    label: "Các bước tái hiện",
+    placeholder:
+      "Đánh số các bước, dùng dữ liệu mẫu thay vì thông tin cá nhân.",
     rows: 3,
     required: true,
     visible: true,
@@ -23,8 +24,8 @@ export const uatDefectIntakeFields: DetailsFieldDef<UatDefectIntakeKey>[] = [
   {
     key: "expected",
     control: "textarea",
-    label: "Expected outcome",
-    placeholder: "What should have happened for this scenario.",
+    label: "Kết quả mong đợi",
+    placeholder: "Kết quả lẽ ra phải xảy ra với kịch bản này.",
     rows: 2,
     required: true,
     visible: true,
@@ -32,8 +33,8 @@ export const uatDefectIntakeFields: DetailsFieldDef<UatDefectIntakeKey>[] = [
   {
     key: "actual",
     control: "textarea",
-    label: "What happened",
-    placeholder: "What you observed instead.",
+    label: "Kết quả thực tế",
+    placeholder: "Mô tả kết quả bạn thực sự quan sát được.",
     rows: 3,
     required: true,
     visible: true,
@@ -71,12 +72,12 @@ export function parseUatDetails(details: string): {
 export function uatDefectReadoutRows(details: string): DetailsReadoutRow[] {
   const parsed = parseUatDetails(details);
   if (!parsed) {
-    return [{ label: "Steps and actual behavior", value: details }];
+    return [{ label: "Các bước và hành vi thực tế", value: details }];
   }
   return [
-    { label: "Steps to reproduce", value: parsed.reproSteps },
-    { label: "Expected outcome", value: parsed.expected },
-    { label: "What happened", value: parsed.actual },
+    { label: "Các bước tái hiện", value: parsed.reproSteps },
+    { label: "Kết quả mong đợi", value: parsed.expected },
+    { label: "Kết quả thực tế", value: parsed.actual },
   ];
 }
 
@@ -88,16 +89,16 @@ export function validateUatDefectIntake(values: {
 }): Partial<Record<UatDefectIntakeKey, string>> {
   const errors: Partial<Record<UatDefectIntakeKey, string>> = {};
   if (!values.title.trim()) {
-    errors.title = "Enter a defect summary.";
+    errors.title = "Nhập tóm tắt lỗi.";
   }
   if (!values.reproSteps.trim()) {
-    errors.reproSteps = "List the steps to reproduce.";
+    errors.reproSteps = "Liệt kê các bước tái hiện.";
   }
   if (!values.expected.trim()) {
-    errors.expected = "Say what should have happened.";
+    errors.expected = "Mô tả kết quả mong đợi.";
   }
   if (!values.actual.trim()) {
-    errors.actual = "Describe what happened instead.";
+    errors.actual = "Mô tả kết quả thực tế.";
   }
   return errors;
 }

@@ -2,6 +2,9 @@ import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
 import { render } from "@/test-utils/render";
+import { evidenceStatusLabels, validateEvidenceFile } from "../lib/attachments";
+import { supportStatusLabels, retestResultLabels } from "../lib/fixtures";
+import { priorityLabels } from "../lib/priority";
 
 import { SupportDetails } from "./support-details";
 import { SupportForm } from "./support-form";
@@ -20,6 +23,47 @@ afterEach(() => {
   search.type = null;
 });
 
+test("internal status, priority and retest values have Vietnamese display labels", () => {
+  expect(supportStatusLabels).toEqual({
+    Unclaimed: "Chưa tiếp nhận",
+    Handling: "Đang xử lý",
+    "Waiting for sender": "Chờ người gửi",
+    "Waiting for retest": "Chờ kiểm tra lại",
+    Resolved: "Đã giải quyết",
+  });
+  expect(priorityLabels).toEqual({
+    Low: "Thấp",
+    Medium: "Trung bình",
+    High: "Cao",
+    Critical: "Khẩn cấp",
+  });
+  expect(retestResultLabels).toEqual({
+    Pass: "Đạt",
+    Fail: "Không đạt",
+    Unable: "Không thể kiểm tra",
+  });
+  expect(evidenceStatusLabels).toEqual({
+    Selected: "Đã chọn",
+    Uploading: "Đang tải lên",
+    Scanning: "Đang quét",
+    Ready: "Sẵn sàng",
+    Rejected: "Bị từ chối",
+    Failed: "Thất bại",
+  });
+});
+
+test("attachment validation returns Vietnamese errors and accepts supported files", () => {
+  expect(validateEvidenceFile(new File(["data"], "notes.txt"))).toBe(
+    "Chỉ chấp nhận tệp PNG, JPG hoặc PDF.",
+  );
+  expect(
+    validateEvidenceFile(
+      new File([new Uint8Array(10 * 1024 * 1024 + 1)], "large.pdf"),
+    ),
+  ).toBe("Mỗi tệp không được vượt quá 10 MB.");
+  expect(validateEvidenceFile(new File(["data"], "report.PDF"))).toBeNull();
+});
+
 test("a valid application cannot open another application's request", () => {
   render(
     <SupportProvider>
@@ -27,10 +71,10 @@ test("a valid application cannot open another application's request", () => {
     </SupportProvider>,
   );
   expect(
-    screen.getByRole("heading", { name: "Support unavailable" }),
+    screen.getByRole("heading", { name: "Không thể truy cập hỗ trợ" }),
   ).toBeInTheDocument();
   expect(
-    screen.queryByText("Help with the monthly report export"),
+    screen.queryByText("Hỗ trợ xuất báo cáo tháng"),
   ).not.toBeInTheDocument();
 });
 
@@ -41,10 +85,10 @@ test("a project route cannot display another project's request", () => {
     </SupportProvider>,
   );
   expect(
-    screen.getByRole("heading", { name: "Support unavailable" }),
+    screen.getByRole("heading", { name: "Không thể truy cập hỗ trợ" }),
   ).toBeInTheDocument();
   expect(
-    screen.queryByText("Help with the monthly report export"),
+    screen.queryByText("Hỗ trợ xuất báo cáo tháng"),
   ).not.toBeInTheDocument();
 });
 
@@ -55,31 +99,31 @@ test("review does not create; explicit confirmation creates an in-memory request
       <SupportForm projectId="beacon-portal" />
     </SupportProvider>,
   );
-  fireEvent.change(screen.getByLabelText(/Brief summary/), {
+  fireEvent.change(screen.getByLabelText(/Tóm tắt ngắn gọn/), {
     target: { value: "Help finding a report" },
   });
-  fireEvent.change(screen.getByLabelText(/Situation/), {
+  fireEvent.change(screen.getByLabelText(/Tình huống/), {
     target: {
       value: "I tried the reports menu but could not find the monthly report.",
     },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Review request" }));
+  fireEvent.click(screen.getByRole("button", { name: "Xem lại yêu cầu" }));
   expect(
-    screen.getByRole("heading", { name: "Review your request" }),
+    screen.getByRole("heading", { name: "Xem lại yêu cầu" }),
   ).toBeInTheDocument();
   expect(
-    screen.queryByRole("link", { name: "View request" }),
+    screen.queryByRole("link", { name: "Xem yêu cầu" }),
   ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Back to edit" }));
-  expect(screen.getByLabelText(/Brief summary/)).toHaveValue(
+  fireEvent.click(screen.getByRole("button", { name: "Quay lại chỉnh sửa" }));
+  expect(screen.getByLabelText(/Tóm tắt ngắn gọn/)).toHaveValue(
     "Help finding a report",
   );
-  fireEvent.click(screen.getByRole("button", { name: "Review request" }));
-  fireEvent.click(screen.getByRole("button", { name: "Confirm creation" }));
+  fireEvent.click(screen.getByRole("button", { name: "Xem lại yêu cầu" }));
+  fireEvent.click(screen.getByRole("button", { name: "Xác nhận tạo yêu cầu" }));
   expect(
-    screen.getByRole("heading", { name: "Request created" }),
+    screen.getByRole("heading", { name: "Đã tạo yêu cầu" }),
   ).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "View request" })).toHaveAttribute(
+  expect(screen.getByRole("link", { name: "Xem yêu cầu" })).toHaveAttribute(
     "href",
     expect.stringContaining("/projects/beacon-portal/support/SUP-"),
   );
@@ -92,10 +136,10 @@ test("broken intake shows repro and correlation fields", () => {
       <SupportForm projectId="beacon-portal" />
     </SupportProvider>,
   );
-  expect(screen.getByLabelText(/Steps to reproduce/)).toBeInTheDocument();
-  expect(screen.getByLabelText(/Correlation \/ error ID/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/Các bước tái hiện/)).toBeInTheDocument();
+  expect(screen.getByLabelText(/Mã tương quan \/ mã lỗi/)).toBeInTheDocument();
   expect(
-    screen.getByText(/Broken reports need repro steps/i),
+    screen.getByText(/Báo lỗi cần các bước tái hiện/i),
   ).toBeInTheDocument();
 });
 
@@ -106,16 +150,16 @@ test("demo handler triage can mark needs more info", () => {
     </SupportProvider>,
   );
   expect(screen.getByText("DEMO-4821")).toBeInTheDocument();
-  expect(screen.getByText("Auto-close paused")).toBeInTheDocument();
+  expect(screen.getByText("Đã tạm dừng tự động đóng")).toBeInTheDocument();
   fireEvent.change(
-    screen.getByLabelText(/What do you still need from the sender/),
+    screen.getByLabelText(/Bạn còn cần thông tin gì từ người gửi/),
     {
       target: { value: "Which filter values reset after navigation?" },
     },
   );
-  fireEvent.click(screen.getByRole("button", { name: "Apply" }));
-  expect(screen.getByRole("status")).toHaveTextContent("needs more info");
-  expect(screen.getByText("Waiting for sender")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Áp dụng" }));
+  expect(screen.getByRole("status")).toHaveTextContent("cần thêm thông tin");
+  expect(screen.getByText("Chờ người gửi")).toBeInTheDocument();
 });
 
 test("sender reply updates responsibility and removes stale reply controls", () => {
@@ -124,19 +168,21 @@ test("sender reply updates responsibility and removes stale reply controls", () 
       <SupportDetails projectId="beacon-portal" supportId="SUP112" />
     </SupportProvider>,
   );
-  fireEvent.change(screen.getByLabelText(/Your reply/), {
+  fireEvent.change(screen.getByLabelText(/Phản hồi của bạn/), {
     target: { value: "April, with no filter." },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Send reply" }));
+  fireEvent.click(screen.getByRole("button", { name: "Gửi phản hồi" }));
   expect(screen.getByText("April, with no filter.")).toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent(
-    "The handler has the next action",
+    "Người xử lý sẽ thực hiện bước tiếp theo",
   );
   expect(
-    screen.queryByRole("button", { name: "Send reply" }),
+    screen.queryByRole("button", { name: "Gửi phản hồi" }),
   ).not.toBeInTheDocument();
   expect(
-    screen.queryByRole("button", { name: /claim|assign|resolve|handover/i }),
+    screen.queryByRole("button", {
+      name: /tiếp nhận|phân công|giải quyết|bàn giao/i,
+    }),
   ).not.toBeInTheDocument();
 });
 
@@ -146,12 +192,14 @@ test("retest pass records a result without resolving the request", () => {
       <SupportDetails projectId="beacon-portal" supportId="SUP113" />
     </SupportProvider>,
   );
-  fireEvent.click(screen.getByRole("button", { name: "Confirm retest" }));
-  expect(screen.getByText("Retest: Pass")).toBeInTheDocument();
-  expect(screen.getByRole("status")).toHaveTextContent(
-    "This does not resolve the request or approve UAT",
+  fireEvent.click(
+    screen.getByRole("button", { name: "Xác nhận kiểm tra lại" }),
   );
-  expect(screen.getByText("Handling")).toBeInTheDocument();
+  expect(screen.getByText("Kiểm tra lại: Đạt")).toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "Việc này không giải quyết yêu cầu hoặc phê duyệt UAT",
+  );
+  expect(screen.getByText("Đang xử lý")).toBeInTheDocument();
 });
 
 test("sender reopening keeps the official outcome as superseded history", () => {
@@ -160,15 +208,54 @@ test("sender reopening keeps the official outcome as superseded history", () => 
       <SupportDetails projectId="beacon-portal" supportId="SUP114" />
     </SupportProvider>,
   );
-  fireEvent.change(screen.getByLabelText(/Reason for reopening/), {
+  expect(screen.queryByLabelText(/Lý do mở lại/)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Mở lại yêu cầu" }));
+  fireEvent.change(screen.getByLabelText(/Lý do mở lại/), {
     target: { value: "The same totals mismatch returned." },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
+  fireEvent.click(screen.getByRole("button", { name: "Mở lại" }));
   expect(
-    screen.getByText("Prior outcome · superseded on reopening"),
+    screen.getByText("Kết quả trước đó · đã được thay thế khi mở lại"),
   ).toBeInTheDocument();
-  expect(screen.getByText("Report totals corrected")).toBeInTheDocument();
-  expect(screen.getByText("Handling")).toBeInTheDocument();
+  expect(screen.getByText("Đã sửa tổng số báo cáo")).toBeInTheDocument();
+  expect(screen.getByText("Đang xử lý")).toBeInTheDocument();
+});
+
+test("canceling reopen keeps the resolved state and preserves the unsent reason", () => {
+  render(
+    <SupportProvider>
+      <SupportDetails projectId="beacon-portal" supportId="SUP114" />
+    </SupportProvider>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Mở lại yêu cầu" }));
+  fireEvent.change(screen.getByLabelText(/Lý do mở lại/), {
+    target: { value: "Vẫn gặp lỗi trong môi trường minh họa." },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Hủy mở lại" }));
+  expect(screen.queryByLabelText(/Lý do mở lại/)).not.toBeInTheDocument();
+  expect(
+    screen.getByText("Đã giải quyết", { exact: true }),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Mở lại yêu cầu" }));
+  expect(screen.getByLabelText(/Lý do mở lại/)).toHaveValue(
+    "Vẫn gặp lỗi trong môi trường minh họa.",
+  );
+});
+
+test("next-action shortcut focuses the explicit reply before request history", () => {
+  render(
+    <SupportProvider>
+      <SupportDetails projectId="beacon-portal" supportId="SUP112" />
+    </SupportProvider>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Đến phần phản hồi" }));
+  expect(
+    screen.getByRole("heading", { name: "Phản hồi cho nhóm" }),
+  ).toHaveFocus();
+  expect(screen.getByRole("link", { name: "Quay lại Hỗ trợ" })).toHaveAttribute(
+    "href",
+    "/projects/beacon-portal/support",
+  );
 });
 
 test("unknown project and unknown request show the same nonenumerating state", () => {
@@ -178,7 +265,7 @@ test("unknown project and unknown request show the same nonenumerating state", (
     </SupportProvider>,
   );
   expect(
-    screen.getByRole("heading", { name: "Support unavailable" }),
+    screen.getByRole("heading", { name: "Không thể truy cập hỗ trợ" }),
   ).toBeInTheDocument();
   expect(screen.queryByText("Beacon Portal")).not.toBeInTheDocument();
   unmount();
@@ -188,7 +275,7 @@ test("unknown project and unknown request show the same nonenumerating state", (
     </SupportProvider>,
   );
   expect(
-    screen.getByRole("heading", { name: "Support unavailable" }),
+    screen.getByRole("heading", { name: "Không thể truy cập hỗ trợ" }),
   ).toBeInTheDocument();
   expect(screen.queryByText("Beacon Portal")).not.toBeInTheDocument();
 });

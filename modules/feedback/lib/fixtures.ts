@@ -1,6 +1,13 @@
 export type FeedbackDisposition =
   "Not reviewed" | "Acknowledged" | "Needs clarification" | "Noted";
 
+export const feedbackDispositionLabels: Record<FeedbackDisposition, string> = {
+  "Not reviewed": "Chưa xem xét",
+  Acknowledged: "Đã tiếp nhận",
+  "Needs clarification": "Cần làm rõ",
+  Noted: "Đã ghi nhận",
+};
+
 export type FeedbackItem = {
   id: string;
   projectId: string;
@@ -16,34 +23,33 @@ export const feedbackItems: FeedbackItem[] = [
   {
     id: "FB-012",
     projectId: "beacon-portal",
-    title: "Switching projects felt uncertain",
-    observation:
-      "I was not sure which project owned the form I was filling in until after I submitted.",
-    context: "Mobile browser, morning shift",
+    title: "Không rõ dự án đang thao tác khi chuyển dự án",
+    observation: "Tôi chỉ biết biểu mẫu đang điền thuộc dự án nào sau khi gửi.",
+    context: "Trình duyệt trên điện thoại, ca sáng",
     disposition: "Acknowledged",
-    reason: "We will keep the project name visible on every working screen.",
-    nextActor: "No further action required from sender",
+    reason: "Chúng tôi sẽ hiển thị tên dự án trên mọi màn hình làm việc.",
+    nextActor: "Người gửi không cần thực hiện thêm thao tác",
   },
   {
     id: "FB-008",
     projectId: "beacon-portal",
-    title: "Support labels were clear",
+    title: "Nhãn hỗ trợ rõ ràng",
     observation:
-      "The next actor label helped me know whether to wait or reply.",
-    context: "Desktop",
+      "Nhãn người xử lý tiếp theo giúp tôi biết nên chờ hay phản hồi.",
+    context: "Máy tính",
     disposition: "Not reviewed",
     reason: "",
-    nextActor: "Lan Vo to review",
+    nextActor: "Lan Vo xem xét",
   },
   {
     id: "FB-003",
     projectId: "orchid-reports",
-    title: "Export timing surprised me",
+    title: "Thời gian xuất dữ liệu không như dự kiến",
     observation:
-      "The overnight export finished later than the email suggested.",
-    context: "Weekly report run",
+      "Tác vụ xuất dữ liệu qua đêm hoàn tất muộn hơn thời gian trong email.",
+    context: "Chạy báo cáo hằng tuần",
     disposition: "Needs clarification",
-    reason: "Need the export job id and the time window you expected.",
-    nextActor: "Mai Tran to reply",
+    reason: "Cần mã tác vụ xuất dữ liệu và khoảng thời gian bạn mong đợi.",
+    nextActor: "Mai Tran phản hồi",
   },
 ];

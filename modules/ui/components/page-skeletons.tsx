@@ -137,7 +137,7 @@ function FormFieldSkeleton({ multiline = false }: { multiline?: boolean }) {
 export function HomePageSkeleton() {
   return (
     <PageFrame header={<PageHeaderSkeleton withBreadcrumbs={false} />}>
-      <div role="status" aria-label="Loading projects">
+      <div role="status" aria-label="Đang tải dự án">
         <Paper withBorder style={{ overflow: "hidden" }}>
           <Box px="md" py="xs" bg="var(--mantine-color-default-hover)">
             <Skeleton height={12} width={80} />
@@ -172,7 +172,7 @@ export function CollectionPageSkeleton({
         />
       }
     >
-      <div role="status" aria-label="Loading collection">
+      <div role="status" aria-label="Đang tải danh sách">
         <Paper withBorder style={{ overflow: "hidden" }}>
           <CollectionToolbarSkeleton withStatus={withStatus} />
           {Array.from({ length: 5 }, (_, index) => (
@@ -215,7 +215,7 @@ export function OverviewPageSkeleton() {
         </Stack>
       }
     >
-      <div role="status" aria-label="Loading overview" />
+      <div role="status" aria-label="Đang tải tổng quan" />
     </PageFrame>
   );
 }
@@ -225,7 +225,7 @@ export function DetailPageSkeleton() {
   return (
     <PageFrame
       paneNarrow="sheet"
-      paneLabel="Details"
+      paneLabel="Chi tiết"
       pane={
         <Stack gap="lg">
           <Stack gap="sm">
@@ -247,7 +247,7 @@ export function DetailPageSkeleton() {
       }
       header={<PageHeaderSkeleton withDescription withBreadcrumbs />}
     >
-      <div role="status" aria-label="Loading details">
+      <div role="status" aria-label="Đang tải chi tiết">
         <Stack gap="lg">
           <Stack gap="sm">
             <Skeleton height={20} width={140} />
@@ -277,7 +277,7 @@ export function DetailPageSkeleton() {
 export function FormPageSkeleton({ fields = 5 }: { fields?: number } = {}) {
   return (
     <PageFrame header={<PageHeaderSkeleton withDescription />}>
-      <div role="status" aria-label="Loading form">
+      <div role="status" aria-label="Đang tải biểu mẫu">
         <Stack gap="md">
           <Skeleton height={52} radius="sm" />
           {Array.from({ length: fields }, (_, index) => (
@@ -303,7 +303,7 @@ export function SettingsPageSkeleton() {
       panePosition="start"
       paneNarrow="index"
       paneIndexOpen={false}
-      paneLabel="Settings sections"
+      paneLabel="Các mục cài đặt"
       pane={
         <Stack gap={2}>
           {Array.from({ length: 4 }, (_, index) => (
@@ -313,7 +313,7 @@ export function SettingsPageSkeleton() {
       }
       header={<PageHeaderSkeleton />}
     >
-      <div role="status" aria-label="Loading settings">
+      <div role="status" aria-label="Đang tải cài đặt">
         <Stack gap="md">
           <Skeleton height={52} radius="sm" />
           <Skeleton height={1} width="100%" />
@@ -331,7 +331,7 @@ export function SettingsPageSkeleton() {
 export function UatPageSkeleton() {
   return (
     <PageFrame header={<PageHeaderSkeleton withAction />}>
-      <div role="status" aria-label="Loading UAT">
+      <div role="status" aria-label="Đang tải kiểm thử nghiệm thu">
         <Stack gap="lg">
           <Skeleton height={52} radius="sm" />
           <Stack gap="sm">
@@ -388,7 +388,7 @@ export function UatPageSkeleton() {
  */
 export function WorkspaceShellSkeleton({ children }: { children?: ReactNode }) {
   return (
-    <Box role="status" aria-label="Loading workspace">
+    <Box role="status" aria-label="Đang tải không gian làm việc">
       <Group
         h={48}
         px="md"

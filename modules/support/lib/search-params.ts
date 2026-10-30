@@ -2,7 +2,7 @@ import { parseAsString, parseAsStringLiteral } from "nuqs/server";
 
 import { supportStatuses } from "./fixtures";
 
-export const supportViews = ["open", "closed"] as const;
+export const supportViews = ["open", "closed", "needs-action"] as const;
 export type SupportView = (typeof supportViews)[number];
 
 export const supportSearchParams = {

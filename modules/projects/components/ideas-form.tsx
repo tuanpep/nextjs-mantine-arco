@@ -31,18 +31,17 @@ export function IdeasForm({ projectId }: { projectId: string }) {
       sponsorCandidate: "",
     },
     validate: {
-      title: (value) => (value.trim() ? null : "Enter a short title."),
+      title: (value) => (value.trim() ? null : "Nhập tiêu đề ngắn gọn."),
       problem: (value) =>
-        value.trim() ? null : "Describe the problem in plain language.",
-      outcome: (value) =>
-        value.trim() ? null : "Describe the desired outcome.",
+        value.trim() ? null : "Mô tả vấn đề bằng ngôn ngữ dễ hiểu.",
+      outcome: (value) => (value.trim() ? null : "Mô tả kết quả mong muốn."),
     },
   });
 
   if (!application) {
     return (
       <PageFrame>
-        <DestinationUnavailable backHref="/" backLabel="Back to projects" />
+        <DestinationUnavailable backHref="/" backLabel="Quay lại dự án" />
       </PageFrame>
     );
   }
@@ -51,17 +50,17 @@ export function IdeasForm({ projectId }: { projectId: string }) {
     <PageFrame
       header={
         <PageHeader
-          title="Suggest an idea"
+          title="Đề xuất ý tưởng"
           breadcrumbs={[
-            { title: "Ideas", href: `/projects/${projectId}/ideas` },
-            { title: "New idea" },
+            { title: "Ý tưởng", href: `/projects/${projectId}/ideas` },
+            { title: "Ý tưởng mới" },
           ]}
         />
       }
     >
       <Stack gap="md">
-        <Alert color="blue" title="Not a delivery commitment">
-          Sending an idea does not put work on a plan.
+        <Alert color="blue" title="Không phải cam kết thực hiện">
+          Gửi ý tưởng không đồng nghĩa với việc đưa công việc vào kế hoạch.
         </Alert>
         {notice && (
           <Alert role="status" color="teal">
@@ -70,7 +69,9 @@ export function IdeasForm({ projectId }: { projectId: string }) {
         )}
         <form
           onSubmit={form.onSubmit(() => {
-            setNotice("IDE-DEMO saved. Your vote was counted once.");
+            setNotice(
+              "Đã lưu IDE-DEMO. Lượt bình chọn của bạn đã được tính một lần.",
+            );
             router.push(`/projects/${projectId}/ideas`);
           })}
         >
@@ -82,7 +83,7 @@ export function IdeasForm({ projectId }: { projectId: string }) {
             />
             <Accordion variant="contained">
               <Accordion.Item value="optional">
-                <Accordion.Control>Optional details</Accordion.Control>
+                <Accordion.Control>Thông tin bổ sung</Accordion.Control>
                 <Accordion.Panel>
                   <DetailsFormFields
                     fields={ideaOptionalFields}
@@ -94,7 +95,7 @@ export function IdeasForm({ projectId }: { projectId: string }) {
             </Accordion>
             <Group justify="flex-end">
               <Button type="submit" disabled={!mounted}>
-                Send idea
+                Gửi ý tưởng
               </Button>
             </Group>
           </Stack>

@@ -7,15 +7,15 @@ export const ideaRequiredFields: DetailsFieldDef<IdeaIntakeKey>[] = [
   {
     key: "title",
     control: "text",
-    label: "Title",
+    label: "Tiêu đề",
     required: true,
     visible: true,
   },
   {
     key: "problem",
     control: "textarea",
-    label: "Problem",
-    placeholder: "What is hard today, and for whom.",
+    label: "Vấn đề",
+    placeholder: "Hiện tại có khó khăn gì và ai đang gặp khó khăn đó?",
     rows: 3,
     required: true,
     visible: true,
@@ -23,8 +23,8 @@ export const ideaRequiredFields: DetailsFieldDef<IdeaIntakeKey>[] = [
   {
     key: "outcome",
     control: "textarea",
-    label: "Desired outcome",
-    placeholder: "What good looks like if this idea is pursued.",
+    label: "Kết quả mong muốn",
+    placeholder: "Kết quả mong đợi nếu ý tưởng này được thực hiện.",
     rows: 2,
     required: true,
     visible: true,
@@ -35,7 +35,7 @@ export const ideaOptionalFields: DetailsFieldDef<IdeaIntakeKey>[] = [
   {
     key: "suggestedChange",
     control: "textarea",
-    label: "Suggested change",
+    label: "Thay đổi đề xuất",
     rows: 2,
     required: false,
     visible: true,
@@ -43,9 +43,9 @@ export const ideaOptionalFields: DetailsFieldDef<IdeaIntakeKey>[] = [
   {
     key: "sponsorCandidate",
     control: "text",
-    label: "Sponsor candidate",
+    label: "Người bảo trợ đề xuất",
     placeholder:
-      "Naming a person does not make them approve or fund this idea.",
+      "Nêu tên một người không có nghĩa là họ đồng ý phê duyệt hoặc tài trợ ý tưởng này.",
     required: false,
     visible: true,
   },

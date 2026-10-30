@@ -21,7 +21,7 @@ import { ModuleTabs } from "@/modules/ui/components/module-tabs";
 import { PageFrame } from "@/modules/ui/components/page-frame";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-import { supportStatuses } from "../lib/fixtures";
+import { supportStatuses, supportStatusLabels } from "../lib/fixtures";
 import {
   requestCatalogCards,
   requestTypeShortLabels,
@@ -73,13 +73,13 @@ export function SupportCollection({ projectId }: { projectId?: string }) {
     <PageFrame
       header={
         <PageHeader
-          title="Support"
-          description="Track requests that need a reply, a retest, or a handler."
+          title="Hỗ trợ"
+          description="Theo dõi yêu cầu cần phản hồi, kiểm tra lại hoặc người xử lý."
           breadcrumbs={[
             ...(overviewHref
-              ? [{ title: "Overview", href: overviewHref }]
+              ? [{ title: "Tổng quan", href: overviewHref }]
               : []),
-            { title: "Support", href: basePath },
+            { title: "Hỗ trợ", href: basePath },
           ]}
           actions={
             <Menu position="bottom-end" withinPortal>
@@ -88,11 +88,11 @@ export function SupportCollection({ projectId }: { projectId?: string }) {
                   leftSection={<IconPlus size={16} aria-hidden />}
                   rightSection={<IconChevronDown size={14} aria-hidden />}
                 >
-                  New request
+                  Tạo yêu cầu
                 </Button>
               </Menu.Target>
               <Menu.Dropdown>
-                <Menu.Label>Request type</Menu.Label>
+                <Menu.Label>Loại yêu cầu</Menu.Label>
                 {requestCatalogCards.map((card) => (
                   <Menu.Item
                     key={card.type}
@@ -112,7 +112,7 @@ export function SupportCollection({ projectId }: { projectId?: string }) {
           }
         >
           <ModuleTabs
-            ariaLabel="Support views"
+            ariaLabel="Chế độ xem hỗ trợ"
             value={filters.view}
             onChange={(value) => {
               const view = supportSearchParams.view.parse(value) as SupportView;
@@ -122,8 +122,16 @@ export function SupportCollection({ projectId }: { projectId?: string }) {
               });
             }}
             items={[
-              { value: "open", label: "Open", count: openCount },
-              { value: "closed", label: "Closed", count: closedCount },
+              { value: "open", label: "Đang mở", count: openCount },
+              { value: "closed", label: "Đã đóng", count: closedCount },
+              {
+                value: "needs-action",
+                label: "Cần bạn phản hồi",
+                count: scoped.filter(
+                  (item) =>
+                    item.nextActor === "Sender" && item.status !== "Resolved",
+                ).length,
+              },
             ]}
           />
         </PageHeader>
@@ -131,19 +139,19 @@ export function SupportCollection({ projectId }: { projectId?: string }) {
     >
       <Paper withBorder style={{ overflow: "hidden" }}>
         <CollectionToolbar
-          searchLabel="Search requests"
-          searchPlaceholder="Search by summary or reference"
+          searchLabel="Tìm yêu cầu"
+          searchPlaceholder="Tìm theo tóm tắt hoặc mã yêu cầu"
           searchValue={filters.q}
           onSearchChange={(value) => void setFilters({ q: value })}
-          statusLabel={filters.view === "open" ? "Status" : undefined}
+          statusLabel={filters.view === "open" ? "Trạng thái" : undefined}
           statusValue={filters.status}
           statusOptions={
             filters.view === "open"
               ? [
-                  { value: "all", label: "All open statuses" },
+                  { value: "all", label: "Tất cả trạng thái đang mở" },
                   ...openStatuses.map((status) => ({
                     value: status,
-                    label: status,
+                    label: supportStatusLabels[status],
                   })),
                 ]
               : undefined
@@ -158,15 +166,15 @@ export function SupportCollection({ projectId }: { projectId?: string }) {
           }
           countLabel={
             waitingOnYouCount > 0
-              ? `${items.length} matching · ${waitingOnYouCount} waiting on you`
-              : `${items.length} matching ${items.length === 1 ? "request" : "requests"}`
+              ? `${items.length} yêu cầu phù hợp · ${waitingOnYouCount} chờ bạn phản hồi`
+              : `${items.length} yêu cầu phù hợp`
           }
         />
         {items.length === 0 ? (
           <CollectionEmpty
             icon={<IconLifebuoy />}
-            title="No requests match"
-            actionLabel="Clear filters"
+            title="Không có yêu cầu phù hợp"
+            actionLabel="Xóa bộ lọc"
             onAction={() =>
               void setFilters({ q: "", status: "all", view: filters.view })
             }

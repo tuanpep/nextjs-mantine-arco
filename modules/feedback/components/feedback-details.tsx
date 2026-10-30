@@ -20,7 +20,11 @@ import { DestinationUnavailable } from "@/modules/ui/components/destination-unav
 import { PageFrame } from "@/modules/ui/components/page-frame";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-import { feedbackItems, type FeedbackDisposition } from "../lib/fixtures";
+import {
+  feedbackDispositionLabels,
+  feedbackItems,
+  type FeedbackDisposition,
+} from "../lib/fixtures";
 import { feedbackReadoutRows } from "../lib/intake-fields";
 
 export function FeedbackDetails({
@@ -46,7 +50,7 @@ export function FeedbackDetails({
       <PageFrame>
         <DestinationUnavailable
           backHref={`/projects/${projectId}/feedback`}
-          backLabel="Back to Feedback"
+          backLabel="Quay lại phản hồi"
         />
       </PageFrame>
     );
@@ -55,23 +59,23 @@ export function FeedbackDetails({
   const metadataPane = (
     <Stack gap="sm">
       <Badge variant="light" color="gray" style={{ alignSelf: "flex-start" }}>
-        {disposition}
+        {feedbackDispositionLabels[disposition]}
       </Badge>
-      <Text size="sm">Next actor: {item.nextActor}</Text>
+      <Text size="sm">Người xử lý tiếp theo: {item.nextActor}</Text>
     </Stack>
   );
 
   return (
     <PageFrame
       pane={metadataPane}
-      paneLabel="Feedback details"
+      paneLabel="Chi tiết phản hồi"
       paneNarrow="sheet"
       header={
         <PageHeader
           title={item.title}
           description={`${item.id} · ${application.name}`}
           breadcrumbs={[
-            { title: "Feedback", href: `/projects/${projectId}/feedback` },
+            { title: "Phản hồi", href: `/projects/${projectId}/feedback` },
             { title: item.id },
           ]}
         />
@@ -93,10 +97,10 @@ export function FeedbackDetails({
         <Divider />
         <Stack gap="md">
           <Title order={2} size="h3">
-            Reviewer disposition
+            Kết quả xem xét
           </Title>
           <Alert color="blue">
-            Acknowledgement is not a promise to change the product.
+            Tiếp nhận phản hồi không đồng nghĩa với cam kết thay đổi sản phẩm.
           </Alert>
           <Group gap="sm">
             {(
@@ -113,13 +117,13 @@ export function FeedbackDetails({
                 disabled={!mounted}
                 onClick={() => setDisposition(value)}
               >
-                {value}
+                {feedbackDispositionLabels[value]}
               </Button>
             ))}
           </Group>
           <Textarea
             disabled={!mounted}
-            label="Reason the sender can read"
+            label="Lý do hiển thị cho người gửi"
             rows={3}
             value={reason}
             onChange={(event) => setReason(event.currentTarget.value)}
@@ -127,9 +131,13 @@ export function FeedbackDetails({
           <Button
             style={{ alignSelf: "flex-start" }}
             disabled={!mounted || !reason.trim()}
-            onClick={() => setNotice(`Disposition recorded as ${disposition}.`)}
+            onClick={() =>
+              setNotice(
+                `Đã ghi nhận kết quả: ${feedbackDispositionLabels[disposition]}.`,
+              )
+            }
           >
-            Record disposition
+            Ghi nhận kết quả xem xét
           </Button>
         </Stack>
       </Stack>

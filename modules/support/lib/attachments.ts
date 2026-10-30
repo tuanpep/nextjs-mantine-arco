@@ -8,15 +8,25 @@ export const evidenceStatuses = [
 ] as const;
 export type EvidenceStatus = (typeof evidenceStatuses)[number];
 
+export const evidenceStatusLabels: Record<EvidenceStatus, string> = {
+  Selected: "Đã chọn",
+  Uploading: "Đang tải lên",
+  Scanning: "Đang quét",
+  Ready: "Sẵn sàng",
+  Rejected: "Bị từ chối",
+  Failed: "Thất bại",
+};
+
 export type EvidenceAttachment = {
   id: string;
   name: string;
   sizeLabel: string;
   status: EvidenceStatus;
+  error?: string;
 };
 
 export const evidencePolicy =
-  "PNG, JPG, or PDF · up to 5 files · 10 MB each · scanned before anyone can download.";
+  "PNG, JPG hoặc PDF · tối đa 5 tệp · mỗi tệp tối đa 10 MB · được quét trước khi tải xuống.";
 
 const allowedExtensions = [".png", ".jpg", ".jpeg", ".pdf"];
 
@@ -29,10 +39,10 @@ export function formatFileSize(bytes: number): string {
 export function validateEvidenceFile(file: File): string | null {
   const lower = file.name.toLowerCase();
   if (!allowedExtensions.some((ext) => lower.endsWith(ext))) {
-    return "Use PNG, JPG, or PDF only.";
+    return "Chỉ chấp nhận tệp PNG, JPG hoặc PDF.";
   }
   if (file.size > 10 * 1024 * 1024) {
-    return "Each file must be 10 MB or smaller.";
+    return "Mỗi tệp không được vượt quá 10 MB.";
   }
   return null;
 }

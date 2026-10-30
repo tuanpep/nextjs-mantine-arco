@@ -1,5 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { campaignReducer, initialCampaign } from "./model";
+import {
+  campaignReducer,
+  defectStatusLabels,
+  initialCampaign,
+  resultLabels,
+  severityOptions,
+} from "./model";
+
+it("translates display labels without changing internal enum values", () => {
+  expect(resultLabels).toEqual({
+    "Not run": "Chưa chạy",
+    Pass: "Đạt",
+    Fail: "Không đạt",
+    Blocked: "Bị chặn",
+  });
+  expect(defectStatusLabels).toEqual({
+    Open: "Đang mở",
+    Retesting: "Đang kiểm thử lại",
+    Resolved: "Đã xử lý",
+  });
+  expect(severityOptions).toEqual([
+    { value: "Critical", label: "Nghiêm trọng" },
+    { value: "Major", label: "Cao" },
+    { value: "Minor", label: "Thấp" },
+  ]);
+});
 
 describe("campaign results", () => {
   it("records results without an acceptance decision", () => {

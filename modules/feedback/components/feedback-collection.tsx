@@ -22,7 +22,11 @@ import { ModuleTabs } from "@/modules/ui/components/module-tabs";
 import { PageFrame } from "@/modules/ui/components/page-frame";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-import { feedbackItems, type FeedbackDisposition } from "../lib/fixtures";
+import {
+  feedbackDispositionLabels,
+  feedbackItems,
+  type FeedbackDisposition,
+} from "../lib/fixtures";
 import { feedbackSearchParams, type FeedbackView } from "../lib/search-params";
 
 const needsReview: FeedbackDisposition[] = [
@@ -44,7 +48,10 @@ export function FeedbackCollection({ projectId }: { projectId: string }) {
   if (!application) {
     return (
       <PageFrame>
-        <DestinationUnavailable backHref="/" backLabel="Back to projects" />
+        <DestinationUnavailable
+          backHref="/"
+          backLabel="Quay lại danh sách dự án"
+        />
       </PageFrame>
     );
   }
@@ -68,10 +75,10 @@ export function FeedbackCollection({ projectId }: { projectId: string }) {
     <PageFrame
       header={
         <PageHeader
-          title="Feedback"
+          title="Phản hồi"
           breadcrumbs={[
-            { title: "Overview", href: `/projects/${projectId}` },
-            { title: "Feedback", href: `/projects/${projectId}/feedback` },
+            { title: "Tổng quan", href: `/projects/${projectId}` },
+            { title: "Phản hồi", href: `/projects/${projectId}/feedback` },
           ]}
           actions={
             <Button
@@ -79,12 +86,12 @@ export function FeedbackCollection({ projectId }: { projectId: string }) {
               href={`/projects/${projectId}/feedback/new`}
               leftSection={<IconPlus size={16} />}
             >
-              Share feedback
+              Chia sẻ phản hồi
             </Button>
           }
         >
           <ModuleTabs
-            ariaLabel="Feedback views"
+            ariaLabel="Chế độ xem phản hồi"
             value={filters.view}
             onChange={(value) => {
               const view = feedbackSearchParams.view.parse(value);
@@ -93,15 +100,15 @@ export function FeedbackCollection({ projectId }: { projectId: string }) {
             items={[
               {
                 value: "needs-review",
-                label: "Needs review",
+                label: "Cần xem xét",
                 count: needsReviewCount,
               },
               {
                 value: "acknowledged",
-                label: "Acknowledged",
+                label: "Đã tiếp nhận",
                 count: acknowledgedCount,
               },
-              { value: "all", label: "All", count: scoped.length },
+              { value: "all", label: "Tất cả", count: scoped.length },
             ]}
           />
         </PageHeader>
@@ -109,17 +116,17 @@ export function FeedbackCollection({ projectId }: { projectId: string }) {
     >
       <Paper withBorder style={{ overflow: "hidden" }}>
         <CollectionToolbar
-          searchLabel="Search feedback"
-          searchPlaceholder="Search by title or observation"
+          searchLabel="Tìm kiếm phản hồi"
+          searchPlaceholder="Tìm theo tiêu đề hoặc nội dung quan sát"
           searchValue={filters.q}
           onSearchChange={(value) => void setFilters({ q: value })}
-          countLabel={`${visible.length} observations`}
+          countLabel={`${visible.length} phản hồi`}
         />
         {visible.length === 0 ? (
           <CollectionEmpty
             icon={<IconMessageCircle />}
-            title="No matching feedback"
-            actionLabel="Clear search"
+            title="Không có phản hồi phù hợp"
+            actionLabel="Xóa tìm kiếm"
             onAction={() => void setFilters({ q: "" })}
           />
         ) : (
@@ -142,7 +149,7 @@ export function FeedbackCollection({ projectId }: { projectId: string }) {
                   {item.id}
                 </Text>
                 <Badge variant="light" color="gray">
-                  {item.disposition}
+                  {feedbackDispositionLabels[item.disposition]}
                 </Badge>
               </Group>
               <Title order={2} size="sm" mt={4}>
@@ -154,7 +161,7 @@ export function FeedbackCollection({ projectId }: { projectId: string }) {
                 </Text>
               </Tooltip>
               <Text size="xs" c="dimmed" mt={6}>
-                Next actor: {item.nextActor}
+                Người xử lý tiếp theo: {item.nextActor}
               </Text>
             </Box>
           ))

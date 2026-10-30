@@ -13,6 +13,7 @@ test("Vietnamese default, keyboard switching, persistence, and unchanged URLs", 
   ).toHaveAttribute("aria-current", "page");
 
   const selector = page.getByRole("combobox", { name: "Ngôn ngữ" });
+  await expect(selector).toBeEnabled();
   await selector.focus();
   await expect(selector).toBeFocused();
   await page.keyboard.press("ArrowDown");
@@ -35,7 +36,9 @@ test("Vietnamese default, keyboard switching, persistence, and unchanged URLs", 
   await page.getByRole("combobox", { name: "Language" }).selectOption("vi");
   await expect(page.locator("html")).toHaveAttribute("lang", "vi");
   await expect(
-    page.getByRole("link", { name: "Ý tưởng", exact: true }),
+    page
+      .getByRole("navigation", { name: "Điều hướng chính" })
+      .getByRole("link", { name: "Ý tưởng", exact: true }),
   ).toBeVisible();
 });
 

@@ -28,6 +28,7 @@ export type PageHeaderProps = {
   /** @deprecated Prefer breadcrumbs. Kept during migration. */
   parentLabel?: string;
   onParentClick?: () => void;
+  onNavigate?: (event: { preventDefault: () => void }) => void;
   children?: ReactNode;
 };
 
@@ -39,6 +40,7 @@ export function PageHeader({
   parentHref,
   parentLabel,
   onParentClick,
+  onNavigate,
   children,
 }: PageHeaderProps) {
   const crumbTrail =
@@ -55,6 +57,7 @@ export function PageHeader({
                 key={`${crumb.title}-${index}`}
                 component={Link}
                 href={crumb.href}
+                onNavigate={onNavigate}
                 size="sm"
                 c={isLast ? undefined : "dimmed"}
                 aria-current={isLast ? "page" : undefined}

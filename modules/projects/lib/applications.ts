@@ -14,14 +14,14 @@ export const applications: Application[] = [
     name: "Beacon Portal",
     initials: "BP",
     owner: "Product Services",
-    description: "Internal product access",
+    description: "Truy cập sản phẩm nội bộ",
   },
   {
     id: "orchid-reports",
     name: "Orchid Reports",
     initials: "OR",
     owner: "Business Analytics",
-    description: "Reporting and scheduled exports",
+    description: "Báo cáo và xuất dữ liệu theo lịch",
   },
 ];
 

@@ -14,15 +14,22 @@ import {
   Title,
 } from "@mantine/core";
 import { IconMessageCircle } from "@tabler/icons-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMounted } from "@mantine/hooks";
+import Link from "next/link";
 
 import { DetailsReadout } from "@/lib/form-details";
 import { PageFrame } from "@/modules/ui/components/page-frame";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { triageDispositionLabels, type SupportRequest } from "../lib/fixtures";
+import {
+  nextActorLabels,
+  retestResultLabels,
+  triageDispositionLabels,
+  type SupportRequest,
+} from "../lib/fixtures";
+import { evidenceStatusLabels } from "../lib/attachments";
 import { intakeReadoutRows, misrouteTargetLabels } from "../lib/intake-fields";
-import { priorities, type Priority } from "../lib/priority";
+import { priorities, priorityLabels, type Priority } from "../lib/priority";
 import { requestTypeLabels } from "../lib/request-catalog";
 import { getApplication } from "@/modules/projects/lib/applications";
 import {
@@ -70,14 +77,19 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
   const [result, setResult] = useState<"Pass" | "Fail" | "Unable">("Pass");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [reopening, setReopening] = useState(false);
+  const responseHeading = useRef<HTMLHeadingElement>(null);
+  const needsResponse =
+    item.status === "Waiting for sender" ||
+    item.status === "Waiting for retest";
   const actionTitle =
     item.status === "Waiting for retest"
-      ? "Report your retest result"
+      ? "Báo kết quả kiểm tra lại"
       : item.status === "Resolved"
-        ? "Need to reopen this request?"
+        ? "Cần mở lại yêu cầu này?"
         : item.status === "Waiting for sender"
-          ? "Reply to the team"
-          : "Add an update";
+          ? "Phản hồi cho nhóm"
+          : "Thêm cập nhật";
 
   function submitResponse(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -87,32 +99,33 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
     ) {
       setError(
         item.status === "Resolved"
-          ? "Explain why you need to reopen this request."
-          : "Add a note before confirming.",
+          ? "Giải thích lý do cần mở lại yêu cầu này."
+          : "Thêm ghi chú trước khi xác nhận.",
       );
       return;
     }
     if (item.status === "Resolved") {
       respond(item.id, { kind: "reopen", text });
       setNotice(
-        `Reopened. The prior official outcome is retained below. ${item.handler} will review your reason.`,
+        `Đã mở lại. Kết quả chính thức trước đó được giữ bên dưới. ${item.handler} sẽ xem xét lý do của bạn.`,
       );
     } else if (item.status === "Waiting for retest") {
       respond(item.id, { kind: "retest", result, text });
       setNotice(
-        "Retest result recorded. The handler has the next action. This does not resolve the request or approve UAT.",
+        "Đã ghi nhận kết quả kiểm tra lại. Người xử lý sẽ thực hiện bước tiếp theo. Việc này không giải quyết yêu cầu hoặc phê duyệt UAT.",
       );
     } else if (item.status === "Waiting for sender") {
       respond(item.id, { kind: "reply", text });
       setNotice(
-        "Reply added. The handler has the next action. Your reply is not a resolution.",
+        "Đã thêm phản hồi. Người xử lý sẽ thực hiện bước tiếp theo. Phản hồi của bạn không phải kết quả giải quyết.",
       );
     } else {
       respond(item.id, { kind: "comment", text });
-      setNotice("Update added. The current responsibility has not changed.");
+      setNotice("Đã thêm cập nhật. Trách nhiệm hiện tại không thay đổi.");
     }
     setText("");
     setError("");
+    setReopening(false);
   }
 
   const metadataPane = (
@@ -122,7 +135,7 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
         <Group gap="xs">
           <Badge variant="light">{requestTypeLabels[item.requestType]}</Badge>
           <Badge variant="light" color="grape">
-            Priority {item.priority}
+            Mức ưu tiên {priorityLabels[item.priority]}
           </Badge>
           {item.lastDisposition && (
             <Badge variant="outline">
@@ -131,7 +144,7 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
           )}
           {item.autoClosePaused && (
             <Badge variant="outline" color="orange">
-              Auto-close paused
+              Đã tạm dừng tự động đóng
             </Badge>
           )}
         </Group>
@@ -139,11 +152,11 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
       <Divider />
       <Stack gap="sm">
         <Title order={2} size="h4">
-          Current responsibility
+          Trách nhiệm hiện tại
         </Title>
         <div>
           <Text size="sm" c="dimmed">
-            Responsible team
+            Nhóm phụ trách
           </Text>
           <Text fw={600} size="sm">
             {item.responsibleTeam}
@@ -151,24 +164,24 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
         </div>
         <div>
           <Text size="sm" c="dimmed">
-            Individual handler
+            Người xử lý
           </Text>
           <Text fw={600} size="sm">
-            {item.handler ?? "Unclaimed"}
+            {item.handler ?? "Chưa tiếp nhận"}
           </Text>
         </div>
         <div>
           <Text size="sm" c="dimmed">
-            Next actor
+            Bên thực hiện tiếp theo
           </Text>
           <Text fw={600} size="sm">
-            {item.nextActor}
+            {nextActorLabels[item.nextActor]}
           </Text>
         </div>
         {item.engTrackerId && (
           <div>
             <Text size="sm" c="dimmed">
-              Engineering tracker
+              Công việc kỹ thuật
             </Text>
             <Text fw={600} size="sm">
               {item.engTrackerId}
@@ -178,7 +191,7 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
         {item.relatedRequestId && (
           <div>
             <Text size="sm" c="dimmed">
-              Related request
+              Yêu cầu liên quan
             </Text>
             <Text fw={600} size="sm">
               {item.relatedRequestId}
@@ -188,7 +201,7 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
         {item.misrouteTarget && (
           <div>
             <Text size="sm" c="dimmed">
-              Redirected to
+              Đã chuyển đến
             </Text>
             <Text fw={600} size="sm">
               {misrouteTargetLabels[item.misrouteTarget]}
@@ -197,15 +210,18 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
         )}
         <div>
           <Text size="sm" fw={600}>
-            Next action
+            Bước tiếp theo
           </Text>
           <Text size="sm">{item.nextAction}</Text>
         </div>
         {item.status !== "Resolved" && (
           <Select
             disabled={!mounted}
-            label="Adjust priority"
-            data={priorities.map((value) => ({ value, label: value }))}
+            label="Điều chỉnh mức ưu tiên"
+            data={priorities.map((value) => ({
+              value,
+              label: priorityLabels[value],
+            }))}
             value={item.priority}
             allowDeselect={false}
             onChange={(value) => {
@@ -214,7 +230,9 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
                 kind: "set-priority",
                 priority: value as Priority,
               });
-              setNotice(`Priority set to ${value}.`);
+              setNotice(
+                `Đã đặt mức ưu tiên: ${priorityLabels[value as Priority]}.`,
+              );
             }}
           />
         )}
@@ -225,14 +243,14 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
   return (
     <PageFrame
       pane={metadataPane}
-      paneLabel="Request details"
+      paneLabel="Chi tiết yêu cầu"
       paneNarrow="sheet"
       header={
         <PageHeader
           title={item.summary}
-          description={`${item.id} · Submitted by ${item.sender}`}
+          description={`${item.id} · Người gửi: ${item.sender}`}
           breadcrumbs={[
-            { title: "Support", href: supportPath(item.applicationId) },
+            { title: "Hỗ trợ", href: supportPath(item.applicationId) },
             { title: item.id },
           ]}
         />
@@ -244,25 +262,163 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
             {notice}
           </Alert>
         )}
+        <Stack
+          component="section"
+          aria-label="Bước tiếp theo của yêu cầu"
+          gap="sm"
+        >
+          <Title order={2} size="h3">
+            {item.status === "Resolved"
+              ? "Yêu cầu đã có kết quả"
+              : needsResponse
+                ? "Bạn cần thực hiện bước tiếp theo"
+                : "Bên thực hiện tiếp theo: " + nextActorLabels[item.nextActor]}
+          </Title>
+          <Text>
+            {item.status === "Resolved"
+              ? "Bạn không cần phản hồi thêm. Nếu vấn đề vẫn còn, hãy mở lại yêu cầu và nêu lý do."
+              : item.nextAction}
+          </Text>
+          {needsResponse && (
+            <Button
+              variant="light"
+              style={{ alignSelf: "flex-start" }}
+              onClick={() => responseHeading.current?.focus()}
+            >
+              {item.status === "Waiting for retest"
+                ? "Đến phần kiểm tra lại"
+                : "Đến phần phản hồi"}
+            </Button>
+          )}
+          {item.status === "Resolved" && !reopening && (
+            <Button
+              variant="light"
+              disabled={!mounted}
+              style={{ alignSelf: "flex-start" }}
+              onClick={() => setReopening(true)}
+            >
+              Mở lại yêu cầu
+            </Button>
+          )}
+          <Text size="sm" c="dimmed">
+            Đây là dữ liệu minh họa trong phiên hiện tại. Không có thông báo
+            thực được gửi; tải lại ứng dụng sẽ đặt lại thay đổi.
+          </Text>
+        </Stack>
+        {(item.status !== "Resolved" || reopening) && (
+          <form onSubmit={submitResponse}>
+            <Stack>
+              <Title ref={responseHeading} tabIndex={-1} order={2} size="h3">
+                {actionTitle}
+              </Title>
+              <Text size="sm" c="dimmed">
+                {item.status === "Resolved"
+                  ? "Mở lại sẽ chuyển bước tiếp theo cho người xử lý và giữ kết quả trước đó trong lịch sử."
+                  : item.status === "Waiting for retest"
+                    ? "Ghi nhận kết quả để người xử lý xem xét. Kết quả đạt không tự giải quyết yêu cầu."
+                    : item.status === "Waiting for sender"
+                      ? "Gửi thông tin được yêu cầu sẽ chuyển bước tiếp theo cho người xử lý."
+                      : "Cập nhật chỉ bổ sung ngữ cảnh, không thay đổi trạng thái hoặc bên thực hiện tiếp theo."}
+              </Text>
+              <Text size="sm" c="dimmed">
+                Chỉ dùng nội dung hư cấu. Phần trao đổi dành cho người tham gia
+                yêu cầu theo phạm vi được phép, không phải ghi chú riêng tư. Tên
+                minh họa không xác nhận danh tính hoặc quyền truy cập.
+              </Text>
+              {item.status === "Waiting for retest" && (
+                <Select
+                  disabled={!mounted}
+                  label="Kết quả kiểm tra lại"
+                  allowDeselect={false}
+                  data={Object.entries(retestResultLabels).map(
+                    ([value, label]) => ({ value, label }),
+                  )}
+                  value={result}
+                  onChange={(value) => {
+                    if (
+                      value === "Pass" ||
+                      value === "Fail" ||
+                      value === "Unable"
+                    )
+                      setResult(value);
+                  }}
+                />
+              )}
+              <Textarea
+                disabled={!mounted}
+                autoFocus={reopening}
+                label={
+                  item.status === "Resolved"
+                    ? "Lý do mở lại"
+                    : item.status === "Waiting for retest"
+                      ? "Ghi chú kiểm tra lại"
+                      : item.status === "Waiting for sender"
+                        ? "Phản hồi của bạn"
+                        : "Cập nhật của bạn"
+                }
+                required={
+                  item.status !== "Waiting for retest" || result !== "Pass"
+                }
+                rows={3}
+                value={text}
+                onChange={(event) => {
+                  setText(event.currentTarget.value);
+                  setError("");
+                }}
+                error={error}
+              />
+              <Group>
+                <Button type="submit" disabled={!mounted}>
+                  {item.status === "Resolved"
+                    ? "Mở lại"
+                    : item.status === "Waiting for retest"
+                      ? "Xác nhận kiểm tra lại"
+                      : item.status === "Waiting for sender"
+                        ? "Gửi phản hồi"
+                        : "Thêm cập nhật"}
+                </Button>
+                {reopening && (
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      setReopening(false);
+                      setError("");
+                    }}
+                  >
+                    Hủy mở lại
+                  </Button>
+                )}
+              </Group>
+            </Stack>
+          </form>
+        )}
+        {item.status === "Resolved" && (
+          <Text size="sm" c="dimmed">
+            Trao đổi chỉ đọc khi yêu cầu đã giải quyết. Cần mở lại rõ ràng trước
+            khi tiếp tục xử lý. Hủy mở lại giữ lý do chưa gửi trong trang này.
+          </Text>
+        )}
         <SupportHandlerTriage item={item} onNotice={setNotice} />
         <Stack gap="md">
           <Title order={2} size="h3">
-            Initial context
+            Thông tin ban đầu
           </Title>
           <DetailsReadout rows={intakeReadoutRows(item)} />
           <div>
             <Text fw={600} size="sm">
-              Evidence
+              Minh chứng
             </Text>
             {item.attachments.length === 0 ? (
               <Text size="sm" c="dimmed">
-                None attached
+                Không có tệp đính kèm
               </Text>
             ) : (
               item.attachments.map((file) => (
                 <Text key={file.id} size="sm">
-                  {file.name} · {file.sizeLabel} · {file.status}
-                  {file.status !== "Ready" ? " · not downloadable" : ""}
+                  {file.name} · {file.sizeLabel} ·{" "}
+                  {evidenceStatusLabels[file.status]}
+                  {file.status !== "Ready" ? " · chưa thể tải xuống" : ""}
+                  {file.error ? ` · ${file.error}` : ""}
                 </Text>
               ))
             )}
@@ -273,7 +429,7 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
             <Divider />
             <Stack gap="sm">
               <Title order={2} size="h3">
-                Rating
+                Đánh giá
               </Title>
               {item.csat === null ? (
                 <Group>
@@ -284,7 +440,7 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
                       disabled={!mounted}
                       onClick={() => {
                         respond(item.id, { kind: "csat", score });
-                        setNotice(`Thanks. Score ${score} saved.`);
+                        setNotice(`Cảm ơn bạn. Đã lưu điểm ${score}.`);
                       }}
                     >
                       {score}
@@ -292,7 +448,7 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
                   ))}
                 </Group>
               ) : (
-                <Text size="sm">You rated this {item.csat} out of 5.</Text>
+                <Text size="sm">Bạn đã đánh giá {item.csat} trên 5 điểm.</Text>
               )}
             </Stack>
           </>
@@ -300,30 +456,30 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
         <Divider />
         <Stack gap="sm">
           <Title order={2} size="h3">
-            Official outcome
+            Kết quả chính thức
           </Title>
           {item.outcomes.length === 0 ? (
             <Text c="dimmed" size="sm">
-              No official outcome recorded.
+              Chưa ghi nhận kết quả chính thức.
             </Text>
           ) : (
             item.outcomes.map((outcome, index) => (
               <Stack key={index} gap="sm">
                 <Text fw={600}>
                   {outcome.superseded
-                    ? "Prior outcome · superseded on reopening"
-                    : "Current official outcome"}
+                    ? "Kết quả trước đó · đã được thay thế khi mở lại"
+                    : "Kết quả chính thức hiện tại"}
                 </Text>
                 <Text>{outcome.summary}</Text>
                 <div>
                   <Text size="sm" fw={600}>
-                    What was done
+                    Công việc đã thực hiện
                   </Text>
                   <Text size="sm">{outcome.work}</Text>
                 </div>
                 <div>
                   <Text size="sm" fw={600}>
-                    Limitations
+                    Giới hạn
                   </Text>
                   <Text size="sm">{outcome.limitations}</Text>
                 </div>
@@ -336,11 +492,11 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
           <Group>
             <IconMessageCircle size={20} />
             <Title order={2} size="h3">
-              Conversation
+              Trao đổi
             </Title>
           </Group>
           {item.conversation.length === 0 ? (
-            <Text c="dimmed">No replies yet.</Text>
+            <Text c="dimmed">Chưa có phản hồi.</Text>
           ) : (
             item.conversation.map((message, index) => (
               <Stack key={index} gap="xs">
@@ -373,60 +529,14 @@ function SupportDetailContent({ item }: { item: SupportRequest }) {
           )}
         </Stack>
         <Divider />
-        <form onSubmit={submitResponse}>
-          <Stack>
-            <Title order={2} size="h3">
-              {actionTitle}
-            </Title>
-            {item.status === "Waiting for retest" && (
-              <Select
-                label="Retest result"
-                allowDeselect={false}
-                data={["Pass", "Fail", "Unable"]}
-                value={result}
-                onChange={(value) => {
-                  if (
-                    value === "Pass" ||
-                    value === "Fail" ||
-                    value === "Unable"
-                  )
-                    setResult(value);
-                }}
-              />
-            )}
-            <Textarea
-              disabled={!mounted}
-              label={
-                item.status === "Resolved"
-                  ? "Reason for reopening"
-                  : item.status === "Waiting for retest"
-                    ? "Retest note"
-                    : item.status === "Waiting for sender"
-                      ? "Your reply"
-                      : "Your update"
-              }
-              required={
-                item.status !== "Waiting for retest" || result !== "Pass"
-              }
-              rows={3}
-              value={text}
-              onChange={(event) => {
-                setText(event.currentTarget.value);
-                setError("");
-              }}
-              error={error}
-            />
-            <Button type="submit" style={{ alignSelf: "flex-start" }}>
-              {item.status === "Resolved"
-                ? "Reopen"
-                : item.status === "Waiting for retest"
-                  ? "Confirm retest"
-                  : item.status === "Waiting for sender"
-                    ? "Send reply"
-                    : "Add update"}
-            </Button>
-          </Stack>
-        </form>
+        <Button
+          component={Link}
+          href={supportPath(item.applicationId)}
+          variant="default"
+          style={{ alignSelf: "flex-start" }}
+        >
+          Quay lại Hỗ trợ
+        </Button>
       </Stack>
     </PageFrame>
   );

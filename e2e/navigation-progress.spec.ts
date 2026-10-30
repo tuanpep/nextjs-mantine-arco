@@ -4,9 +4,12 @@ test("navigation shows progress until the destination responds", async ({
   page,
 }) => {
   await page.goto("/projects/beacon-portal/support");
+  await expect(
+    page.getByRole("button", { name: "Ẩn thanh bên" }),
+  ).toBeEnabled();
   const destination = page
-    .getByRole("navigation", { name: "Main navigation" })
-    .getByRole("link", { name: "Ideas", exact: true });
+    .getByRole("navigation", { name: "Điều hướng chính" })
+    .getByRole("link", { name: "Ý tưởng", exact: true });
 
   let releaseNavigation = () => {};
   const navigationReleased = new Promise<void>((resolve) => {
@@ -41,8 +44,8 @@ test("clicking the current route does not leave a progress bar", async ({
 }) => {
   await page.goto("/projects/beacon-portal/support");
   await page
-    .getByRole("navigation", { name: "Main navigation" })
-    .getByRole("link", { name: "Support", exact: true })
+    .getByRole("navigation", { name: "Điều hướng chính" })
+    .getByRole("link", { name: "Hỗ trợ", exact: true })
     .click();
 
   await expect(page).toHaveURL("/projects/beacon-portal/support");

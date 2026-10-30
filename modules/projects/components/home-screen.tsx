@@ -11,7 +11,7 @@ import { applicationPath, applications } from "../lib/applications";
 
 export function HomeScreen() {
   return (
-    <PageFrame header={<PageHeader title="Projects" />}>
+    <PageFrame header={<PageHeader title="Dự án" />}>
       <Paper withBorder style={{ overflow: "hidden" }}>
         <Text
           size="xs"
@@ -20,7 +20,7 @@ export function HomeScreen() {
           py="xs"
           bg="var(--mantine-color-default-hover)"
         >
-          {applications.length} projects
+          {applications.length} dự án
         </Text>
         {applications.map((application) => (
           <Box

@@ -47,7 +47,7 @@ export function SupportProvider({ children }: { children: ReactNode }) {
 
   function handle(id: string, action: HandlerAction) {
     const item = requests.find((request) => request.id === id);
-    if (!item) throw new Error("Issue not found.");
+    if (!item) throw new Error("Không tìm thấy yêu cầu.");
     const updated = applyHandlerAction(item, action);
     setRequests((current) =>
       current.map((request) => (request.id === id ? updated : request)),
@@ -64,6 +64,6 @@ export function SupportProvider({ children }: { children: ReactNode }) {
 export function useSupport() {
   const store = useContext(SupportContextStore);
   if (!store)
-    throw new Error("Support screens must be wrapped in SupportProvider.");
+    throw new Error("Màn hình hỗ trợ phải nằm trong SupportProvider.");
   return store;
 }

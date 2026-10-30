@@ -6,7 +6,7 @@ import type { DetailsReadoutRow } from "./types";
 
 export function DetailsReadout({
   rows,
-  emptyLabel = "Not provided",
+  emptyLabel = "Chưa cung cấp",
   omitEmpty = false,
 }: {
   rows: DetailsReadoutRow[];

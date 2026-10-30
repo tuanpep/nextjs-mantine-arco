@@ -26,7 +26,7 @@ export function PageFrame({
   header,
   children,
   pane,
-  paneLabel = "Details",
+  paneLabel = "Chi tiết",
   panePosition = "end",
   paneNarrow = "stack",
   paneIndexOpen = false,
@@ -171,6 +171,7 @@ export function PageFrame({
           onClose={closeSheet}
           position="right"
           title={paneLabel}
+          closeButtonProps={{ "aria-label": "Đóng chi tiết" }}
           size={isSmallest ? "100%" : 400}
         >
           {pane}

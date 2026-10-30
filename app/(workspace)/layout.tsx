@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { Suspense, type ReactNode } from "react";
 
 import { WorkspaceShell } from "@/modules/projects/components/workspace-shell";
+import { ProjectSettingsProvider } from "@/modules/projects/components/project-settings-provider";
 import {
   parseSidebarCollapsed,
   sidebarCollapsedCookie,
@@ -21,11 +22,13 @@ export default async function WorkspaceLayout({
 
   return (
     <SupportProvider>
-      <Suspense fallback={<WorkspaceShellSkeleton />}>
-        <WorkspaceShell initialDesktopCollapsed={initialDesktopCollapsed}>
-          {children}
-        </WorkspaceShell>
-      </Suspense>
+      <ProjectSettingsProvider>
+        <Suspense fallback={<WorkspaceShellSkeleton />}>
+          <WorkspaceShell initialDesktopCollapsed={initialDesktopCollapsed}>
+            {children}
+          </WorkspaceShell>
+        </Suspense>
+      </ProjectSettingsProvider>
     </SupportProvider>
   );
 }

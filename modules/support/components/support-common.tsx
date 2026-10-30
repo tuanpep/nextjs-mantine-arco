@@ -11,10 +11,11 @@ import {
 import {
   supportProjectId,
   supportStatusColor,
+  supportStatusLabels,
   type SupportRequest,
   type SupportStatus,
 } from "../lib/fixtures";
-import { priorityColor, type Priority } from "../lib/priority";
+import { priorityColor, priorityLabels, type Priority } from "../lib/priority";
 
 export const supportBasePath = `/projects/${supportProjectId}/support`;
 
@@ -25,13 +26,13 @@ export function supportPath(applicationId: string | null) {
 export function SupportUnavailable() {
   return (
     <Stack align="flex-start" py="xl">
-      <Title order={1}>Support unavailable</Title>
+      <Title order={1}>Không thể truy cập hỗ trợ</Title>
       <Text c="dimmed">
-        This destination is not available. It may not exist or you may not have
-        access.
+        Không thể truy cập nội dung này. Nội dung có thể không tồn tại hoặc bạn
+        không có quyền truy cập.
       </Text>
       <Anchor component={Link} href={projectSupportPath(DEFAULT_PROJECT_ID)}>
-        Back to Support
+        Quay lại hỗ trợ
       </Anchor>
     </Stack>
   );
@@ -40,7 +41,7 @@ export function SupportUnavailable() {
 export function SupportStatusBadge({ status }: { status: SupportStatus }) {
   return (
     <Badge variant="light" color={supportStatusColor[status]}>
-      {status}
+      {supportStatusLabels[status]}
     </Badge>
   );
 }
@@ -48,7 +49,7 @@ export function SupportStatusBadge({ status }: { status: SupportStatus }) {
 export function SupportPriorityBadge({ priority }: { priority: Priority }) {
   return (
     <Badge variant="light" color={priorityColor[priority]}>
-      {priority}
+      {priorityLabels[priority]}
     </Badge>
   );
 }
@@ -61,14 +62,14 @@ export function supportAttention(item: SupportRequest): {
 } {
   if (item.nextActor === "Sender") {
     return {
-      label: "Waiting on you",
+      label: "Chờ bạn phản hồi",
       waitingOnYou: true,
       detail: item.nextAction,
     };
   }
   if (item.status === "Unclaimed") {
     return {
-      label: "Unclaimed",
+      label: "Chưa tiếp nhận",
       waitingOnYou: false,
       detail: null,
     };
