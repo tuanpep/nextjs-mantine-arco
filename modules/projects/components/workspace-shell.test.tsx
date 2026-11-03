@@ -10,13 +10,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import messages from "@/messages/en.json";
 import vietnameseMessages from "@/messages/vi.json";
+import { PortalProvider } from "@/modules/portal/components/portal-provider";
 import { render } from "@/test-utils/render";
+
 import { WorkspaceShell } from "./workspace-shell";
-import { ProjectSettingsProvider } from "./project-settings-provider";
 
 const { push, route } = vi.hoisted(() => ({
   push: vi.fn(),
-  route: { pathname: "/projects/orchid-reports/support" },
+  route: { pathname: "/projects/orchid-reports/support/bugs" },
 }));
 vi.mock("next/navigation", () => ({
   usePathname: () => route.pathname,
@@ -27,35 +28,35 @@ vi.mock("@/lib/i18n/actions", () => ({ setLocale: vi.fn() }));
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
-  route.pathname = "/projects/orchid-reports/support";
+  route.pathname = "/projects/orchid-reports/support/bugs";
 });
 
-function renderShell() {
+function renderShell(locale: "en" | "vi" = "en") {
+  const catalog = locale === "vi" ? vietnameseMessages : messages;
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <ProjectSettingsProvider>
+    <NextIntlClientProvider locale={locale} messages={catalog}>
+      <PortalProvider>
         <WorkspaceShell>Workspace content</WorkspaceShell>
-      </ProjectSettingsProvider>
+      </PortalProvider>
     </NextIntlClientProvider>,
   );
 }
 
 describe("workspace navigation", () => {
   it("renders Vietnamese navigation and preserves the language selector", () => {
-    render(
-      <NextIntlClientProvider locale="vi" messages={vietnameseMessages}>
-        <ProjectSettingsProvider>
-          <WorkspaceShell>Nội dung không gian làm việc</WorkspaceShell>
-        </ProjectSettingsProvider>
-      </NextIntlClientProvider>,
-    );
+    renderShell("vi");
+    const navigation = screen.getByRole("navigation", {
+      name: "Điều hướng chính",
+    });
     expect(
-      screen.queryByRole("link", { name: "Dự án" }),
+      within(navigation).queryByRole("link", { name: "Dự án" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Tổng quan" })).toHaveAttribute(
-      "href",
-      "/projects/orchid-reports",
-    );
+    expect(
+      within(navigation).getByRole("link", { name: "Tổng quan" }),
+    ).toHaveAttribute("href", "/projects/orchid-reports");
+    expect(
+      within(navigation).getByRole("link", { name: "Báo cáo lỗi" }),
+    ).toHaveAttribute("href", "/projects/orchid-reports/support/bugs");
     expect(screen.getByRole("option", { name: "Tiếng Việt" })).toHaveValue(
       "vi",
     );
@@ -76,48 +77,55 @@ describe("workspace navigation", () => {
       hidden: true,
     });
     fireEvent.click(options[0]);
-    expect(push).toHaveBeenCalledWith("/projects/beacon-portal/support");
-    expect(screen.getByRole("link", { name: "Support" })).toHaveAttribute(
-      "href",
-      "/projects/orchid-reports/support",
-    );
-    expect(screen.getByRole("link", { name: "Feedback" })).toHaveAttribute(
-      "href",
-      "/projects/orchid-reports/feedback",
-    );
-    expect(screen.getByRole("link", { name: "Ideas" })).toHaveAttribute(
-      "href",
-      "/projects/orchid-reports/ideas",
-    );
-    expect(screen.getByRole("link", { name: "UAT" })).toHaveAttribute(
-      "href",
-      "/projects/orchid-reports/uat",
-    );
+    expect(push).toHaveBeenCalledWith("/projects/beacon-portal/support/bugs");
+    const navigation = screen.getByRole("navigation", {
+      name: "Main navigation",
+    });
+    expect(
+      within(navigation).getByRole("link", { name: "Bug Reports" }),
+    ).toHaveAttribute("href", "/projects/orchid-reports/support/bugs");
+    expect(
+      within(navigation).getByRole("link", { name: "Help" }),
+    ).toHaveAttribute("href", "/projects/orchid-reports/support/help");
+    expect(
+      within(navigation).getByRole("link", { name: "Feature Requests" }),
+    ).toHaveAttribute("href", "/projects/orchid-reports/ideas/features");
+    expect(
+      within(navigation).getByRole("link", { name: "Feedback" }),
+    ).toHaveAttribute("href", "/projects/orchid-reports/ideas/feedback");
+    expect(
+      within(navigation).getByRole("link", { name: "Guides" }),
+    ).toHaveAttribute("href", "/projects/orchid-reports/guides");
+    expect(
+      within(navigation).getByRole("link", { name: "Discussions" }),
+    ).toHaveAttribute("href", "/projects/orchid-reports/discussions");
+    expect(
+      within(navigation).getByRole("button", { name: "Support" }),
+    ).toHaveAttribute("aria-expanded", "true");
+    expect(
+      within(navigation).getByRole("button", { name: "Ideas" }),
+    ).toHaveAttribute("aria-expanded", "true");
     expect(
       screen.getByRole("button", { name: "Hide sidebar" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Project settings" }),
-    ).toHaveAttribute("href", "/projects/orchid-reports/settings");
-    expect(
-      screen.queryByRole("link", { name: "Projects" }),
+      within(navigation).queryByRole("link", { name: "Projects" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
-      "href",
-      "/projects/orchid-reports",
-    );
     expect(
-      screen.queryByRole("link", { name: "My requests" }),
+      within(navigation).queryByRole("link", { name: "Project settings" }),
     ).not.toBeInTheDocument();
+    expect(
+      within(navigation).getByRole("link", { name: "Overview" }),
+    ).toHaveAttribute("href", "/projects/orchid-reports");
     expect(
       screen.getByRole("link", { name: "Skip to content" }),
     ).toHaveAttribute("href", "#main-content");
     expect(document.getElementById("main-content")?.tagName).toBe("MAIN");
   });
 
-  it.each(["/", "/projects/unknown/support"])(
+  it.each(["/", "/projects/unknown/support/bugs"])(
     "shows only root navigation without a project at %s",
-    async (pathname) => {
+    (pathname) => {
       route.pathname = pathname;
       renderShell();
       const navigation = screen.getByRole("navigation", {
@@ -127,10 +135,7 @@ describe("workspace navigation", () => {
         within(navigation).getByRole("link", { name: "Projects" }),
       ).toHaveAttribute("href", "/");
       expect(within(navigation).getAllByRole("link")).toHaveLength(1);
-      expect(within(navigation).queryByRole("button")).not.toBeInTheDocument();
-      expect(
-        within(navigation).queryByText("Project work"),
-      ).not.toBeInTheDocument();
+      expect(within(navigation).queryByRole("group")).not.toBeInTheDocument();
       expect(
         within(navigation).queryByText("Beacon Portal"),
       ).not.toBeInTheDocument();

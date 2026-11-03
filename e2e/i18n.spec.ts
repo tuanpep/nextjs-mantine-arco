@@ -5,11 +5,11 @@ test("Vietnamese default, keyboard switching, persistence, and unchanged URLs", 
   context,
 }) => {
   await context.clearCookies();
-  await page.goto("/projects/beacon-portal/support?view=list");
+  await page.goto("/projects/beacon-portal/support/bugs");
   await expect(page.locator("html")).toHaveAttribute("lang", "vi");
   const navigation = page.getByRole("navigation", { name: "Điều hướng chính" });
   await expect(
-    navigation.getByRole("link", { name: "Hỗ trợ", exact: true }),
+    navigation.getByRole("link", { name: "Báo cáo lỗi", exact: true }),
   ).toHaveAttribute("aria-current", "page");
 
   const selector = page.getByRole("combobox", { name: "Ngôn ngữ" });
@@ -19,18 +19,18 @@ test("Vietnamese default, keyboard switching, persistence, and unchanged URLs", 
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
-  await expect(page).toHaveURL("/projects/beacon-portal/support?view=list");
+  await expect(page).toHaveURL("/projects/beacon-portal/support/bugs");
   await expect(
     page
       .getByRole("navigation", { name: "Main navigation" })
-      .getByRole("link", { name: "Support", exact: true }),
+      .getByRole("link", { name: "Bug Reports", exact: true }),
   ).toHaveAttribute("aria-current", "page");
   await page.reload();
   await expect(page.getByRole("combobox", { name: "Language" })).toHaveValue(
     "en",
   );
-  await page.getByRole("link", { name: "Ideas", exact: true }).click();
-  await expect(page).toHaveURL("/projects/beacon-portal/ideas");
+  await page.getByRole("link", { name: "Guides", exact: true }).click();
+  await expect(page).toHaveURL("/projects/beacon-portal/guides");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
   await page.getByRole("combobox", { name: "Language" }).selectOption("vi");
@@ -38,7 +38,7 @@ test("Vietnamese default, keyboard switching, persistence, and unchanged URLs", 
   await expect(
     page
       .getByRole("navigation", { name: "Điều hướng chính" })
-      .getByRole("link", { name: "Ý tưởng", exact: true }),
+      .getByRole("link", { name: "Hướng dẫn", exact: true }),
   ).toBeVisible();
 });
 
@@ -46,10 +46,9 @@ test("unsupported locale cookies fall back to Vietnamese", async ({
   page,
   context,
 }) => {
-  await context.addCookies([
-    { name: "DX_LOCALE", value: "fr", url: "http://localhost:4202" },
-  ]);
-  await page.goto("/projects/beacon-portal/support");
+  const baseURL = test.info().project.use.baseURL ?? "http://localhost:4202";
+  await context.addCookies([{ name: "DX_LOCALE", value: "fr", url: baseURL }]);
+  await page.goto("/projects/beacon-portal/support/bugs");
   await expect(page.locator("html")).toHaveAttribute("lang", "vi");
   await expect(page.getByRole("combobox", { name: "Ngôn ngữ" })).toHaveValue(
     "vi",
@@ -62,10 +61,10 @@ test("mobile selector remains accessible and failed changes can be retried", asy
 }) => {
   await context.clearCookies();
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/projects/beacon-portal/support");
+  await page.goto("/projects/beacon-portal/support/bugs");
   const selector = page.getByRole("combobox", { name: "Ngôn ngữ" });
   await expect(selector).toBeVisible();
-  await page.route("**/projects/beacon-portal/support", async (route) => {
+  await page.route("**/projects/beacon-portal/support/bugs", async (route) => {
     if (route.request().method() === "POST") {
       await route.abort();
     } else {
@@ -79,7 +78,7 @@ test("mobile selector remains accessible and failed changes can be retried", asy
   await expect(error).toBeVisible();
   await expect(selector).toBeEnabled();
   await expect(selector).toHaveValue("vi");
-  await page.unroute("**/projects/beacon-portal/support");
+  await page.unroute("**/projects/beacon-portal/support/bugs");
   await selector.selectOption("en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(error).toHaveCount(0);

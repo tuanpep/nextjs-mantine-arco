@@ -4,14 +4,20 @@ import {
   Accordion,
   ActionIcon,
   Alert,
+  Anchor,
   AppShell,
   Avatar,
   Badge,
   Breadcrumbs,
+  Burger,
   Button,
   Card,
   Checkbox,
+  CloseButton,
+  Combobox,
+  ComboboxPopover,
   Divider,
+  Drawer,
   Input,
   Loader,
   Menu,
@@ -33,6 +39,7 @@ import {
   defaultVariantColorsResolver,
   parseThemeColor,
   rem,
+  type AccordionProps,
   type CSSVariablesResolver,
   type MantineColorsTuple,
   type MantineTheme,
@@ -352,6 +359,11 @@ const controlVariables = (step: "light" | "dark") =>
         "--gl-breadcrumb-separator": neutral[400],
         "--gl-avatar-border": alpha.dark8,
         "--gl-nav-active": neutral[100],
+        "--gl-nav-fg": neutral[600],
+        "--gl-nav-fg-strong": neutral[950],
+        "--gl-nav-bg-hover": neutral[100],
+        "--gl-nav-bg-active": neutral[200],
+        "--gl-nav-indicator": orange[5],
       }
     : {
         "--gl-segment-selected-bg": neutral[300],
@@ -383,6 +395,11 @@ const controlVariables = (step: "light" | "dark") =>
         "--gl-breadcrumb-separator": neutral[400],
         "--gl-avatar-border": alpha.light8,
         "--gl-nav-active": neutral[700],
+        "--gl-nav-fg": neutral[200],
+        "--gl-nav-fg-strong": neutral[0],
+        "--gl-nav-bg-hover": neutral[800],
+        "--gl-nav-bg-active": neutral[950],
+        "--gl-nav-indicator": orange[3],
       };
 
 export const cssVariablesResolver: CSSVariablesResolver = () => ({
@@ -481,6 +498,33 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
 
 const heading = {
   fontWeight: "600",
+} as const;
+
+const overlaySurface = {
+  header: {
+    minHeight: rem(48),
+    borderBottom: `${rem(1)} solid var(--mantine-color-default-border)`,
+    backgroundColor: "var(--gl-main-bg)",
+  },
+  title: {
+    color: "var(--gl-text-heading)",
+    fontSize: rem(16),
+    fontWeight: 600,
+    lineHeight: 1.25,
+  },
+  body: {
+    paddingTop: rem(16),
+  },
+  content: {
+    backgroundColor: "var(--gl-main-bg)",
+  },
+} as const;
+
+const choiceLabel = {
+  color: "var(--mantine-color-text)",
+  fontSize: rem(14),
+  fontWeight: 400,
+  lineHeight: rem(16),
 } as const;
 
 export const theme = createTheme({
@@ -711,10 +755,30 @@ export const theme = createTheme({
         size: "xs",
         radius: "md",
       },
+      classNames: {
+        input: classes["choice-input"],
+      },
+      styles: {
+        root: {
+          "--label-offset-start": rem(8),
+          "--label-lh": rem(16),
+        },
+        label: choiceLabel,
+      },
     }),
     Radio: Radio.extend({
       defaultProps: {
         size: "xs",
+      },
+      classNames: {
+        radio: classes["choice-input"],
+      },
+      styles: {
+        root: {
+          "--label-offset-start": rem(8),
+          "--label-lh": rem(16),
+        },
+        label: choiceLabel,
       },
     }),
     Divider: Divider.extend({
@@ -750,11 +814,22 @@ export const theme = createTheme({
     Menu: Menu.extend({
       defaultProps: {
         shadow: "md",
+        radius: "lg",
       },
       styles: {
         item: {
           "--menu-item-hover": "var(--gl-action-hover)",
           borderRadius: "var(--mantine-radius-md)",
+          fontSize: rem(14),
+          fontWeight: 400,
+          padding: `${rem(8)} ${rem(8)}`,
+        },
+        label: {
+          fontSize: rem(12),
+          fontWeight: 600,
+        },
+        dropdown: {
+          backgroundColor: "var(--gl-main-bg)",
         },
       },
     }),
@@ -803,6 +878,66 @@ export const theme = createTheme({
         overlayProps: {
           backgroundOpacity: 0.24,
           color: "#050406",
+        },
+      },
+      styles: overlaySurface,
+    }),
+    Drawer: Drawer.extend({
+      defaultProps: {
+        shadow: "lg",
+        overlayProps: {
+          backgroundOpacity: 0.24,
+          color: "#050406",
+        },
+      },
+      styles: overlaySurface,
+    }),
+    Combobox: Combobox.extend({
+      classNames: {
+        option: classes["combobox-option"],
+      },
+      styles: {
+        option: {
+          padding: `${rem(8)} ${rem(8)}`,
+        },
+      },
+    }),
+    ComboboxPopover: ComboboxPopover.extend({
+      classNames: {
+        option: classes["combobox-option"],
+      },
+      styles: {
+        option: {
+          padding: `${rem(8)} ${rem(8)}`,
+        },
+      },
+    }),
+    Anchor: Anchor.extend({
+      defaultProps: {
+        underline: "hover",
+      },
+    }),
+    Burger: Burger.extend({
+      defaultProps: {
+        size: "sm",
+      },
+      styles: {
+        root: {
+          "--burger-color": "var(--gl-button-fg)",
+        },
+      },
+    }),
+    CloseButton: CloseButton.extend({
+      defaultProps: {
+        size: "sm",
+        radius: "md",
+      },
+      classNames: {
+        root: classes["close-button"],
+      },
+      styles: {
+        root: {
+          color: "var(--gl-button-fg)",
         },
       },
     }),
@@ -938,38 +1073,38 @@ export const theme = createTheme({
     Accordion: Accordion.extend({
       defaultProps: {
         chevronPosition: "left",
+        chevronSize: 16,
+        chevronIconSize: 16,
+        variant: "default",
+        // AccordionProps locks the multiple generic to false, so the theme slot cannot express true.
+        multiple: true as unknown as AccordionProps["multiple"],
       },
-      styles: {
-        item: {
-          "--item-border-color": "transparent",
-          marginBottom: rem(16),
-        },
-        control: {
-          color: "var(--gl-text-heading)",
-          paddingInline: 0,
-        },
-        label: {
-          fontSize: "var(--mantine-font-size-md)",
-          fontWeight: 600,
-        },
-        content: {
-          fontSize: "var(--mantine-font-size-md)",
-          padding: 0,
-          paddingInlineStart: rem(24),
-        },
+      classNames: {
+        item: classes["accordion-item"],
+        itemTitle: classes["accordion-title"],
+        control: classes["accordion-control"],
+        label: classes["accordion-label"],
+        chevron: classes["accordion-chevron"],
+        content: classes["accordion-content"],
       },
     }),
     NavLink: NavLink.extend({
+      classNames: {
+        root: classes["nav-link"],
+        section: classes["nav-section"],
+        label: classes["nav-label"],
+        children: classes["nav-children"],
+      },
       styles: {
         root: {
-          "--nl-bg": "var(--gl-nav-active)",
-          "--nl-hover": "var(--gl-action-hover)",
-          "--nl-color": "var(--gl-text-heading)",
-          borderRadius: "var(--mantine-radius-md)",
+          "--nl-bg": "var(--gl-nav-bg-hover)",
+          "--nl-hover": "var(--gl-nav-bg-hover)",
+          "--nl-color": "var(--gl-nav-fg-strong)",
         },
         label: {
           fontSize: "var(--mantine-font-size-md)",
-          fontWeight: 400,
+          fontWeight: "inherit",
+          lineHeight: rem(20),
         },
       },
     }),

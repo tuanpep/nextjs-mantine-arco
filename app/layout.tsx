@@ -11,9 +11,9 @@ import { fontClassName } from "@/lib/fonts";
 import { AppProviders } from "./providers";
 
 export const metadata: Metadata = {
-  title: { default: "DX Support", template: "%s | DX Support" },
+  title: { default: "DX Portal", template: "%s | DX Portal" },
   description:
-    "Không gian dự án dành cho hỗ trợ, phản hồi, ý tưởng và các đợt kiểm thử nghiệm thu. Chỉ dùng để minh họa.",
+    "Không gian dự án cho báo cáo lỗi, trợ giúp, đề xuất, phản hồi, hướng dẫn và thảo luận. Chỉ dùng để minh họa.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

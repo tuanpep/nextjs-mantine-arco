@@ -4,6 +4,22 @@ import en from "@/messages/en.json";
 import vi from "@/messages/vi.json";
 import { isLocale, resolveLocale } from "./config";
 
+function catalogKeys(value: unknown, prefix = ""): string[] {
+  if (value && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, child]) =>
+      catalogKeys(child, prefix ? `${prefix}.${key}` : key),
+    );
+  }
+  return [prefix];
+}
+
+function catalogValues(value: unknown): string[] {
+  if (value && typeof value === "object") {
+    return Object.values(value).flatMap((child) => catalogValues(child));
+  }
+  return typeof value === "string" ? [value] : [];
+}
+
 describe("locale configuration", () => {
   it("defaults missing and unsupported preferences to Vietnamese", () => {
     for (const value of [undefined, "", "fr", "../../en", null]) {
@@ -17,11 +33,9 @@ describe("locale configuration", () => {
     expect(resolveLocale("vi")).toBe("vi");
   });
 
-  it("keeps both workspace catalogs complete", () => {
-    expect(Object.keys(vi.Workspace).sort()).toEqual(
-      Object.keys(en.Workspace).sort(),
-    );
-    for (const value of Object.values(vi.Workspace)) {
+  it("keeps both message catalogs aligned", () => {
+    expect(catalogKeys(vi).sort()).toEqual(catalogKeys(en).sort());
+    for (const value of catalogValues(vi)) {
       expect(value.trim()).not.toBe("");
     }
   });

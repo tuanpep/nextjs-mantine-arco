@@ -1,36 +1,36 @@
 import { describe, expect, it } from "vitest";
+
 import {
-  applications,
   applicationPath,
+  applications,
   getApplication,
   projectSectionFromPath,
   projectSectionPath,
-  projectSupportPath,
 } from "./applications";
 
 describe("application registry", () => {
   it.each(applications)("resolves $id and its overview path", (application) => {
     expect(getApplication(application.id)).toBe(application);
     expect(applicationPath(application.id)).toBe(`/projects/${application.id}`);
-    expect(projectSupportPath(application.id)).toBe(
-      `/projects/${application.id}/support`,
-    );
   });
 
   it("does not resolve unknown applications", () => {
     expect(getApplication("unknown")).toBeUndefined();
   });
 
-  it("preserves the current section when switching projects", () => {
+  it("keeps the section and drops the record when switching projects", () => {
     expect(
-      projectSectionPath("beacon-portal", "/projects/orchid-reports/ideas"),
-    ).toBe("/projects/beacon-portal/ideas");
+      projectSectionPath(
+        "beacon-portal",
+        "/projects/orchid-reports/ideas/feedback/FB-1",
+      ),
+    ).toBe("/projects/beacon-portal/ideas/feedback");
     expect(
       projectSectionPath(
         "orchid-reports",
-        "/projects/beacon-portal/support/new",
+        "/projects/beacon-portal/support/bugs/new",
       ),
-    ).toBe("/projects/orchid-reports/support");
+    ).toBe("/projects/orchid-reports/support/bugs");
     expect(projectSectionFromPath("/projects/beacon-portal")).toBe("overview");
     expect(
       projectSectionPath("orchid-reports", "/projects/beacon-portal"),
@@ -39,5 +39,8 @@ describe("application registry", () => {
     expect(projectSectionPath("orchid-reports", "/")).toBe(
       "/projects/orchid-reports",
     );
+    expect(
+      projectSectionPath("beacon-portal", "/projects/orchid-reports/retired"),
+    ).toBe("/projects/beacon-portal");
   });
 });

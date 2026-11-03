@@ -1,80 +1,89 @@
 "use client";
 
-import {
-  Anchor,
-  Button,
-  Group,
-  Paper,
-  SimpleGrid,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
-import {
-  IconBulb,
-  IconChecklist,
-  IconLifebuoy,
-  IconMessageCircle,
-} from "@tabler/icons-react";
+import { Anchor, Paper, SimpleGrid, Stack, Text } from "@mantine/core";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
-import { feedbackItems } from "@/modules/feedback/lib/fixtures";
-import { useSupport } from "@/modules/support/components/support-provider";
-import { DestinationUnavailable } from "@/modules/ui/components/destination-unavailable";
+import { usePortal } from "@/modules/portal/components/portal-provider";
 import { PageFrame } from "@/modules/ui/components/page-frame";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getApplication } from "../lib/applications";
+import { ProjectUnavailable } from "@/modules/ui/components/project-unavailable";
 
-const quickActions = [
-  { label: "Tạo yêu cầu hỗ trợ", path: "support/new", icon: IconLifebuoy },
-  { label: "Gửi phản hồi", path: "feedback/new", icon: IconMessageCircle },
-  { label: "Đề xuất ý tưởng", path: "ideas/new", icon: IconBulb },
-  { label: "Mở kiểm thử nghiệm thu", path: "uat", icon: IconChecklist },
-] as const;
+import { getApplication } from "../lib/applications";
 
 export function ProjectHub({ projectId }: { projectId: string }) {
   const application = getApplication(projectId);
-  const { requests } = useSupport();
+  const t = useTranslations("Overview");
+  const nav = useTranslations("Workspace");
+  const { bugs, help, features, feedback, guides, discussions } = usePortal();
 
-  if (!application) {
-    return (
-      <PageFrame>
-        <DestinationUnavailable backHref="/" backLabel="Quay lại dự án" />
-      </PageFrame>
-    );
-  }
+  if (!application) return <ProjectUnavailable />;
 
-  const basePath = `/projects/${projectId}`;
-  const open = requests.filter(
-    (item) => item.applicationId === projectId && item.status !== "Resolved",
-  );
-  const attention = open.filter((item) => item.nextActor === "Sender");
-  const unreviewed = feedbackItems.filter(
-    (item) =>
-      item.projectId === projectId &&
-      (item.disposition === "Not reviewed" ||
-        item.disposition === "Needs clarification"),
-  ).length;
-  const stats = [
+  const base = `/projects/${projectId}`;
+  const inProject = <T extends { projectId: string }>(items: T[]) =>
+    items.filter((item) => item.projectId === projectId);
+  const link = (id: string, section: string) => ({
+    id,
+    href: `${base}/${section}/${id}`,
+  });
+  const cards = [
     {
-      label: "Cần bạn phản hồi",
-      value: attention.length,
-      href: `${basePath}/support?view=needs-action`,
+      label: t("openBugs"),
+      value: inProject(bugs).filter((item) => item.status !== "Resolved")
+        .length,
+      href: `${base}/support/bugs?view=open`,
+      records: inProject(bugs)
+        .filter((item) => item.status !== "Resolved")
+        .map((item) => ({
+          ...link(item.id, "support/bugs"),
+          title: item.title,
+        })),
     },
     {
-      label: "Hỗ trợ đang mở",
-      value: open.length,
-      href: `${basePath}/support`,
+      label: t("openHelp"),
+      value: inProject(help).filter((item) => item.status === "Open").length,
+      href: `${base}/support/help?view=open`,
+      records: inProject(help)
+        .filter((item) => item.status === "Open")
+        .map((item) => ({
+          ...link(item.id, "support/help"),
+          title: item.question,
+        })),
     },
     {
-      label: "Phản hồi cần xem xét",
-      value: unreviewed,
-      href: `${basePath}/feedback?view=needs-review`,
+      label: t("openFeatures"),
+      value: inProject(features).filter((item) => item.status === "Submitted")
+        .length,
+      href: `${base}/ideas/features?view=open`,
+      records: inProject(features)
+        .filter((item) => item.status === "Submitted")
+        .map((item) => ({
+          ...link(item.id, "ideas/features"),
+          title: item.title,
+        })),
     },
     {
-      label: "Tiến độ UAT",
-      value: "Chưa có dữ liệu",
-      href: `${basePath}/uat`,
+      label: t("newFeedback"),
+      value: inProject(feedback).filter((item) => item.status === "New").length,
+      href: `${base}/ideas/feedback?view=open`,
+      records: inProject(feedback)
+        .filter((item) => item.status === "New")
+        .map((item) => ({
+          ...link(item.id, "ideas/feedback"),
+          title: item.title,
+        })),
+    },
+    {
+      label: t("guides"),
+      value: inProject(guides).length,
+      href: `${base}/guides`,
+      records: [],
+    },
+    {
+      label: t("discussions"),
+      value: inProject(discussions).length,
+      href: `${base}/discussions`,
+      records: [],
     },
   ];
 
@@ -82,118 +91,48 @@ export function ProjectHub({ projectId }: { projectId: string }) {
     <PageFrame
       header={
         <PageHeader
-          title="Tổng quan"
+          title={t("title")}
           description={application.name}
-          breadcrumbs={[{ title: "Tổng quan", href: basePath }]}
+          breadcrumbs={[
+            { title: nav("projects"), href: "/" },
+            { title: application.name, href: base },
+          ]}
         />
       }
     >
-      <Stack gap="xl">
-        <Text size="sm" c="dimmed">
-          Dữ liệu minh họa, đặt lại khi tải lại ứng dụng. Không gửi thông báo
-          thực.
-        </Text>
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
-          {stats.map((stat) => (
-            <Paper
-              key={stat.label}
-              component="section"
-              aria-label={stat.label}
-              withBorder
-              p="md"
-            >
-              <Stack gap="sm" h="100%">
-                <Text size="sm" c="dimmed">
-                  {stat.label}
-                </Text>
-                <Text size="xl" fw={700}>
-                  {stat.value}
-                </Text>
-                <Anchor component={Link} href={stat.href} size="sm" mt="auto">
-                  Xem {stat.label.toLowerCase()}
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+        {cards.map((card) => (
+          <Paper
+            key={card.label}
+            component="section"
+            aria-label={card.label}
+            withBorder
+            p="md"
+          >
+            <Stack gap="sm" h="100%">
+              <Text size="sm" c="dimmed">
+                {card.label}
+              </Text>
+              <Text size="xl" fw={700}>
+                {card.value}
+              </Text>
+              {card.records.map((record) => (
+                <Anchor
+                  key={record.id}
+                  component={Link}
+                  href={record.href}
+                  size="sm"
+                >
+                  {record.title}
                 </Anchor>
-              </Stack>
-            </Paper>
-          ))}
-        </SimpleGrid>
-        <Stack
-          component="section"
-          aria-labelledby="quick-actions-title"
-          gap="sm"
-        >
-          <Title id="quick-actions-title" order={2} size="h3">
-            Thao tác nhanh
-          </Title>
-          <Group gap="sm">
-            {quickActions.map(({ label, path, icon: Icon }, index) => (
-              <Button
-                key={path}
-                component={Link}
-                href={`${basePath}/${path}`}
-                variant={index === 0 ? "filled" : "default"}
-                leftSection={<Icon size={18} aria-hidden />}
-              >
-                {label}
-              </Button>
-            ))}
-          </Group>
-        </Stack>
-        <Stack component="section" aria-labelledby="attention-title" gap="sm">
-          <Group justify="space-between">
-            <Title id="attention-title" order={2} size="h3">
-              Cần bạn thực hiện
-            </Title>
-            {attention.length > 0 && (
-              <Anchor
-                component={Link}
-                href={`${basePath}/support?view=needs-action`}
-                size="sm"
-              >
-                Xem tất cả ({attention.length})
+              ))}
+              <Anchor component={Link} href={card.href} size="sm" mt="auto">
+                {t("view")}
               </Anchor>
-            )}
-          </Group>
-          {attention.length === 0 ? (
-            <Paper withBorder p="md">
-              <Stack gap="xs">
-                <Text fw={600}>
-                  Hiện không có yêu cầu hỗ trợ chờ bạn phản hồi.
-                </Text>
-                <Anchor component={Link} href={`${basePath}/support`} size="sm">
-                  Xem yêu cầu hỗ trợ
-                </Anchor>
-              </Stack>
-            </Paper>
-          ) : (
-            attention.slice(0, 5).map((item) => (
-              <Paper key={item.id} withBorder p="md">
-                <Group justify="space-between" align="flex-start">
-                  <Stack gap={4}>
-                    <Text size="xs" c="dimmed">
-                      {item.id}
-                    </Text>
-                    <Anchor
-                      component={Link}
-                      href={`${basePath}/support/${item.id}`}
-                      fw={600}
-                    >
-                      {item.summary}
-                    </Anchor>
-                    <Text size="sm">
-                      {item.status === "Waiting for retest"
-                        ? "Ghi nhận kết quả kiểm tra lại"
-                        : "Bổ sung thông tin"}
-                    </Text>
-                    <Text size="sm" c="dimmed">
-                      {item.nextAction}
-                    </Text>
-                  </Stack>
-                </Group>
-              </Paper>
-            ))
-          )}
-        </Stack>
-      </Stack>
+            </Stack>
+          </Paper>
+        ))}
+      </SimpleGrid>
     </PageFrame>
   );
 }

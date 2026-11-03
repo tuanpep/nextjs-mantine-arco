@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Group, Paper, SimpleGrid, Skeleton, Stack } from "@mantine/core";
+import { Box, Group, Paper, Skeleton, Stack } from "@mantine/core";
 import type { ReactNode } from "react";
 
 import { PageFrame } from "./page-frame";
@@ -48,11 +48,7 @@ function PageHeaderSkeleton({
   );
 }
 
-function CollectionToolbarSkeleton({
-  withStatus = true,
-}: {
-  withStatus?: boolean;
-}) {
+function CollectionToolbarSkeleton() {
   return (
     <>
       <Group
@@ -62,15 +58,8 @@ function CollectionToolbarSkeleton({
           borderBottom: "1px solid var(--mantine-color-default-border)",
         }}
       >
-        <Skeleton height={36} style={{ flex: "1 1 260px" }} radius="sm" />
-        {withStatus ? (
-          <Skeleton
-            height={36}
-            w={220}
-            style={{ flex: "0 1 220px" }}
-            radius="sm"
-          />
-        ) : null}
+        <Skeleton height={32} style={{ flex: "1 1 260px" }} radius="sm" />
+        <Skeleton height={32} w={96} style={{ flex: "0 0 auto" }} radius="sm" />
       </Group>
       <Box px="md" py="xs" bg="var(--mantine-color-default-hover)">
         <Skeleton height={12} width={140} />
@@ -151,15 +140,15 @@ export function HomePageSkeleton() {
   );
 }
 
-/** Support / Feedback / Ideas collection: header, tabs, toolbar, rows. */
+/** Support / Feedback / Ideas collection: header, optional tabs, toolbar, rows. */
 export function CollectionPageSkeleton({
   tabCount = 2,
-  withStatus = true,
   withDescription = true,
+  withTabs = true,
 }: {
   tabCount?: number;
-  withStatus?: boolean;
   withDescription?: boolean;
+  withTabs?: boolean;
 } = {}) {
   return (
     <PageFrame
@@ -167,14 +156,14 @@ export function CollectionPageSkeleton({
         <PageHeaderSkeleton
           withDescription={withDescription}
           withAction
-          withTabs
+          withTabs={withTabs}
           tabCount={tabCount}
         />
       }
     >
       <div role="status" aria-label="Đang tải danh sách">
         <Paper withBorder style={{ overflow: "hidden" }}>
-          <CollectionToolbarSkeleton withStatus={withStatus} />
+          <CollectionToolbarSkeleton />
           {Array.from({ length: 5 }, (_, index) => (
             <CollectionRowSkeleton key={index} />
           ))}
@@ -184,38 +173,37 @@ export function CollectionPageSkeleton({
   );
 }
 
-/** Project overview hub: title, avatar description, action cluster. */
+/** Project overview hub: breadcrumbs, title, description, card grid. */
 export function OverviewPageSkeleton() {
   return (
     <PageFrame
       header={
-        <Stack gap="sm" mb="md">
-          <Skeleton height={14} width={80} />
-          <Group
-            justify="space-between"
-            align="flex-start"
-            wrap="wrap"
-            gap="sm"
-          >
-            <Box style={{ minWidth: 0, flex: 1 }}>
-              <Skeleton height={28} width={140} />
-              <Group gap="sm" wrap="nowrap" align="flex-start" mt={8}>
-                <Skeleton height={40} width={40} circle />
-                <Skeleton height={14} width="70%" maw={360} mt={10} />
-              </Group>
-            </Box>
-            <Group gap="xs" style={{ flexShrink: 0 }}>
-              <Skeleton height={36} width={130} radius="sm" />
-              <Skeleton height={36} width={36} radius="sm" />
-              <Skeleton height={36} width={36} radius="sm" />
-              <Skeleton height={36} width={36} radius="sm" />
-              <Skeleton height={36} width={36} radius="sm" />
-            </Group>
-          </Group>
-        </Stack>
+        <PageHeaderSkeleton
+          withDescription
+          withBreadcrumbs
+          withAction={false}
+        />
       }
     >
-      <div role="status" aria-label="Đang tải tổng quan" />
+      <div role="status" aria-label="Đang tải tổng quan">
+        <Group align="stretch" gap="md" wrap="wrap">
+          {Array.from({ length: 6 }, (_, index) => (
+            <Paper
+              key={index}
+              withBorder
+              p="md"
+              style={{ flex: "1 1 240px", maxWidth: 360 }}
+            >
+              <Stack gap="sm">
+                <Skeleton height={12} width="45%" />
+                <Skeleton height={28} width={48} />
+                <Skeleton height={12} width="70%" />
+                <Skeleton height={12} width={64} mt="sm" />
+              </Stack>
+            </Paper>
+          ))}
+        </Group>
+      </div>
     </PageFrame>
   );
 }
@@ -289,93 +277,6 @@ export function FormPageSkeleton({ fields = 5 }: { fields?: number } = {}) {
           <Group justify="flex-end">
             <Skeleton height={36} width={120} radius="sm" />
           </Group>
-        </Stack>
-      </div>
-    </PageFrame>
-  );
-}
-
-/** Settings: index nav + section body. */
-export function SettingsPageSkeleton() {
-  return (
-    <PageFrame
-      fullBleed
-      panePosition="start"
-      paneNarrow="index"
-      paneIndexOpen={false}
-      paneLabel="Các mục cài đặt"
-      pane={
-        <Stack gap={2}>
-          {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} height={34} radius="sm" />
-          ))}
-        </Stack>
-      }
-      header={<PageHeaderSkeleton />}
-    >
-      <div role="status" aria-label="Đang tải cài đặt">
-        <Stack gap="md">
-          <Skeleton height={52} radius="sm" />
-          <Skeleton height={1} width="100%" />
-          <Skeleton height={22} width={120} />
-          <FormFieldSkeleton />
-          <FormFieldSkeleton />
-          <Skeleton height={36} width={110} radius="sm" mt="xs" />
-        </Stack>
-      </div>
-    </PageFrame>
-  );
-}
-
-/** UAT: campaign summary, scenario cards, defect tabs. */
-export function UatPageSkeleton() {
-  return (
-    <PageFrame header={<PageHeaderSkeleton withAction />}>
-      <div role="status" aria-label="Đang tải kiểm thử nghiệm thu">
-        <Stack gap="lg">
-          <Skeleton height={52} radius="sm" />
-          <Stack gap="sm">
-            <Group justify="space-between" align="flex-start">
-              <Box style={{ flex: 1 }}>
-                <Skeleton height={12} width={140} />
-                <Skeleton height={22} width="45%" mt={8} />
-              </Box>
-              <Skeleton height={22} width={90} radius="xl" />
-            </Group>
-            <Skeleton height={14} width="80%" />
-            <Group gap="xl">
-              <Skeleton height={14} width={100} />
-              <Skeleton height={14} width={120} />
-              <Skeleton height={14} width={110} />
-            </Group>
-            <Skeleton height={8} radius="xl" />
-          </Stack>
-          <Skeleton height={1} width="100%" />
-          <Stack gap="sm">
-            <Skeleton height={22} width={160} />
-            <SimpleGrid cols={{ base: 1, lg: 3 }}>
-              {Array.from({ length: 3 }, (_, index) => (
-                <Paper withBorder p="md" key={index}>
-                  <Stack>
-                    <Group justify="space-between">
-                      <Skeleton height={12} width={56} />
-                      <Skeleton height={22} width={64} radius="xl" />
-                    </Group>
-                    <Skeleton height={18} width="70%" />
-                    <Skeleton height={12} width="90%" />
-                    <Skeleton height={12} width="80%" />
-                    <Skeleton height={12} width="60%" />
-                    <Skeleton height={36} radius="sm" mt="sm" />
-                  </Stack>
-                </Paper>
-              ))}
-            </SimpleGrid>
-          </Stack>
-          <Group gap="md">
-            <Skeleton height={28} width={110} />
-            <Skeleton height={28} width={100} />
-          </Group>
-          <Skeleton height={120} radius="sm" />
         </Stack>
       </div>
     </PageFrame>

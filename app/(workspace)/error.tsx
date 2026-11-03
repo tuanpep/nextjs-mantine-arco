@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import {
   DEFAULT_PROJECT_ID,
-  projectSupportPath,
+  applicationPath,
 } from "@/modules/projects/lib/applications";
 
 export default function WorkspaceError({ reset }: { reset: () => void }) {
@@ -21,10 +21,10 @@ export default function WorkspaceError({ reset }: { reset: () => void }) {
       </Button>
       <Button
         component={Link}
-        href={projectSupportPath(DEFAULT_PROJECT_ID)}
+        href={applicationPath(DEFAULT_PROJECT_ID)}
         variant="subtle"
       >
-        Về hỗ trợ
+        Về tổng quan
       </Button>
     </Stack>
   );

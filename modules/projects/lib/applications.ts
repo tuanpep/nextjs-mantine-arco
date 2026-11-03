@@ -26,11 +26,12 @@ export const applications: Application[] = [
 ];
 
 const PROJECT_SECTIONS = [
-  "support",
-  "feedback",
-  "ideas",
-  "uat",
-  "settings",
+  "support/bugs",
+  "support/help",
+  "ideas/features",
+  "ideas/feedback",
+  "guides",
+  "discussions",
 ] as const;
 
 export type ProjectSection = (typeof PROJECT_SECTIONS)[number] | "overview";
@@ -43,29 +44,18 @@ export function applicationPath(id: string): string {
   return `/projects/${id}`;
 }
 
-export function projectSupportPath(id: string): string {
-  return `/projects/${id}/support`;
-}
-
 export function projectSectionFromPath(pathname: string): ProjectSection {
-  const match = pathname.match(/^\/projects\/[^/]+(?:\/([^/]+))?/);
-  if (!match) {
-    return "overview";
-  }
-  const section = match[1];
-  if (!section) {
-    return "overview";
-  }
-  if ((PROJECT_SECTIONS as readonly string[]).includes(section)) {
-    return section as ProjectSection;
-  }
-  return "support";
+  const match = pathname.match(/^\/projects\/[^/]+(?:\/(.*))?$/);
+  const rest = match?.[1];
+  if (!rest) return "overview";
+  const section = PROJECT_SECTIONS.find(
+    (item) => rest === item || rest.startsWith(`${item}/`),
+  );
+  return section ?? "overview";
 }
 
 export function projectSectionPath(id: string, pathname: string): string {
   const section = projectSectionFromPath(pathname);
-  if (section === "overview") {
-    return applicationPath(id);
-  }
+  if (section === "overview") return applicationPath(id);
   return `/projects/${id}/${section}`;
 }

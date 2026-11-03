@@ -4,11 +4,8 @@ import {
   ActionIcon,
   Anchor,
   AppShell,
-  Avatar,
   Box,
   Burger,
-  Button,
-  ComboboxPopover,
   Group,
   NavLink,
   NativeSelect,
@@ -19,120 +16,50 @@ import {
 } from "@mantine/core";
 import { useDisclosure, useMounted } from "@mantine/hooks";
 import {
-  IconLifebuoy,
+  IconBook,
   IconBulb,
-  IconMoon,
-  IconSun,
-  IconChevronDown,
   IconChevronRight,
-  IconChecklist,
-  IconSettings,
-  IconMessageCircle,
   IconFolders,
   IconLayoutDashboard,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
+  IconLifebuoy,
+  IconMessages,
+  IconMoon,
+  IconSun,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "nextjs-toploader/app";
-import { useState, useTransition, type ReactNode } from "react";
+import {
+  useState,
+  useTransition,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 
 import { setLocale } from "@/lib/i18n/actions";
 import { AccountMenu } from "@/modules/account/components/account-menu";
+import { OpenRequestControl } from "@/modules/portal/components/open-request-panel";
 
 import {
   applicationPath,
   applications,
   getApplication,
   projectSectionPath,
-  type ProjectSection,
 } from "../lib/applications";
 import { writeSidebarCollapsedCookie } from "../lib/sidebar-preference";
-import { useProjectSettings } from "./project-settings-provider";
+
+import { NavGroup } from "./nav-group";
+import { ProjectSwitcher } from "./project-switcher";
 
 const projectOptions = applications.map((item) => ({
   value: item.id,
   label: item.name,
 }));
 
-const projectNavigation = [
-  { section: "overview", label: "overview", icon: IconLayoutDashboard },
-  { section: "support", label: "support", icon: IconLifebuoy },
-  { section: "feedback", label: "feedback", icon: IconMessageCircle },
-  { section: "ideas", label: "ideas", icon: IconBulb },
-  { section: "uat", label: "uat", icon: IconChecklist },
-  { section: "settings", label: "projectSettings", icon: IconSettings },
-] as const;
-
-function sectionPath(projectId: string, section: ProjectSection) {
-  const base = applicationPath(projectId);
-  return section === "overview" ? base : `${base}/${section}`;
-}
-
-function ProjectSwitcher({
-  value,
-  disabled,
-  label,
-  nothingFound,
-  placeholder,
-  onChange,
-  fullWidth,
-}: {
-  value: string;
-  disabled?: boolean;
-  label: string;
-  nothingFound: string;
-  placeholder: string;
-  onChange: (projectId: string) => void;
-  fullWidth?: boolean;
-}) {
-  const selected = getApplication(value);
-
-  return (
-    <ComboboxPopover
-      value={value}
-      allowDeselect={false}
-      searchable
-      nothingFoundMessage={nothingFound}
-      data={projectOptions}
-      comboboxProps={{ width: 280, position: "bottom-start" }}
-      onChange={(next) => {
-        if (typeof next !== "string" || next === value) return;
-        onChange(next);
-      }}
-      renderOption={({ option }) => {
-        const project = getApplication(option.value);
-        return (
-          <Group gap="xs" wrap="nowrap">
-            <Avatar color="blue" size={22}>
-              {project?.initials ?? option.label.slice(0, 2)}
-            </Avatar>
-            <Text size="sm">{option.label}</Text>
-          </Group>
-        );
-      }}
-    >
-      <ComboboxPopover.Target>
-        <Button
-          variant="default"
-          size="compact-xs"
-          disabled={disabled}
-          aria-label={label}
-          fullWidth={fullWidth}
-          justify="space-between"
-          rightSection={<IconChevronDown size={14} aria-hidden />}
-          maw={fullWidth ? undefined : 160}
-        >
-          <Text component="span" size="xs" truncate>
-            {selected?.name ?? placeholder}
-          </Text>
-        </Button>
-      </ComboboxPopover.Target>
-    </ComboboxPopover>
-  );
-}
+type NavIcon = ComponentType<{ size?: number; "aria-hidden"?: boolean }>;
 
 export function WorkspaceShell({
   children,
@@ -143,12 +70,12 @@ export function WorkspaceShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { confirmLeave } = useProjectSettings();
   const application = pathname.startsWith("/projects/")
     ? getApplication(pathname.split("/")[2] ?? "")
     : undefined;
   const homeHref = "/";
   const t = useTranslations("Workspace");
+  const portal = useTranslations("Portal");
   const locale = useLocale();
   const [pending, startTransition] = useTransition();
   const [languageError, setLanguageError] = useState(false);
@@ -158,9 +85,12 @@ export function WorkspaceShell({
   );
   const mounted = useMounted();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const isSectionActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`);
   const isHomeActive = pathname === "/";
+
+  function destinationActive(href: string, exact = false) {
+    if (exact) return pathname === href;
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
 
   function toggleDesktopSidebar() {
     setDesktopCollapsed((current) => {
@@ -172,38 +102,33 @@ export function WorkspaceShell({
 
   function switchProject(projectId: string) {
     if (!getApplication(projectId)) return;
-    if (application && !confirmLeave(application.id)) return;
     router.push(projectSectionPath(projectId, pathname));
     close();
   }
 
-  function guardNavigation(event: { preventDefault: () => void }) {
-    if (application && !confirmLeave(application.id)) {
-      event.preventDefault();
-      return;
-    }
-    close();
-  }
-
-  function renderProjectDestination(item: (typeof projectNavigation)[number]) {
-    const Icon = item.icon;
-    if (!application) return null;
-    const href = sectionPath(application.id, item.section);
-    const active =
-      item.section === "overview" ? pathname === href : isSectionActive(href);
+  function sectionLink(
+    href: string,
+    label: string,
+    exact = false,
+    icon?: NavIcon,
+  ) {
+    const active = destinationActive(href, exact);
+    const Icon = icon;
     return (
       <NavLink
-        key={item.section}
+        key={href}
         component={Link}
         href={href}
-        label={t(item.label)}
-        leftSection={<Icon size={20} aria-hidden />}
+        label={label}
+        leftSection={Icon ? <Icon size={16} aria-hidden /> : undefined}
         active={active}
         aria-current={active ? "page" : undefined}
-        onNavigate={guardNavigation}
+        onNavigate={() => close()}
       />
     );
   }
+
+  const base = application ? applicationPath(application.id) : "";
 
   return (
     <AppShell
@@ -272,7 +197,6 @@ export function WorkspaceShell({
             <Anchor
               component={Link}
               href={homeHref}
-              onNavigate={guardNavigation}
               c="inherit"
               underline="never"
             >
@@ -291,6 +215,7 @@ export function WorkspaceShell({
             >
               <IconChevronRight size={14} color="var(--mantine-color-dimmed)" />
               <ProjectSwitcher
+                options={projectOptions}
                 disabled={!mounted}
                 label={application ? t("switchProject") : t("chooseProject")}
                 placeholder={t("chooseProject")}
@@ -301,6 +226,12 @@ export function WorkspaceShell({
             </Group>
           </Group>
           <Group gap="sm" wrap="nowrap">
+            <Box hiddenFrom="lg">
+              <OpenRequestControl
+                projectId={application?.id ?? null}
+                projectOptions={projectOptions}
+              />
+            </Box>
             <NativeSelect
               aria-label={t("language")}
               value={locale}
@@ -342,52 +273,92 @@ export function WorkspaceShell({
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p="xs" component="nav" aria-label={t("mainNavigation")}>
-        <Stack h="100%" gap="sm" style={{ overflowY: "auto" }}>
-          {application && (
-            <Box px="sm" py="xs">
-              <Text visibleFrom="lg" size="sm" fw={600} truncate>
-                {application.name}
-              </Text>
-              <Box hiddenFrom="lg">
-                <ProjectSwitcher
-                  disabled={!mounted}
-                  label={application ? t("switchProject") : t("chooseProject")}
-                  placeholder={t("chooseProject")}
-                  nothingFound={t("noProjectsFound")}
-                  value={application?.id ?? ""}
-                  fullWidth
-                  onChange={switchProject}
+        <Stack h="100%" gap="sm">
+          <Stack
+            gap="sm"
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              marginInlineStart: "calc(-1 * var(--mantine-spacing-xs))",
+              paddingInlineStart: "var(--mantine-spacing-xs)",
+            }}
+          >
+            {application && (
+              <Box px="sm" py="xs">
+                <Text visibleFrom="lg" size="sm" fw={600} truncate>
+                  {application.name}
+                </Text>
+                <Box hiddenFrom="lg">
+                  <ProjectSwitcher
+                    options={projectOptions}
+                    disabled={!mounted}
+                    label={t("switchProject")}
+                    placeholder={t("chooseProject")}
+                    nothingFound={t("noProjectsFound")}
+                    value={application.id}
+                    fullWidth
+                    onChange={switchProject}
+                  />
+                </Box>
+              </Box>
+            )}
+            {!application && (
+              <NavLink
+                component={Link}
+                href={homeHref}
+                onNavigate={() => close()}
+                label={t("projects")}
+                leftSection={<IconFolders size={16} aria-hidden />}
+                active={isHomeActive}
+                aria-current={isHomeActive ? "page" : undefined}
+              />
+            )}
+            {application && (
+              <Stack gap={4}>
+                {sectionLink(base, t("overview"), true, IconLayoutDashboard)}
+                <NavGroup label={t("support")} icon={IconLifebuoy}>
+                  {sectionLink(`${base}/support/bugs`, t("bugReports"))}
+                  {sectionLink(`${base}/support/help`, t("help"))}
+                </NavGroup>
+                <NavGroup label={t("ideas")} icon={IconBulb}>
+                  {sectionLink(`${base}/ideas/features`, t("featureRequests"))}
+                  {sectionLink(`${base}/ideas/feedback`, t("feedback"))}
+                </NavGroup>
+                <NavLink
+                  component={Link}
+                  href={`${base}/guides`}
+                  label={t("guides")}
+                  leftSection={<IconBook size={16} aria-hidden />}
+                  active={destinationActive(`${base}/guides`)}
+                  aria-current={
+                    destinationActive(`${base}/guides`) ? "page" : undefined
+                  }
+                  onNavigate={() => close()}
                 />
-              </Box>
-            </Box>
-          )}
-          {!application && (
-            <NavLink
-              component={Link}
-              href={homeHref}
-              onNavigate={guardNavigation}
-              label={t("projects")}
-              leftSection={<IconFolders size={20} aria-hidden />}
-              active={isHomeActive}
-              aria-current={isHomeActive ? "page" : undefined}
-            />
-          )}
-          {application && (
-            <>
-              <Stack gap="xs" style={{ flexShrink: 0 }}>
-                <Stack gap={2} style={{ flexShrink: 0 }}>
-                  {projectNavigation
-                    .filter((item) => item.section !== "settings")
-                    .map(renderProjectDestination)}
-                </Stack>
+                <NavLink
+                  component={Link}
+                  href={`${base}/discussions`}
+                  label={t("discussions")}
+                  leftSection={<IconMessages size={16} aria-hidden />}
+                  active={destinationActive(`${base}/discussions`)}
+                  aria-current={
+                    destinationActive(`${base}/discussions`)
+                      ? "page"
+                      : undefined
+                  }
+                  onNavigate={() => close()}
+                />
               </Stack>
-              <Box mt="auto" pt="sm">
-                {projectNavigation
-                  .filter((item) => item.section === "settings")
-                  .map(renderProjectDestination)}
-              </Box>
-            </>
-          )}
+            )}
+          </Stack>
+          <Box visibleFrom="lg">
+            <OpenRequestControl
+              projectId={application?.id ?? null}
+              projectOptions={projectOptions}
+              fullWidth
+            />
+          </Box>
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main id="main-content" component="main">
@@ -396,6 +367,16 @@ export function WorkspaceShell({
             {t("languageError")}
           </Text>
         )}
+        <Text
+          size="sm"
+          c="dimmed"
+          px={{ base: "md", sm: "xl" }}
+          pt="md"
+          maw={1280}
+          mx="auto"
+        >
+          {portal("demoNotice")}
+        </Text>
         {children}
       </AppShell.Main>
     </AppShell>

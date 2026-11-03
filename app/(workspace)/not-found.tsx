@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import {
   DEFAULT_PROJECT_ID,
-  projectSupportPath,
+  applicationPath,
 } from "@/modules/projects/lib/applications";
 
 export default function UnavailablePage() {
@@ -15,7 +15,7 @@ export default function UnavailablePage() {
       </p>
       <Link href="/">Về trang chủ</Link>
       {" · "}
-      <Link href={projectSupportPath(DEFAULT_PROJECT_ID)}>Về hỗ trợ</Link>
+      <Link href={applicationPath(DEFAULT_PROJECT_ID)}>Về tổng quan</Link>
     </section>
   );
 }

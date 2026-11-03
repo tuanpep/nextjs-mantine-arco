@@ -1,8 +1,14 @@
 "use client";
 
-import { Box, Group, Select, Text, TextInput } from "@mantine/core";
-import { IconSearch } from "@tabler/icons-react";
+import { Box, Group, Text } from "@mantine/core";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
+
+import {
+  FilteredSearch,
+  type FilterOperator,
+  type FilterQuery,
+} from "./filtered-search";
 
 export type CollectionStatusOption = {
   value: string;
@@ -16,8 +22,9 @@ export type CollectionToolbarProps = {
   onSearchChange: (value: string) => void;
   statusLabel?: string;
   statusValue?: string;
+  statusOperator?: FilterOperator;
   statusOptions?: CollectionStatusOption[];
-  onStatusChange?: (value: string) => void;
+  onStatusChange?: (value: string, operator: FilterOperator) => void;
   countLabel: ReactNode;
 };
 
@@ -28,42 +35,69 @@ export function CollectionToolbar({
   onSearchChange,
   statusLabel,
   statusValue,
+  statusOperator = "is",
   statusOptions,
   onStatusChange,
   countLabel,
 }: CollectionToolbarProps) {
+  const t = useTranslations("Portal");
   const hasStatus =
     Boolean(statusLabel) &&
     Boolean(statusOptions) &&
     typeof onStatusChange === "function";
+  const options = (statusOptions ?? []).filter(
+    (option) => option.value !== "all",
+  );
+  const queries: FilterQuery[] =
+    hasStatus && statusValue && statusValue !== "all"
+      ? [{ type: "status", operator: statusOperator, value: statusValue }]
+      : [];
 
   return (
     <>
       <Group
-        align="flex-end"
+        align="flex-start"
         p="sm"
         style={{
           borderBottom: "1px solid var(--mantine-color-default-border)",
         }}
       >
-        <TextInput
-          style={{ flex: "1 1 260px" }}
-          aria-label={searchLabel}
+        <FilteredSearch
+          fields={
+            hasStatus
+              ? [{ type: "status", title: statusLabel ?? "", options }]
+              : []
+          }
+          queries={queries}
+          onQueriesChange={(next) => {
+            const status = next.find((query) => query.type === "status");
+            if (!status) {
+              onStatusChange?.("all", "is");
+              return;
+            }
+            onStatusChange?.(status.value, status.operator);
+          }}
+          terms={searchValue}
+          onTermsChange={onSearchChange}
+          onSearch={() => undefined}
+          inputLabel={searchLabel}
           placeholder={searchPlaceholder}
-          leftSection={<IconSearch size={16} />}
-          value={searchValue}
-          onChange={(event) => onSearchChange(event.currentTarget.value)}
+          searchLabel={searchLabel}
+          clearLabel={t("filterClear")}
+          emptyLabel={t("filterNoMatch")}
+          operatorLabel={(operator) => {
+            switch (operator) {
+              case "is":
+                return t("filterIs");
+              case "isNot":
+                return t("filterIsNot");
+              default: {
+                const neverOperator: never = operator;
+                return neverOperator;
+              }
+            }
+          }}
         />
-        {hasStatus ? (
-          <Select
-            style={{ flex: "0 1 220px" }}
-            aria-label={statusLabel}
-            value={statusValue}
-            allowDeselect={false}
-            data={statusOptions}
-            onChange={(value) => onStatusChange?.(value ?? statusValue ?? "")}
-          />
-        ) : null}
       </Group>
       <Box
         px="md"

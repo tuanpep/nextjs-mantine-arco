@@ -1,9 +1,9 @@
-import { parseAsString, parseAsStringLiteral } from "nuqs/server";
+import { parseAsString, parseAsStringLiteral } from "nuqs";
 
-export const feedbackViews = ["needs-review", "acknowledged", "all"] as const;
+export const feedbackViews = ["open", "closed"] as const;
 export type FeedbackView = (typeof feedbackViews)[number];
 
 export const feedbackSearchParams = {
   q: parseAsString.withDefault(""),
-  view: parseAsStringLiteral(feedbackViews).withDefault("needs-review"),
+  view: parseAsStringLiteral(feedbackViews).withDefault("open"),
 };

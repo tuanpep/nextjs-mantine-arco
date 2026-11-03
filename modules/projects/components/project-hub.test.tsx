@@ -1,94 +1,90 @@
 import { cleanup, fireEvent, screen, within } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { afterEach, expect, test } from "vitest";
-import { render } from "@/test-utils/render";
+
+import messages from "@/messages/en.json";
+import { bugFixtures } from "@/modules/bug-reports/lib/fixtures";
 import {
-  SupportProvider,
-  useSupport,
-} from "@/modules/support/components/support-provider";
-import { supportFixtures } from "@/modules/support/lib/fixtures";
+  PortalProvider,
+  usePortal,
+} from "@/modules/portal/components/portal-provider";
+import { render } from "@/test-utils/render";
+
 import { ProjectHub } from "./project-hub";
 
 afterEach(cleanup);
 
-function Reply() {
-  const { respond } = useSupport();
+function Resolve() {
+  const { transitionBug } = usePortal();
   return (
     <button
       onClick={() =>
-        respond("SUP112", { kind: "reply", text: "Thông tin minh họa" })
+        transitionBug("beacon-portal", "BUG-1", {
+          kind: "resolve",
+          note: "Fixed in this session",
+        })
       }
     >
-      Trả lời mẫu
+      Resolve sample
     </button>
   );
 }
 
-test("overview uses scoped session records and updates after a reply", () => {
-  render(
-    <SupportProvider>
-      <ProjectHub projectId="beacon-portal" />
-      <Reply />
-    </SupportProvider>,
+function renderHub(projectId: string) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <PortalProvider>
+        <ProjectHub projectId={projectId} />
+        <Resolve />
+      </PortalProvider>
+    </NextIntlClientProvider>,
   );
-  const expected = supportFixtures.filter(
-    (item) =>
-      item.applicationId === "beacon-portal" &&
-      item.status !== "Resolved" &&
-      item.nextActor === "Sender",
+}
+
+test("overview counts stay inside the project and update after a bug is resolved", () => {
+  renderHub("beacon-portal");
+  const open = bugFixtures().filter(
+    (item) => item.projectId === "beacon-portal" && item.status !== "Resolved",
   ).length;
-  const card = screen.getByRole("region", { name: "Cần bạn phản hồi" });
+  const card = screen.getByRole("region", { name: "Open bug reports" });
   expect(
-    within(card).getByText(String(expected), { exact: true }),
+    within(card).getByText(String(open), { exact: true }),
   ).toBeInTheDocument();
-  expect(within(card).getByRole("link")).toHaveAttribute(
+  expect(within(card).getByRole("link", { name: "View" })).toHaveAttribute(
     "href",
-    "/projects/beacon-portal/support?view=needs-action",
+    "/projects/beacon-portal/support/bugs?view=open",
   );
-  fireEvent.click(screen.getByRole("button", { name: "Trả lời mẫu" }));
+  fireEvent.click(screen.getByRole("button", { name: "Resolve sample" }));
   expect(
-    within(card).getByText(String(expected - 1), { exact: true }),
+    within(card).getByText(String(open - 1), { exact: true }),
   ).toBeInTheDocument();
-  expect(
-    within(
-      screen.getByRole("region", { name: "Cần bạn thực hiện" }),
-    ).queryByText("SUP112"),
-  ).not.toBeInTheDocument();
 });
 
-test("Orchid overview excludes Beacon requests and uses project-scoped quick actions", () => {
-  render(
-    <SupportProvider>
-      <ProjectHub projectId="orchid-reports" />
-    </SupportProvider>,
-  );
+test("Orchid overview does not show Beacon bug titles", () => {
+  renderHub("orchid-reports");
+  const beaconTitle = bugFixtures().find(
+    (item) => item.projectId === "beacon-portal",
+  )?.title;
+  expect(screen.queryByText(beaconTitle ?? "")).not.toBeInTheDocument();
   expect(
-    screen.getByText("Hiện không có yêu cầu hỗ trợ chờ bạn phản hồi."),
-  ).toBeInTheDocument();
-  expect(
-    screen.getByRole("link", { name: "Tạo yêu cầu hỗ trợ" }),
-  ).toHaveAttribute("href", "/projects/orchid-reports/support/new");
-  expect(screen.getByRole("link", { name: "Gửi phản hồi" })).toHaveAttribute(
-    "href",
-    "/projects/orchid-reports/feedback/new",
-  );
-  expect(
-    within(screen.getByRole("region", { name: "Tiến độ UAT" })).getByText(
-      "Chưa có dữ liệu",
+    within(screen.getByRole("region", { name: "Open bug reports" })).getByText(
+      "2",
+      { exact: true },
     ),
   ).toBeInTheDocument();
-  expect(screen.queryByText("SUP112")).not.toBeInTheDocument();
+  expect(
+    within(screen.getByRole("region", { name: "Guides" })).getByRole("link", {
+      name: "View",
+    }),
+  ).toHaveAttribute("href", "/projects/orchid-reports/guides");
 });
 
-test("unknown project does not display stats or quick actions", () => {
-  render(
-    <SupportProvider>
-      <ProjectHub projectId="missing" />
-    </SupportProvider>,
-  );
+test("unknown project does not display module counts", () => {
+  renderHub("missing");
   expect(
-    screen.queryByRole("region", { name: "Cần bạn phản hồi" }),
+    screen.queryByRole("region", { name: "Open bug reports" }),
   ).not.toBeInTheDocument();
   expect(
-    screen.queryByRole("link", { name: "Tạo yêu cầu hỗ trợ" }),
-  ).not.toBeInTheDocument();
+    screen.getByRole("heading", { name: "This page is unavailable" }),
+  ).toBeInTheDocument();
 });
