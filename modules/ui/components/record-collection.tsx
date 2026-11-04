@@ -14,12 +14,12 @@ import { IconSearch } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
 import { CollectionEmpty } from "./collection-empty";
 import { CollectionToolbar } from "./collection-toolbar";
 import type { FilterOperator } from "./filtered-search";
-import { ModuleTabs } from "./module-tabs";
+import { ModuleTabs, ModuleTabPanel } from "./module-tabs";
 import { PageFrame } from "./page-frame";
 import { PageHeader, type PageBreadcrumb } from "./page-header";
 
@@ -91,6 +91,7 @@ export function RecordCollection({
   onEmptyAction?: () => void;
 }) {
   const t = useTranslations("Portal");
+  const tabsId = useId();
   const router = useRouter();
   const searching = query.trim().length > 0;
   const narrowed = rows.length === 0 && (searching || filterActive);
@@ -110,6 +111,7 @@ export function RecordCollection({
         >
           {views && view && onViewChange ? (
             <ModuleTabs
+              id={tabsId}
               ariaLabel={t("views")}
               value={view}
               items={views}
@@ -119,51 +121,74 @@ export function RecordCollection({
         </PageHeader>
       }
     >
-      <Stack gap="md">
-        <Paper withBorder style={{ overflow: "hidden" }}>
-          <CollectionToolbar
-            searchLabel={t("search")}
-            searchPlaceholder={t("searchPlaceholder")}
-            searchValue={query}
-            onSearchChange={onQueryChange}
-            statusLabel={filterLabel}
-            statusValue={filterValue}
-            statusOperator={filterOperator}
-            statusOptions={filterOptions}
-            onStatusChange={onFilterChange}
-            countLabel={t("count", { count: resultCount ?? rows.length })}
-          />
-          {toolbarControls}
-          {rows.length === 0 ? (
-            <CollectionEmpty
-              icon={<IconSearch size={20} />}
-              title={narrowed ? t("noMatches") : emptyTitle}
-              actionLabel={
-                narrowed
-                  ? (narrowActionLabel ?? t("clearSearch"))
-                  : emptyActionLabel
-              }
-              onAction={() => {
-                if (!narrowed) {
-                  if (onEmptyAction) onEmptyAction();
-                  else router.push(createHref);
-                  return;
-                }
-                if (onClearFilters) onClearFilters();
-                else onQueryChange("");
-              }}
+      <CollectionPanel
+        id={tabsId}
+        value={views && onViewChange ? view : undefined}
+      >
+        <Stack gap="md">
+          <Paper withBorder style={{ overflow: "hidden" }}>
+            <CollectionToolbar
+              searchLabel={t("search")}
+              searchPlaceholder={t("searchPlaceholder")}
+              searchValue={query}
+              onSearchChange={onQueryChange}
+              statusLabel={filterLabel}
+              statusValue={filterValue}
+              statusOperator={filterOperator}
+              statusOptions={filterOptions}
+              onStatusChange={onFilterChange}
+              countLabel={t("count", { count: resultCount ?? rows.length })}
             />
-          ) : (
-            <Stack component="ul" gap={0} p={0} m={0} aria-label={title}>
-              {rows.map((row) => (
-                <Row key={row.id} row={row} />
-              ))}
-            </Stack>
-          )}
-        </Paper>
-        {footer}
-      </Stack>
+            {toolbarControls}
+            {rows.length === 0 ? (
+              <CollectionEmpty
+                icon={<IconSearch size={20} />}
+                title={narrowed ? t("noMatches") : emptyTitle}
+                actionLabel={
+                  narrowed
+                    ? (narrowActionLabel ?? t("clearSearch"))
+                    : emptyActionLabel
+                }
+                onAction={() => {
+                  if (!narrowed) {
+                    if (onEmptyAction) onEmptyAction();
+                    else router.push(createHref);
+                    return;
+                  }
+                  if (onClearFilters) onClearFilters();
+                  else onQueryChange("");
+                }}
+              />
+            ) : (
+              <Stack component="ul" gap={0} p={0} m={0} aria-label={title}>
+                {rows.map((row) => (
+                  <Row key={row.id} row={row} />
+                ))}
+              </Stack>
+            )}
+          </Paper>
+          {footer}
+        </Stack>
+      </CollectionPanel>
     </PageFrame>
+  );
+}
+
+function CollectionPanel({
+  id,
+  value,
+  children,
+}: {
+  id: string;
+  value?: string;
+  children: ReactNode;
+}) {
+  return value ? (
+    <ModuleTabPanel id={id} value={value}>
+      {children}
+    </ModuleTabPanel>
+  ) : (
+    children
   );
 }
 
@@ -177,7 +202,12 @@ function Row({ row }: { row: RecordRow }) {
     >
       <Group justify="space-between" wrap="nowrap" align="flex-start">
         <Stack gap={2} style={{ minWidth: 0 }}>
-          <Anchor component={Link} href={row.href} fw={600}>
+          <Anchor
+            component={Link}
+            href={row.href}
+            fw={600}
+            style={{ overflowWrap: "anywhere" }}
+          >
             {row.title}
           </Anchor>
           {row.meta ? (

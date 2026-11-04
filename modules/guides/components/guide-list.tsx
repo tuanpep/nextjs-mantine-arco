@@ -10,7 +10,7 @@ import { recordTrail } from "@/modules/projects/lib/record-trail";
 import { ProjectUnavailable } from "@/modules/ui/components/project-unavailable";
 import { RecordCollection } from "@/modules/ui/components/record-collection";
 
-import { guideSearchParams } from "../lib/search-params";
+import { guideSearchParams, serializeGuideQueue } from "../lib/search-params";
 
 export function GuideList({ projectId }: { projectId: string }) {
   const t = useTranslations("Guides");
@@ -31,13 +31,13 @@ export function GuideList({ projectId }: { projectId: string }) {
       breadcrumbs={recordTrail(application, nav("projects"), [
         { title: t("title"), href: base },
       ])}
-      createHref={`${base}/new`}
+      createHref={serializeGuideQueue(`${base}/new`, { q })}
       createLabel={t("new")}
       query={q}
       onQueryChange={(value) => void setQuery({ q: value })}
       rows={rows.map((item) => ({
         id: item.id,
-        href: `${base}/${item.id}`,
+        href: serializeGuideQueue(`${base}/${item.id}`, { q }),
         title: item.title,
         meta: item.summary,
       }))}

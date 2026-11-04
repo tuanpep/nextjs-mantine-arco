@@ -287,22 +287,17 @@ export function WorkspaceShell({
             }}
           >
             {application && (
-              <Box px="sm" py="xs">
-                <Text visibleFrom="lg" size="sm" fw={600} truncate>
-                  {application.name}
-                </Text>
-                <Box hiddenFrom="lg">
-                  <ProjectSwitcher
-                    options={projectOptions}
-                    disabled={!mounted}
-                    label={t("switchProject")}
-                    placeholder={t("chooseProject")}
-                    nothingFound={t("noProjectsFound")}
-                    value={application.id}
-                    fullWidth
-                    onChange={switchProject}
-                  />
-                </Box>
+              <Box hiddenFrom="lg" px="sm" py="xs">
+                <ProjectSwitcher
+                  options={projectOptions}
+                  disabled={!mounted}
+                  label={t("switchProject")}
+                  placeholder={t("chooseProject")}
+                  nothingFound={t("noProjectsFound")}
+                  value={application.id}
+                  fullWidth
+                  onChange={switchProject}
+                />
               </Box>
             )}
             {!application && (

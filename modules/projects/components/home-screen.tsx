@@ -77,16 +77,7 @@ export function HomeScreen() {
     <PageFrame header={<PageHeader title={t("projects")} />}>
       <Stack gap="xl">
         <Paper withBorder style={{ overflow: "hidden" }}>
-          <Text
-            size="xs"
-            c="dimmed"
-            px="md"
-            py="xs"
-            bg="var(--mantine-color-default-hover)"
-          >
-            {t("projectCount", { count: applications.length })}
-          </Text>
-          {applications.map((application) => (
+          {applications.map((application, index) => (
             <Box
               key={application.id}
               component={Link}
@@ -97,7 +88,10 @@ export function HomeScreen() {
               c="inherit"
               td="none"
               style={{
-                borderTop: "1px solid var(--mantine-color-default-border)",
+                borderTop:
+                  index > 0
+                    ? "1px solid var(--mantine-color-default-border)"
+                    : undefined,
               }}
             >
               <Group justify="space-between" wrap="nowrap">

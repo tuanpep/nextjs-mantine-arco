@@ -44,6 +44,9 @@
     "skipToContent": "Skip to content"
   },
   "Portal": {
+    "details": "Details",
+    "closeDetails": "Close details",
+    "cancel": "Cancel",
     "discardDraft": "Discard your unsaved draft?",
     "demoNotice": "Saved in this session only. Reload clears these records. Nothing is sent or notified.",
     "backToProjects": "Back to projects",
@@ -95,6 +98,11 @@
     "decisionStands": "This decision stands."
   },
   "Overview": {
+    "pendingDecisions": "Pending decisions",
+    "bugsAttention": "Bugs needing attention",
+    "emptyBugs": "No open bug reports",
+    "pendingReview": "Pending review",
+    "resources": "Resources",
     "title": "Overview",
     "openBugs": "Open bug reports",
     "openHelp": "Open help requests",

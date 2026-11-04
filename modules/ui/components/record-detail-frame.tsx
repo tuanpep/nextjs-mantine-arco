@@ -11,16 +11,20 @@ export function RecordDetailFrame({
   breadcrumbs,
   status,
   meta,
+  pane,
   children,
 }: {
   title: string;
   breadcrumbs: PageBreadcrumb[];
   status?: string;
   meta?: string;
+  pane?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <PageFrame
+      pane={pane}
+      paneNarrow="sheet"
       header={
         <PageHeader
           title={title}

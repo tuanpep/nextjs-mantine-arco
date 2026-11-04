@@ -2,6 +2,7 @@
 
 import { Box, Button, Drawer, Group, Stack } from "@mantine/core";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 /** Matches Mantine `lg` / Pajamas nav breakpoint (~1200px). */
@@ -26,13 +27,15 @@ export function PageFrame({
   header,
   children,
   pane,
-  paneLabel = "Chi tiết",
+  paneLabel,
   panePosition = "end",
   paneNarrow = "stack",
   paneIndexOpen = false,
   fullBleed = false,
   footer,
 }: PageFrameProps) {
+  const t = useTranslations("Portal");
+  const detailsLabel = paneLabel ?? t("details");
   const [sheetOpened, { open: openSheet, close: closeSheet }] =
     useDisclosure(false);
   const isNarrow = useMediaQuery(NARROW_QUERY, false, {
@@ -69,7 +72,7 @@ export function PageFrame({
           {(!showDetailOnly || !isNarrow) && (
             <Box
               component="aside"
-              aria-label={paneLabel}
+              aria-label={detailsLabel}
               w={showIndexOnly ? "100%" : { base: "100%", sm: 260 }}
               px={{ base: "md", sm: "md" }}
               py="lg"
@@ -109,17 +112,16 @@ export function PageFrame({
 
   const contentColumn = (
     <Box style={{ flex: 1, minWidth: 0 }}>
-      {header}
       {paneNarrow === "sheet" && isNarrow ? (
         <Group mb="md">
           <Button variant="default" size="compact-sm" onClick={openSheet}>
-            {paneLabel}
+            {detailsLabel}
           </Button>
         </Group>
       ) : null}
       {children}
       {paneNarrow === "stack" && isNarrow ? (
-        <Box component="aside" aria-label={paneLabel} mt="md">
+        <Box component="aside" aria-label={detailsLabel} mt="md">
           {pane}
         </Box>
       ) : null}
@@ -129,14 +131,17 @@ export function PageFrame({
   const sidePane = !isNarrow ? (
     <Box
       component="aside"
-      aria-label={paneLabel}
+      aria-label={detailsLabel}
       w={280}
       maw={320}
       style={{
         flexShrink: 0,
         alignSelf: "flex-start",
         position: "sticky",
-        top: 16,
+        top: 64,
+        maxHeight: "calc(100dvh - 80px)",
+        overflowY: "auto",
+        overflowWrap: "anywhere",
       }}
     >
       {pane}
@@ -151,6 +156,7 @@ export function PageFrame({
       mx={fullBleed ? undefined : "auto"}
       style={{ minWidth: 0 }}
     >
+      {header}
       {isNarrow ? (
         <Stack gap={0}>{contentColumn}</Stack>
       ) : (
@@ -165,13 +171,14 @@ export function PageFrame({
           {panePosition === "end" ? sidePane : null}
         </Group>
       )}
-      {paneNarrow === "sheet" ? (
+      {paneNarrow === "sheet" && isNarrow ? (
         <Drawer
           opened={sheetOpened}
           onClose={closeSheet}
           position="right"
-          title={paneLabel}
-          closeButtonProps={{ "aria-label": "Đóng chi tiết" }}
+          title={detailsLabel}
+          closeButtonProps={{ "aria-label": t("closeDetails") }}
+          keepMounted
           size={isSmallest ? "100%" : 400}
         >
           {pane}

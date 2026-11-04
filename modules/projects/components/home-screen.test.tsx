@@ -133,6 +133,6 @@ test("Vietnamese descriptions and headings follow locale", () => {
   home("vi");
   expect(screen.getByText(/Truy cập sản phẩm nội bộ/)).toBeInTheDocument();
   expect(
-    screen.getByRole("heading", { name: "Bản ghi trong phiên" }),
+    screen.getByRole("heading", { name: "Nội dung trong phiên này" }),
   ).toBeInTheDocument();
 });

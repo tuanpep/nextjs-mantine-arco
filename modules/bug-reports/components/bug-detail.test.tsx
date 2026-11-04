@@ -13,6 +13,25 @@ import { BugDetail } from "./bug-detail";
 
 afterEach(cleanup);
 
+test("keeps metadata and status actions in the details panel, with replies in the center", () => {
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <PortalProvider>
+        <BugDetail projectId="beacon-portal" bugId="BUG-1" />
+      </PortalProvider>
+    </NextIntlClientProvider>,
+  );
+  const panel = screen.getByRole("complementary", {
+    name: messages.Portal.details,
+  });
+  expect(within(panel).getByText(messages.Portal.severity)).toBeVisible();
+  expect(within(panel).getByRole("button", { name: "Update" })).toBeVisible();
+  expect(
+    within(panel).queryByRole("textbox", { name: "Message" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("region", { name: "Discussion" })).toBeVisible();
+});
+
 function RequestInformation() {
   const { transitionBug } = usePortal();
   return (

@@ -57,18 +57,20 @@ export function BugDetail({
       ? bug.notes.findLast((note) => note.action === "wait")
       : undefined;
   const fields = [
-    { label: portal("severity"), value: copy.severity(bug.severity) },
     { label: t("happened"), value: bug.happened },
     {
       label: t("steps"),
       value: bug.reproduction === "unknown" ? t("stepsUnknown") : bug.steps,
     },
     { label: t("expected"), value: bug.expected },
+    { label: t("impactDetail"), value: bug.impactDetail },
+  ].filter((field) => field.value.trim().length > 0);
+  const details = [
+    { label: portal("severity"), value: copy.severity(bug.severity) },
     { label: t("environment"), value: bug.environment },
     { label: t("impactScope"), value: copy.impact(bug.impactScope) },
     { label: t("urgency"), value: copy.urgency(bug.urgency) },
     { label: t("correlation"), value: bug.correlationId },
-    { label: t("impactDetail"), value: bug.impactDetail },
   ].filter((field) => field.value.trim().length > 0);
 
   return (
@@ -76,6 +78,41 @@ export function BugDetail({
       title={bug.title}
       status={copy.status(bug.status)}
       meta={bug.id}
+      pane={
+        <Stack gap="lg">
+          <RecordFields fields={details} />
+          {bug.pageUrl ? (
+            <Stack gap={4}>
+              <Text size="sm" fw={600}>
+                {t("pageUrl")}
+              </Text>
+              <Anchor
+                href={bug.pageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {bug.pageUrl}
+              </Anchor>
+            </Stack>
+          ) : null}
+          <NoteAction
+            key={`${bug.id}-action`}
+            protectDraft
+            errorMessage={t("updateFailed")}
+            successMessage={t("statusSaved")}
+            validateNote={(value) =>
+              validateBugText(value, 10000) === "tooLong"
+                ? t("tooLong", { limit: 10000 })
+                : null
+            }
+            actions={actions}
+            onSubmit={(action, note) => {
+              if (!isBugAction(action)) return false;
+              return transitionBug(projectId, bug.id, { kind: action, note });
+            }}
+          />
+        </Stack>
+      }
       breadcrumbs={recordTrail(application, nav("projects"), [
         { title: t("title"), href: backHref },
         { title: bug.title, href: `${base}/${bug.id}` },
@@ -85,16 +122,6 @@ export function BugDetail({
         {t("backToReports")}
       </Anchor>
       <RecordFields fields={fields} />
-      {bug.pageUrl ? (
-        <Stack gap={4}>
-          <Text size="sm" fw={600}>
-            {t("pageUrl")}
-          </Text>
-          <Anchor href={bug.pageUrl} target="_blank" rel="noopener noreferrer">
-            {bug.pageUrl}
-          </Anchor>
-        </Stack>
-      ) : null}
       <BugFileList label={t("attachments")} files={bug.attachments} />
       <BugActivity
         bug={bug}
@@ -137,22 +164,6 @@ export function BugDetail({
           onSubmit={(_action, text) => addBugMessage(projectId, bug.id, text)}
         />
       </Stack>
-      <NoteAction
-        key={`${bug.id}-action`}
-        protectDraft
-        errorMessage={t("updateFailed")}
-        successMessage={t("statusSaved")}
-        validateNote={(value) =>
-          validateBugText(value, 10000) === "tooLong"
-            ? t("tooLong", { limit: 10000 })
-            : null
-        }
-        actions={actions}
-        onSubmit={(action, note) => {
-          if (!isBugAction(action)) return false;
-          return transitionBug(projectId, bug.id, { kind: action, note });
-        }}
-      />
     </RecordDetailFrame>
   );
 }

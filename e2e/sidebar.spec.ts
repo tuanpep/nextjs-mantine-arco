@@ -34,21 +34,21 @@ test("mobile root hides project menus until a project is selected", async ({
 }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Mở điều hướng" }).click();
+  await page.getByRole("button", { name: "Mở menu điều hướng" }).click();
   const navigation = page.getByRole("navigation", { name: "Điều hướng chính" });
   await expect(navigation.getByRole("link")).toHaveText(["Dự án"]);
   await expect(navigation.getByRole("combobox")).toHaveCount(0);
-  await page.getByRole("button", { name: "Đóng điều hướng" }).click();
+  await page.getByRole("button", { name: "Đóng menu điều hướng" }).click();
   await page
     .getByRole("main")
     .getByRole("link", { name: /Beacon Portal/ })
     .click();
-  await page.getByRole("button", { name: "Mở điều hướng" }).click();
+  await page.getByRole("button", { name: "Mở menu điều hướng" }).click();
   await navigation
     .getByRole("link", { name: "Đề xuất tính năng", exact: true })
     .click();
   await expect(page).toHaveURL("/projects/beacon-portal/ideas/features");
-  await page.getByRole("button", { name: "Mở điều hướng" }).click();
+  await page.getByRole("button", { name: "Mở menu điều hướng" }).click();
   await navigation.getByRole("combobox", { name: "Chuyển dự án" }).click();
   await page.getByRole("option", { name: "Orchid Reports" }).click();
   await expect(page).toHaveURL("/projects/orchid-reports/ideas/features");

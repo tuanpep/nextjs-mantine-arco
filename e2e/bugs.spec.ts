@@ -9,10 +9,10 @@ test("create a bug report, revisit it, and start work", async ({ page }) => {
     .getByRole("textbox", { name: "Tiêu đề" })
     .fill("Workspace stays blank");
   await page
-    .getByRole("textbox", { name: "Điều đã xảy ra" })
+    .getByRole("textbox", { name: "Mô tả lỗi" })
     .fill("The page stays blank after sign-in.");
   await page
-    .getByRole("textbox", { name: "Các bước tái hiện" })
+    .getByRole("textbox", { name: "Các bước tái hiện lỗi" })
     .fill("Sign in, then open the project.");
   await page
     .getByRole("textbox", { name: "Kết quả mong đợi" })
@@ -22,7 +22,7 @@ test("create a bug report, revisit it, and start work", async ({ page }) => {
     .fill("Production · Chrome");
   await page.getByRole("combobox", { name: "Đối tượng bị ảnh hưởng" }).click();
   await page.getByRole("option", { name: "Chỉ tôi", exact: true }).click();
-  await page.getByRole("combobox", { name: "Mức độ cần xử lý" }).click();
+  await page.getByRole("combobox", { name: "Mức độ khẩn cấp" }).click();
   await page
     .getByRole("option", { name: "Công việc đang bị đình trệ", exact: true })
     .click();
@@ -55,30 +55,26 @@ test("create a bug report, revisit it, and start work", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByText("Reproduced locally.")).toBeVisible();
 
-  await page
-    .getByRole("combobox", { name: "Việc cần làm", exact: true })
-    .click();
+  await page.getByRole("combobox", { name: "Thao tác", exact: true }).click();
   await page.getByRole("option", { name: "Yêu cầu thêm thông tin" }).click();
   await page
     .getByRole("textbox", { name: "Ghi chú", exact: true })
     .fill("Which release is affected?");
   await page.getByRole("button", { name: "Cập nhật", exact: true }).click();
   await expect(
-    page.getByText("Chờ người báo cáo", { exact: true }),
+    page.getByText("Chờ bổ sung thông tin", { exact: true }),
   ).toBeVisible();
   const discussion = page.getByRole("region", {
-    name: "Thảo luận",
+    name: "Trao đổi",
     exact: true,
   });
   await expect(
     discussion.getByText("Which release is affected?"),
   ).toBeVisible();
   await page
-    .getByRole("textbox", { name: "Nội dung", exact: true })
+    .getByRole("textbox", { name: "Tin nhắn", exact: true })
     .fill("Release 2 is affected.");
-  await page
-    .getByRole("button", { name: "Gửi thảo luận", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Gửi tin nhắn", exact: true }).click();
   await expect(
     page.getByText("Đang mở", { exact: true }).first(),
   ).toBeVisible();
@@ -86,12 +82,10 @@ test("create a bug report, revisit it, and start work", async ({ page }) => {
     0,
   );
   await expect(discussion.getByRole("status")).toHaveText(
-    "Đã lưu thảo luận trong phiên này.",
+    "Đã lưu tin nhắn trong phiên này.",
   );
 
-  await page
-    .getByRole("combobox", { name: "Việc cần làm", exact: true })
-    .click();
+  await page.getByRole("combobox", { name: "Thao tác", exact: true }).click();
   await page
     .getByRole("option", { name: "Đánh dấu đã xử lý", exact: true })
     .click();
@@ -103,11 +97,9 @@ test("create a bug report, revisit it, and start work", async ({ page }) => {
     page.getByText("Đã xử lý", { exact: true }).first(),
   ).toBeVisible();
   await page
-    .getByRole("textbox", { name: "Nội dung", exact: true })
+    .getByRole("textbox", { name: "Tin nhắn", exact: true })
     .fill("Verified in release 3.");
-  await page
-    .getByRole("button", { name: "Gửi thảo luận", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Gửi tin nhắn", exact: true }).click();
   await expect(
     page.getByText("Verified in release 3.", { exact: true }),
   ).toBeVisible();

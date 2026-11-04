@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createTranslator } from "next-intl";
 
 import en from "@/messages/en.json";
 import vi from "@/messages/vi.json";
@@ -38,5 +39,38 @@ describe("locale configuration", () => {
     for (const value of catalogValues(vi)) {
       expect(value.trim()).not.toBe("");
     }
+  });
+
+  it("formats every Vietnamese message without losing interpolation values", () => {
+    const onError = (error: Error) => {
+      throw error;
+    };
+    const t = createTranslator({ locale: "vi", messages: vi, onError });
+    const values = {
+      count: 3,
+      page: 2,
+      pages: 4,
+      id: "BUG-123",
+      severity: "Cao",
+      limit: 160,
+      name: "anh-chup.png",
+      date: "04/11/2026",
+      author: "Nguyễn An",
+    };
+
+    for (const message of catalogValues(vi)) {
+      const translate = createTranslator({
+        locale: "vi",
+        messages: { message },
+        onError,
+      });
+      expect(translate("message", values).trim()).not.toBe("");
+    }
+
+    expect(t("Portal.savedRecord", values)).toContain(values.id);
+    expect(t("Bugs.attachmentRemove", values)).toContain(values.name);
+    expect(t("Bugs.tooLong", values)).toContain("160");
+    expect(t("Features.resultCount", values)).toBe("3 đề xuất");
+    expect(t("Discussions.replyBy", values)).toContain(values.author);
   });
 });

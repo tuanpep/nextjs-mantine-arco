@@ -51,15 +51,19 @@ test("overview counts stay inside the project and update after a bug is resolved
     within(card).getByText(String(open), { exact: true }),
   ).toBeInTheDocument();
   expect(
-    within(card).getByRole("link", { name: messages.Overview.viewBugs }),
-  ).toHaveAttribute("href", "/projects/beacon-portal/support/bugs?view=open");
+    within(card).getByRole("link", { name: messages.Overview.openBugs }),
+  ).toHaveAttribute(
+    "href",
+    "/projects/beacon-portal/support/bugs?view=open&sort=severity-desc",
+  );
   fireEvent.click(screen.getByRole("button", { name: "Resolve sample" }));
   expect(
     within(card).getByText(String(open - 1), { exact: true }),
   ).toBeInTheDocument();
+  expect(screen.getByText(messages.Overview.emptyBugs)).toBeInTheDocument();
   expect(
-    within(card).getByText(messages.Overview.emptyActive),
-  ).toBeInTheDocument();
+    screen.queryByRole("list", { name: messages.Overview.bugsAttention }),
+  ).not.toBeInTheDocument();
 });
 
 test("Orchid overview does not show Beacon bug titles", () => {
@@ -75,26 +79,54 @@ test("Orchid overview does not show Beacon bug titles", () => {
     ),
   ).toBeInTheDocument();
   expect(
-    within(screen.getByRole("region", { name: "Guides" })).getByRole("link", {
-      name: messages.Overview.viewGuides,
-    }),
+    within(screen.getByRole("region", { name: "Resources" })).getByRole(
+      "link",
+      {
+        name: messages.Overview.guides,
+      },
+    ),
   ).toHaveAttribute("href", "/projects/orchid-reports/guides");
 });
 
-test("each overview card has a descriptive link and at most three previews", () => {
+test("overview separates actionable summaries, bug context, review and resources", () => {
   renderHub("beacon-portal");
-  for (const [label, view] of [
-    [messages.Overview.openBugs, messages.Overview.viewBugs],
-    [messages.Overview.openHelp, messages.Overview.viewHelp],
-    [messages.Overview.openFeatures, messages.Overview.viewFeatures],
-    [messages.Overview.newFeedback, messages.Overview.viewFeedback],
-    [messages.Overview.guides, messages.Overview.viewGuides],
-    [messages.Overview.discussions, messages.Overview.viewDiscussions],
+  for (const label of [
+    messages.Overview.openBugs,
+    messages.Overview.openHelp,
+    messages.Overview.pendingDecisions,
   ]) {
     const card = screen.getByRole("region", { name: label });
-    expect(within(card).getByRole("link", { name: view })).toBeInTheDocument();
-    expect(within(card).getAllByRole("link").length).toBeLessThanOrEqual(4);
+    expect(within(card).getByRole("link", { name: label })).toBeInTheDocument();
+    expect(within(card).getAllByRole("link")).toHaveLength(1);
   }
+  const bugs = screen.getByRole("list", {
+    name: messages.Overview.bugsAttention,
+  });
+  const active = bugFixtures().filter(
+    (bug) => bug.projectId === "beacon-portal" && bug.status !== "Resolved",
+  );
+  expect(within(bugs).getAllByRole("listitem")).toHaveLength(
+    Math.min(5, active.length),
+  );
+  expect(
+    within(bugs).getByText(messages.Portal.statusOpen),
+  ).toBeInTheDocument();
+  const pane = screen.getByRole("complementary", {
+    name: messages.Portal.details,
+  });
+  const review = within(pane).getByRole("region", {
+    name: messages.Overview.pendingReview,
+  });
+  expect(
+    within(pane).getByRole("region", { name: messages.Overview.resources }),
+  ).toBeInTheDocument();
+  expect(
+    within(review).getByRole("link", { name: messages.Overview.openFeatures }),
+  ).toHaveAttribute("href", "/projects/beacon-portal/ideas/features?view=open");
+  expect(
+    within(review).getByRole("link", { name: messages.Overview.newFeedback }),
+  ).toHaveAttribute("href", "/projects/beacon-portal/ideas/feedback?view=open");
+  expect(screen.getAllByText("Beacon Portal")).toHaveLength(1);
 });
 
 test("unknown project does not display module counts", () => {

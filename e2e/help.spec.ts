@@ -146,12 +146,12 @@ test("mobile Vietnamese conversation actions", async ({ page, context }) => {
     .getByRole("textbox", { name: "Câu hỏi", exact: true })
     .fill("Làm sao triển khai?");
   await page
-    .getByRole("textbox", { name: "Bạn đã thử gì", exact: true })
+    .getByRole("textbox", { name: "Những cách bạn đã thử", exact: true })
     .fill("Đã xem hướng dẫn.");
   await page.getByRole("button", { name: "Lưu câu hỏi", exact: true }).click();
   const message = page.getByRole("textbox", { name: "Tin nhắn", exact: true });
   const action = page.getByRole("combobox", {
-    name: "Việc cần làm",
+    name: "Thao tác",
     exact: true,
   });
   await expect(
@@ -175,7 +175,7 @@ test("mobile Vietnamese conversation actions", async ({ page, context }) => {
     .click();
   await expect(
     page
-      .getByRole("region", { name: "Cuộc trao đổi" })
+      .getByRole("region", { name: "Trao đổi" })
       .getByText("Tôi cần thêm trợ giúp."),
   ).toBeVisible();
   expect(

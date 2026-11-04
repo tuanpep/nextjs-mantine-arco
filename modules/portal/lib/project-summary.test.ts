@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { projectSummaries } from "./project-summary";
+import { projectAttention, projectSummaries } from "./project-summary";
 import { seedPortal } from "./seed";
 
 test("counts only open workflow statuses", () => {
@@ -83,4 +83,117 @@ test("previews are title sorted, capped and include guides and discussions", () 
   expect(
     summaries.find((summary) => summary.kind === "discussion")?.records,
   ).toHaveLength(1);
+});
+
+test("attention isolates active project records, orders and caps bugs without mutating source", () => {
+  const source = seedPortal();
+  const [bug] = source.bugs;
+  const [help] = source.help;
+  const [feature] = source.features;
+  const [feedback] = source.feedback;
+  if (!bug || !help || !feature || !feedback)
+    throw new Error("Missing fixtures");
+  source.bugs = [
+    {
+      ...bug,
+      projectId: "p",
+      id: "6",
+      title: "Z",
+      severity: "Low",
+      status: "Open",
+    },
+    {
+      ...bug,
+      projectId: "p",
+      id: "3",
+      title: "A",
+      severity: "High",
+      status: "Waiting for reporter",
+    },
+    {
+      ...bug,
+      projectId: "p",
+      id: "2",
+      title: "A",
+      severity: "High",
+      status: "In progress",
+    },
+    {
+      ...bug,
+      projectId: "p",
+      id: "1",
+      title: "Z",
+      severity: "Critical",
+      status: "Open",
+    },
+    {
+      ...bug,
+      projectId: "p",
+      id: "4",
+      title: "B",
+      severity: "High",
+      status: "Open",
+    },
+    {
+      ...bug,
+      projectId: "p",
+      id: "5",
+      title: "A",
+      severity: "Medium",
+      status: "Open",
+    },
+    {
+      ...bug,
+      projectId: "p",
+      id: "resolved",
+      severity: "Critical",
+      status: "Resolved",
+    },
+    {
+      ...bug,
+      projectId: "other",
+      id: "other",
+      severity: "Critical",
+      status: "Open",
+    },
+  ];
+  source.help = [
+    { ...help, projectId: "p", status: "Open" },
+    { ...help, projectId: "p", status: "Answered" },
+    { ...help, projectId: "other", status: "Open" },
+  ];
+  source.features = [
+    { ...feature, projectId: "p", status: "Submitted" },
+    { ...feature, projectId: "p", status: "Accepted" },
+    { ...feature, projectId: "other", status: "Submitted" },
+  ];
+  source.feedback = [
+    { ...feedback, projectId: "p", status: "New" },
+    { ...feedback, projectId: "p", status: "Reviewed" },
+    { ...feedback, projectId: "other", status: "New" },
+  ];
+  const before = structuredClone(source);
+  const result = projectAttention("p", source, "en");
+  expect(result).toMatchObject({
+    bugCount: 6,
+    helpCount: 1,
+    featureCount: 1,
+    feedbackCount: 1,
+  });
+  expect(result.bugs.map(({ id }) => id)).toEqual(["1", "2", "3", "4", "5"]);
+  expect(result.bugs[2]).toEqual({
+    id: "3",
+    title: "A",
+    href: "/projects/p/support/bugs/3",
+    severity: "High",
+    status: "Waiting for reporter",
+  });
+  expect(source).toEqual(before);
+  expect(projectAttention("missing", source, "en")).toEqual({
+    bugs: [],
+    bugCount: 0,
+    helpCount: 0,
+    featureCount: 0,
+    feedbackCount: 0,
+  });
 });

@@ -123,6 +123,21 @@ describe("workspace navigation", () => {
     expect(document.getElementById("main-content")?.tagName).toBe("MAIN");
   });
 
+  it("keeps project switching without a repeated static project label", () => {
+    renderShell();
+    expect(
+      screen.getAllByRole("combobox", { name: "Switch project" }),
+    ).toHaveLength(2);
+    expect(
+      screen
+        .getAllByText("Orchid Reports")
+        .filter(
+          (element) => !element.closest('[role="combobox"], [role="option"]'),
+        ),
+    ).toHaveLength(0);
+    expect(screen.getByText(messages.Portal.demoNotice)).toBeInTheDocument();
+  });
+
   it.each(["/", "/projects/unknown/support/bugs"])(
     "shows only root navigation without a project at %s",
     (pathname) => {

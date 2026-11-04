@@ -4,7 +4,9 @@ test("session records filter, reopen from history and reset on reload", async ({
   page,
 }) => {
   await page.goto("/");
-  const records = page.getByRole("region", { name: "Bản ghi trong phiên" });
+  const records = page.getByRole("region", {
+    name: "Nội dung trong phiên này",
+  });
   await expect(page.getByRole("region", { name: "Đã mở gần đây" })).toHaveCount(
     0,
   );
@@ -30,11 +32,13 @@ test("session records filter, reopen from history and reset on reload", async ({
   await expect(page).toHaveURL(href);
   await page.getByRole("link", { name: "DX Portal", exact: true }).click();
   const search = records.getByRole("textbox", {
-    name: "Tìm bản ghi trong phiên",
+    name: "Tìm nội dung trong phiên này",
   });
   await search.fill("no-result-xyz");
   await search.press("Enter");
-  await expect(records.getByText("Không có bản ghi khớp")).toBeVisible();
+  await expect(
+    records.getByText("Không tìm thấy kết quả phù hợp"),
+  ).toBeVisible();
   await records
     .getByRole("button", { name: "Xóa bộ lọc", exact: true })
     .filter({ hasText: "Xóa bộ lọc" })
@@ -53,7 +57,9 @@ test("home filters are URL-backed and usable by keyboard on mobile", async ({
   await page.goto(
     "/?recordsProject=unknown&recordsKind=unknown&recordsPage=999",
   );
-  const records = page.getByRole("region", { name: "Bản ghi trong phiên" });
+  const records = page.getByRole("region", {
+    name: "Nội dung trong phiên này",
+  });
   const type = records.getByRole("combobox", { name: "Loại", exact: true });
   await expect(type).toHaveValue("all");
   await expect(

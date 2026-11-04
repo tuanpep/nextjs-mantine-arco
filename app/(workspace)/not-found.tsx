@@ -10,8 +10,8 @@ export default function UnavailablePage() {
     <section>
       <h1>Không thể truy cập trang này</h1>
       <p>
-        Tài khoản của bạn có thể không có quyền truy cập. Thông tin bị hạn chế
-        sẽ không được hiển thị.
+        Bạn có thể không có quyền truy cập trang này. Nội dung bị hạn chế sẽ
+        không được hiển thị.
       </p>
       <Link href="/">Về trang chủ</Link>
       {" · "}

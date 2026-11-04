@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useQueryStates } from "nuqs";
 
 import { usePortal } from "@/modules/portal/components/portal-provider";
 import { getApplication } from "@/modules/projects/lib/applications";
@@ -12,6 +13,7 @@ import { RecordDetailFrame } from "@/modules/ui/components/record-detail-frame";
 import { RecordFields } from "@/modules/ui/components/record-fields";
 import { RecordUnavailable } from "@/modules/ui/components/record-unavailable";
 
+import { helpSearchParams, serializeHelpQueue } from "../lib/search-params";
 import {
   helpActions,
   type HelpNoteAction,
@@ -30,13 +32,15 @@ export function HelpDetail({
   const portal = useTranslations("Portal");
   const nav = useTranslations("Workspace");
   const { help, transitionHelp } = usePortal();
+  const [query] = useQueryStates(helpSearchParams);
   const item = help.find(
     (entry) => entry.id === helpId && entry.projectId === projectId,
   );
   const application = getApplication(projectId);
   const base = `/projects/${projectId}/support/help`;
+  const back = serializeHelpQueue(base, query);
   if (!application) return <ProjectUnavailable />;
-  if (!item) return <RecordUnavailable backHref={base} />;
+  if (!item) return <RecordUnavailable backHref={back} />;
 
   return (
     <RecordDetailFrame
@@ -44,8 +48,11 @@ export function HelpDetail({
       status={helpStatusLabel(item.status, portal)}
       meta={item.id}
       breadcrumbs={recordTrail(application, nav("projects"), [
-        { title: t("title"), href: base },
-        { title: item.question, href: `${base}/${item.id}` },
+        { title: t("title"), href: back },
+        {
+          title: item.question,
+          href: serializeHelpQueue(`${base}/${item.id}`, query),
+        },
       ])}
     >
       <RecordFields fields={[{ label: t("tried"), value: item.tried }]} />

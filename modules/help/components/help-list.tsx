@@ -13,6 +13,7 @@ import { RecordCollection } from "@/modules/ui/components/record-collection";
 import {
   helpSearchParams,
   helpViews,
+  serializeHelpQueue,
   type HelpView,
 } from "../lib/search-params";
 import { helpInView, type HelpStatus } from "../lib/state";
@@ -41,7 +42,7 @@ export function HelpList({ projectId }: { projectId: string }) {
       breadcrumbs={recordTrail(application, nav("projects"), [
         { title: t("title"), href: base },
       ])}
-      createHref={`${base}/new`}
+      createHref={serializeHelpQueue(`${base}/new`, { q, view })}
       createLabel={t("new")}
       query={q}
       onQueryChange={(value) => void setQuery({ q: value })}
@@ -63,13 +64,16 @@ export function HelpList({ projectId }: { projectId: string }) {
       }}
       rows={rows.map((item) => ({
         id: item.id,
-        href: `${base}/${item.id}`,
+        href: serializeHelpQueue(`${base}/${item.id}`, { q, view }),
         title: item.question,
         meta: item.id,
         status: helpStatusLabel(item.status, portal),
       }))}
       emptyTitle={view === "answered" ? t("emptyAnswered") : t("emptyOpen")}
-      emptyActionLabel={t("new")}
+      emptyActionLabel={view === "answered" ? t("tabOpen") : t("new")}
+      onEmptyAction={
+        view === "answered" ? () => void setQuery({ view: "open" }) : undefined
+      }
     />
   );
 }

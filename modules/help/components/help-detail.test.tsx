@@ -63,9 +63,7 @@ test("Vietnamese labels and project-scoped unavailable state", () => {
       </PortalProvider>
     </NextIntlClientProvider>,
   );
-  expect(
-    screen.getByRole("region", { name: "Cuộc trao đổi" }),
-  ).toBeInTheDocument();
+  expect(screen.getByRole("region", { name: "Trao đổi" })).toBeInTheDocument();
   expect(screen.getByRole("textbox", { name: "Tin nhắn" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Trả lời" })).toBeInTheDocument();
   view.unmount();
