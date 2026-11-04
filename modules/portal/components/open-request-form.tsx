@@ -3,6 +3,7 @@
 import {
   Anchor,
   Button,
+  Checkbox,
   Collapse,
   NativeSelect,
   Stack,
@@ -14,19 +15,42 @@ import { useForm } from "@mantine/form";
 import { useDisclosure, useMounted } from "@mantine/hooks";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import {
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type Ref,
+} from "react";
 
 import {
   BugUpload,
   type BugUploadFile,
 } from "@/modules/bug-reports/components/bug-upload";
+import { SimilarBugReports } from "@/modules/bug-reports/components/similar-bug-reports";
 import { useBugCopy } from "@/modules/bug-reports/components/use-bug-copy";
 import {
   acceptBugFiles,
   bugAttachmentMessage,
 } from "@/modules/bug-reports/lib/attachments";
 import { isImpactScope, isUrgency } from "@/modules/bug-reports/lib/intake";
-import { isPageUrl } from "@/modules/bug-reports/lib/state";
+import {
+  bugTextLimits,
+  validateBugText,
+  isPageUrl,
+} from "@/modules/bug-reports/lib/state";
+import { useUnsavedDraft } from "@/modules/ui/components/use-unsaved-draft";
+import { SimilarFeatureRequests } from "@/modules/feature-requests/components/similar-feature-requests";
+import {
+  FEATURE_TITLE_MAX_LENGTH,
+  FEATURE_TEXT_MAX_LENGTH,
+  validateFeatureText,
+} from "@/modules/feature-requests/lib/state";
+import {
+  FEEDBACK_TITLE_MAX_LENGTH,
+  FEEDBACK_TEXT_MAX_LENGTH,
+  validateFeedbackText,
+} from "@/modules/feedback/lib/state";
 
 import {
   createOpenRequest,
@@ -34,6 +58,7 @@ import {
   openRequestUsesTitle,
   type CreatedOpenRequest,
   type OpenRequestKind,
+  type OpenRequestValues,
 } from "../lib/create-open-request";
 
 import { usePortal } from "./portal-provider";
@@ -43,14 +68,18 @@ export type ProjectOption = {
   label: string;
 };
 
+export type OpenRequestHandle = { canClose: () => boolean };
+
 export function OpenRequestForm({
   defaultProjectId,
   projectOptions,
   onClose,
+  ref,
 }: {
   defaultProjectId: string;
   projectOptions: ProjectOption[];
   onClose: () => void;
+  ref?: Ref<OpenRequestHandle>;
 }) {
   const portal = useTranslations("Portal");
   const workspace = useTranslations("Workspace");
@@ -59,20 +88,62 @@ export function OpenRequestForm({
   const features = useTranslations("Features");
   const feedback = useTranslations("Feedback");
   const copy = useBugCopy();
-  const [more, { toggle: toggleMore }] = useDisclosure(false);
+  const [more, { toggle: toggleMore, open: openMore }] = useDisclosure(false);
   const [files, setFiles] = useState<BugUploadFile[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
   const { createBug, createHelp, createFeature, createFeedback } = usePortal();
   const mounted = useMounted();
   const required = portal("required");
   const [created, setCreated] = useState<CreatedOpenRequest | null>(null);
-  const form = useForm({
+  const [bugError, setBugError] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [featureError, setFeatureError] = useState(false);
+  const [feedbackError, setFeedbackError] = useState(false);
+  const validateBug = (value: string, limit: number, requiredField = true) => {
+    const issue = validateBugText(value, limit, requiredField);
+    return issue === "required"
+      ? required
+      : issue === "tooLong"
+        ? bugs("tooLong", { limit })
+        : null;
+  };
+  const validateFeedback = (
+    value: string,
+    limit: number,
+    field: "titleTooLong" | "observationTooLong",
+  ) => {
+    const issue = validateFeedbackText(value, limit);
+    return issue === "required"
+      ? required
+      : issue === "tooLong"
+        ? feedback(field, { limit })
+        : null;
+  };
+  const validateFeature = (value: string, limit: number) => {
+    const issue = validateFeatureText(value, limit);
+    return issue === "required"
+      ? required
+      : issue === "tooLong"
+        ? features("tooLong", { limit })
+        : null;
+  };
+  const stagedPreviews = useRef<BugUploadFile[]>([]);
+  useEffect(
+    () => () => {
+      stagedPreviews.current.forEach((item) => {
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      });
+    },
+    [],
+  );
+  const form = useForm<OpenRequestValues>({
     initialValues: {
       projectId: defaultProjectId,
-      kind: "bug" as OpenRequestKind,
+      kind: "bug",
       title: "",
       happened: "",
       steps: "",
+      reproduction: "known",
       expected: "",
       environment: "",
       pageUrl: "",
@@ -89,18 +160,49 @@ export function OpenRequestForm({
     validate: {
       projectId: (value) => (value ? null : required),
       title: (value, values) =>
-        openRequestUsesTitle(values.kind) && !value.trim() ? required : null,
+        values.kind === "bug"
+          ? validateBug(value, bugTextLimits.title)
+          : values.kind === "feature"
+            ? validateFeature(value, FEATURE_TITLE_MAX_LENGTH)
+            : values.kind === "feedback"
+              ? validateFeedback(
+                  value,
+                  FEEDBACK_TITLE_MAX_LENGTH,
+                  "titleTooLong",
+                )
+              : openRequestUsesTitle(values.kind) && !value.trim()
+                ? required
+                : null,
       happened: (value, values) =>
-        values.kind === "bug" && !value.trim() ? required : null,
+        values.kind === "bug"
+          ? validateBug(value, bugTextLimits.happened)
+          : null,
       steps: (value, values) =>
-        values.kind === "bug" && !value.trim() ? required : null,
+        values.kind === "bug" && values.reproduction === "known"
+          ? validateBug(value, bugTextLimits.steps)
+          : null,
       expected: (value, values) =>
-        values.kind === "bug" && !value.trim() ? required : null,
+        values.kind === "bug"
+          ? validateBug(value, bugTextLimits.expected)
+          : null,
       environment: (value, values) =>
-        values.kind === "bug" && !value.trim() ? required : null,
+        values.kind === "bug"
+          ? validateBug(value, bugTextLimits.environment, false)
+          : null,
+      correlationId: (value, values) =>
+        values.kind === "bug"
+          ? validateBug(value, bugTextLimits.correlationId, false)
+          : null,
+      impactDetail: (value, values) =>
+        values.kind === "bug"
+          ? validateBug(value, bugTextLimits.impactDetail, false)
+          : null,
       pageUrl: (value, values) =>
-        values.kind === "bug" && value.trim() && !isPageUrl(value.trim())
-          ? bugs("pageUrlInvalid")
+        values.kind === "bug"
+          ? validateBug(value, bugTextLimits.pageUrl, false) ||
+            (value.trim() && !isPageUrl(value.trim())
+              ? bugs("pageUrlInvalid")
+              : null)
           : null,
       impactScope: (value, values) =>
         values.kind === "bug" && !isImpactScope(value) ? required : null,
@@ -111,13 +213,33 @@ export function OpenRequestForm({
       tried: (value, values) =>
         values.kind === "help" && !value.trim() ? required : null,
       problem: (value, values) =>
-        values.kind === "feature" && !value.trim() ? required : null,
+        values.kind === "feature"
+          ? validateFeature(value, FEATURE_TEXT_MAX_LENGTH)
+          : null,
       outcome: (value, values) =>
-        values.kind === "feature" && !value.trim() ? required : null,
+        values.kind === "feature"
+          ? validateFeature(value, FEATURE_TEXT_MAX_LENGTH)
+          : null,
       observation: (value, values) =>
-        values.kind === "feedback" && !value.trim() ? required : null,
+        values.kind === "feedback"
+          ? validateFeedback(
+              value,
+              FEEDBACK_TEXT_MAX_LENGTH,
+              "observationTooLong",
+            )
+          : null,
     },
   });
+
+  const dirty = !created && (form.isDirty() || files.length > 0);
+  useUnsavedDraft(dirty, portal("discardDraft"));
+  useImperativeHandle(
+    ref,
+    () => ({
+      canClose: () => !dirty || window.confirm(portal("discardDraft")),
+    }),
+    [dirty, portal],
+  );
 
   if (created) {
     return (
@@ -137,36 +259,61 @@ export function OpenRequestForm({
 
   return (
     <form
-      onSubmit={form.onSubmit((values) => {
-        const accepted =
-          values.kind === "bug"
-            ? acceptBugFiles(files.map((item) => item.file))
-            : { attachments: [] };
-        if ("error" in accepted) {
-          setFileError(
-            bugAttachmentMessage(accepted.error, {
-              type: bugs("attachmentType"),
-              size: bugs("attachmentSize"),
-              count: bugs("attachmentCount"),
-            }),
-          );
-          return;
-        }
-        const record = createOpenRequest(
-          values,
-          accepted.attachments.map((attachment, index) => {
-            const previewUrl = files[index]?.previewUrl;
-            return previewUrl ? { ...attachment, previewUrl } : attachment;
-          }),
-          {
-            createBug,
-            createHelp,
-            createFeature,
-            createFeedback,
+      ref={formRef}
+      noValidate
+      onSubmit={(event) =>
+        form.onSubmit(
+          (values) => {
+            const accepted =
+              values.kind === "bug"
+                ? acceptBugFiles(files.map((item) => item.file))
+                : { attachments: [] };
+            if ("error" in accepted) {
+              setFileError(
+                bugAttachmentMessage(accepted.error, {
+                  type: bugs("attachmentType"),
+                  size: bugs("attachmentSize"),
+                  count: bugs("attachmentCount"),
+                }),
+              );
+              return;
+            }
+            const record = createOpenRequest(
+              values,
+              accepted.attachments.map((attachment, index) => {
+                const previewUrl = files[index]?.previewUrl;
+                return previewUrl ? { ...attachment, previewUrl } : attachment;
+              }),
+              {
+                createBug,
+                createHelp,
+                createFeature,
+                createFeedback,
+              },
+            );
+            if (record) {
+              stagedPreviews.current = [];
+              setCreated(record);
+            } else if (values.kind === "bug") {
+              setBugError(true);
+            } else if (values.kind === "feature") {
+              setFeatureError(true);
+            } else if (values.kind === "feedback") {
+              setFeedbackError(true);
+            }
           },
-        );
-        if (record) setCreated(record);
-      })}
+          (errors) => {
+            if (errors.correlationId || errors.impactDetail) openMore();
+            setTimeout(
+              () =>
+                formRef.current
+                  ?.querySelector<HTMLElement>("[aria-invalid=true]")
+                  ?.focus(),
+              100,
+            );
+          },
+        )(event)
+      }
     >
       <Stack gap="sm">
         <NativeSelect
@@ -194,18 +341,35 @@ export function OpenRequestForm({
               required
               {...form.getInputProps("title")}
             />
+            <SimilarBugReports
+              projectId={form.values.projectId}
+              title={form.values.title}
+            />
             <Textarea
               label={bugs("happened")}
               required
               minRows={2}
               {...form.getInputProps("happened")}
             />
-            <Textarea
-              label={bugs("steps")}
-              required
-              minRows={2}
-              {...form.getInputProps("steps")}
+            <Checkbox
+              label={bugs("stepsUnknown")}
+              checked={form.values.reproduction === "unknown"}
+              onChange={(event) => {
+                form.setFieldValue(
+                  "reproduction",
+                  event.currentTarget.checked ? "unknown" : "known",
+                );
+                form.clearFieldError("steps");
+              }}
             />
+            {form.values.reproduction === "known" ? (
+              <Textarea
+                label={bugs("steps")}
+                required
+                minRows={2}
+                {...form.getInputProps("steps")}
+              />
+            ) : null}
             <Textarea
               label={bugs("expected")}
               required
@@ -214,12 +378,13 @@ export function OpenRequestForm({
             />
             <TextInput
               label={bugs("environment")}
-              required
               placeholder={bugs("environmentPlaceholder")}
               {...form.getInputProps("environment")}
             />
             <TextInput
               label={bugs("pageUrl")}
+              type="url"
+              inputMode="url"
               placeholder="https://"
               {...form.getInputProps("pageUrl")}
             />
@@ -227,6 +392,7 @@ export function OpenRequestForm({
               files={files}
               error={fileError}
               onChange={(next, issue) => {
+                stagedPreviews.current = next;
                 setFiles(next);
                 setFileError(
                   issue
@@ -283,6 +449,11 @@ export function OpenRequestForm({
                 </Stack>
               </Collapse>
             </div>
+            {bugError ? (
+              <Text c="red" role="alert">
+                {bugs("createFailed")}
+              </Text>
+            ) : null}
           </>
         ) : null}
         {kind === "help" ? (
@@ -308,6 +479,10 @@ export function OpenRequestForm({
               required
               {...form.getInputProps("title")}
             />
+            <SimilarFeatureRequests
+              projectId={form.values.projectId}
+              title={form.values.title}
+            />
             <Textarea
               label={features("problem")}
               required
@@ -320,6 +495,11 @@ export function OpenRequestForm({
               minRows={2}
               {...form.getInputProps("outcome")}
             />
+            {featureError ? (
+              <Text c="red" role="alert">
+                {features("createFailed")}
+              </Text>
+            ) : null}
           </>
         ) : null}
         {kind === "feedback" ? (
@@ -335,6 +515,11 @@ export function OpenRequestForm({
               minRows={2}
               {...form.getInputProps("observation")}
             />
+            {feedbackError ? (
+              <Text c="red" role="alert">
+                {feedback("createFailed")}
+              </Text>
+            ) : null}
           </>
         ) : null}
         <Button type="submit" disabled={!mounted}>

@@ -3,8 +3,13 @@
 import { Button, Drawer } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useTranslations } from "next-intl";
+import { useRef } from "react";
 
-import { OpenRequestForm, type ProjectOption } from "./open-request-form";
+import {
+  OpenRequestForm,
+  type OpenRequestHandle,
+  type ProjectOption,
+} from "./open-request-form";
 
 export function OpenRequestControl({
   projectId,
@@ -17,6 +22,11 @@ export function OpenRequestControl({
 }) {
   const portal = useTranslations("Portal");
   const [opened, { open, close }] = useDisclosure(false);
+  const form = useRef<OpenRequestHandle>(null);
+  const requestClose = () => {
+    if (form.current && !form.current.canClose()) return;
+    close();
+  };
 
   return (
     <>
@@ -30,7 +40,7 @@ export function OpenRequestControl({
       </Button>
       <Drawer
         opened={opened}
-        onClose={close}
+        onClose={requestClose}
         position="left"
         title={portal("openRequest")}
         size={400}
@@ -42,6 +52,7 @@ export function OpenRequestControl({
             defaultProjectId={projectId ?? ""}
             projectOptions={projectOptions}
             onClose={close}
+            ref={form}
           />
         ) : null}
       </Drawer>

@@ -1,12 +1,13 @@
 import { expect, test } from "@playwright/test";
 
+import messages from "../messages/vi.json";
+
 test("overview counts stay on the current project", async ({ page }) => {
   await page.goto("/projects/beacon-portal");
   const card = page.getByRole("region", { name: "Báo cáo lỗi đang mở" });
-  await expect(card.getByRole("link", { name: "Xem" })).toHaveAttribute(
-    "href",
-    "/projects/beacon-portal/support/bugs?view=open",
-  );
+  await expect(
+    card.getByRole("link", { name: messages.Overview.viewBugs }),
+  ).toHaveAttribute("href", "/projects/beacon-portal/support/bugs?view=open");
   await expect(card).toContainText("1");
   await page.goto("/projects/orchid-reports");
   await expect(
@@ -21,7 +22,7 @@ test("mobile overview keeps every module available", async ({ page }) => {
   for (const name of [
     "Báo cáo lỗi đang mở",
     "Câu hỏi đang mở",
-    "Đề xuất đang mở",
+    messages.Overview.openFeatures,
     "Phản hồi mới",
     "Hướng dẫn",
     "Thảo luận",

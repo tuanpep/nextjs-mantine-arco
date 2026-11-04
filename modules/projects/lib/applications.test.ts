@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import english from "@/messages/en.json";
+import vietnamese from "@/messages/vi.json";
+
 import {
   applicationPath,
   applications,
@@ -12,6 +15,8 @@ describe("application registry", () => {
   it.each(applications)("resolves $id and its overview path", (application) => {
     expect(getApplication(application.id)).toBe(application);
     expect(applicationPath(application.id)).toBe(`/projects/${application.id}`);
+    expect(english.Workspace[application.descriptionKey]).toBeTruthy();
+    expect(vietnamese.Workspace[application.descriptionKey]).toBeTruthy();
   });
 
   it("does not resolve unknown applications", () => {

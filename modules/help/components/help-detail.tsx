@@ -50,20 +50,25 @@ export function HelpDetail({
     >
       <RecordFields fields={[{ label: t("tried"), value: item.tried }]} />
       <NotesList
-        title={portal("notes")}
+        title={t("conversation")}
         notes={item.notes.map((note) => ({
-          label: helpActionLabel(note.action, portal),
+          label: helpActionLabel(note.action, t),
           text: note.text,
         }))}
       />
       <NoteAction
+        key={item.id}
+        noteLabel={t("message")}
+        useActionLabel
+        protectDraft
+        errorMessage={t("updateFailed")}
         actions={helpActions(item.status).map((kind) => ({
           value: kind,
-          label: helpActionLabel(kind, portal),
+          label: helpActionLabel(kind, t),
         }))}
         onSubmit={(action, note) => {
-          if (!isHelpAction(action)) return;
-          transitionHelp(projectId, item.id, { kind: action, note });
+          if (!isHelpAction(action)) return false;
+          return transitionHelp(projectId, item.id, { kind: action, note });
         }}
       />
     </RecordDetailFrame>
@@ -71,7 +76,7 @@ export function HelpDetail({
 }
 
 function isHelpAction(value: string): value is HelpTransition["kind"] {
-  return value === "answer" || value === "reopen";
+  return value === "reply" || value === "answer" || value === "reopen";
 }
 
 function helpStatusLabel(
@@ -92,13 +97,15 @@ function helpStatusLabel(
 
 function helpActionLabel(
   action: HelpNoteAction,
-  t: ReturnType<typeof useTranslations<"Portal">>,
+  t: ReturnType<typeof useTranslations<"HelpRequests">>,
 ) {
   switch (action) {
+    case "reply":
+      return t("reply");
     case "answer":
-      return t("actionAnswer");
+      return t("answer");
     case "reopen":
-      return t("actionReopen");
+      return t("reopen");
     default: {
       const neverAction: never = action;
       return neverAction;

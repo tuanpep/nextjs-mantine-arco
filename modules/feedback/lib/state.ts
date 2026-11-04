@@ -1,6 +1,17 @@
 export const feedbackStatuses = ["New", "Reviewed"] as const;
 export type FeedbackStatus = (typeof feedbackStatuses)[number];
 
+export const FEEDBACK_TITLE_MAX_LENGTH = 160;
+export const FEEDBACK_TEXT_MAX_LENGTH = 10000;
+
+export function validateFeedbackText(
+  value: string,
+  maxLength: number,
+): "required" | "tooLong" | null {
+  const length = value.trim().length;
+  return length === 0 ? "required" : length > maxLength ? "tooLong" : null;
+}
+
 export type FeedbackItem = {
   id: string;
   projectId: string;
@@ -22,7 +33,11 @@ export function createFeedbackItem(
 ): FeedbackItem | null {
   const title = draft.title.trim();
   const observation = draft.observation.trim();
-  if (!title || !observation) return null;
+  if (
+    validateFeedbackText(title, FEEDBACK_TITLE_MAX_LENGTH) ||
+    validateFeedbackText(observation, FEEDBACK_TEXT_MAX_LENGTH)
+  )
+    return null;
   return {
     id,
     projectId: draft.projectId,
@@ -48,13 +63,15 @@ export function feedbackActions(status: FeedbackStatus): "review"[] {
 
 export function feedbackInView(
   item: FeedbackItem,
-  view: "open" | "closed",
+  view: "open" | "closed" | "all",
 ): boolean {
   switch (view) {
     case "open":
       return item.status === "New";
     case "closed":
       return item.status === "Reviewed";
+    case "all":
+      return true;
     default: {
       const neverView: never = view;
       return neverView;
@@ -67,7 +84,11 @@ export function applyFeedbackReview(
   note: string,
 ): FeedbackItem | null {
   const text = note.trim();
-  if (!text || item.status !== "New") return null;
+  if (
+    validateFeedbackText(text, FEEDBACK_TEXT_MAX_LENGTH) ||
+    item.status !== "New"
+  )
+    return null;
   return {
     ...item,
     status: "Reviewed",

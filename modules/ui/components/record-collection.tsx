@@ -14,6 +14,7 @@ import { IconSearch } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 import { CollectionEmpty } from "./collection-empty";
 import { CollectionToolbar } from "./collection-toolbar";
@@ -58,6 +59,10 @@ export function RecordCollection({
   filterActive = false,
   onClearFilters,
   narrowActionLabel,
+  toolbarControls,
+  footer,
+  resultCount,
+  onEmptyAction,
 }: {
   title: string;
   description?: string;
@@ -80,6 +85,10 @@ export function RecordCollection({
   filterActive?: boolean;
   onClearFilters?: () => void;
   narrowActionLabel?: string;
+  toolbarControls?: ReactNode;
+  footer?: ReactNode;
+  resultCount?: number;
+  onEmptyAction?: () => void;
 }) {
   const t = useTranslations("Portal");
   const router = useRouter();
@@ -122,8 +131,9 @@ export function RecordCollection({
             statusOperator={filterOperator}
             statusOptions={filterOptions}
             onStatusChange={onFilterChange}
-            countLabel={t("count", { count: rows.length })}
+            countLabel={t("count", { count: resultCount ?? rows.length })}
           />
+          {toolbarControls}
           {rows.length === 0 ? (
             <CollectionEmpty
               icon={<IconSearch size={20} />}
@@ -135,7 +145,8 @@ export function RecordCollection({
               }
               onAction={() => {
                 if (!narrowed) {
-                  router.push(createHref);
+                  if (onEmptyAction) onEmptyAction();
+                  else router.push(createHref);
                   return;
                 }
                 if (onClearFilters) onClearFilters();
@@ -143,13 +154,14 @@ export function RecordCollection({
               }}
             />
           ) : (
-            <Stack component="ul" gap={0} p={0} m={0}>
+            <Stack component="ul" gap={0} p={0} m={0} aria-label={title}>
               {rows.map((row) => (
                 <Row key={row.id} row={row} />
               ))}
             </Stack>
           )}
         </Paper>
+        {footer}
       </Stack>
     </PageFrame>
   );

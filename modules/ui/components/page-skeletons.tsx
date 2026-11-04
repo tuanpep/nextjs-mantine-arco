@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Group, Paper, Skeleton, Stack } from "@mantine/core";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { PageFrame } from "./page-frame";
@@ -124,9 +125,10 @@ function FormFieldSkeleton({ multiline = false }: { multiline?: boolean }) {
 
 /** Projects home: header + bordered project rows. */
 export function HomePageSkeleton() {
+  const t = useTranslations("Workspace");
   return (
     <PageFrame header={<PageHeaderSkeleton withBreadcrumbs={false} />}>
-      <div role="status" aria-label="Đang tải dự án">
+      <Stack role="status" aria-label={t("loadingProjects")}>
         <Paper withBorder style={{ overflow: "hidden" }}>
           <Box px="md" py="xs" bg="var(--mantine-color-default-hover)">
             <Skeleton height={12} width={80} />
@@ -135,7 +137,13 @@ export function HomePageSkeleton() {
             <ProjectRowSkeleton key={index} />
           ))}
         </Paper>
-      </div>
+        <Paper withBorder>
+          <CollectionToolbarSkeleton />
+          {Array.from({ length: 3 }, (_, index) => (
+            <CollectionRowSkeleton key={index} />
+          ))}
+        </Paper>
+      </Stack>
     </PageFrame>
   );
 }
@@ -175,6 +183,7 @@ export function CollectionPageSkeleton({
 
 /** Project overview hub: breadcrumbs, title, description, card grid. */
 export function OverviewPageSkeleton() {
+  const t = useTranslations("Workspace");
   return (
     <PageFrame
       header={
@@ -185,7 +194,7 @@ export function OverviewPageSkeleton() {
         />
       }
     >
-      <div role="status" aria-label="Đang tải tổng quan">
+      <div role="status" aria-label={t("loadingOverview")}>
         <Group align="stretch" gap="md" wrap="wrap">
           {Array.from({ length: 6 }, (_, index) => (
             <Paper
@@ -198,6 +207,8 @@ export function OverviewPageSkeleton() {
                 <Skeleton height={12} width="45%" />
                 <Skeleton height={28} width={48} />
                 <Skeleton height={12} width="70%" />
+                <Skeleton height={12} width="65%" />
+                <Skeleton height={12} width="75%" />
                 <Skeleton height={12} width={64} mt="sm" />
               </Stack>
             </Paper>

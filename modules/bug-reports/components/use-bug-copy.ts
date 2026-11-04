@@ -18,7 +18,7 @@ export function useBugCopy() {
     bugs,
     portal,
     severity: (value: BugSeverity) => severityLabel(value, portal),
-    status: (value: BugStatus) => statusLabel(value, portal),
+    status: (value: BugStatus) => statusLabel(value, portal, bugs),
     impact: (value: ImpactScope) => impactLabel(value, bugs),
     urgency: (value: Urgency) => urgencyLabel(value, bugs),
     impactOptions: impactScopes.map((value) => ({
@@ -55,6 +55,7 @@ function severityLabel(
 function statusLabel(
   value: BugStatus,
   portal: ReturnType<typeof useTranslations<"Portal">>,
+  bugs: ReturnType<typeof useTranslations<"Bugs">>,
 ) {
   switch (value) {
     case "Open":
@@ -63,6 +64,8 @@ function statusLabel(
       return portal("statusInProgress");
     case "Resolved":
       return portal("statusResolved");
+    case "Waiting for reporter":
+      return bugs("statusWaiting");
     default: {
       const neverStatus: never = value;
       return neverStatus;

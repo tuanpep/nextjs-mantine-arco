@@ -50,13 +50,15 @@ test("overview counts stay inside the project and update after a bug is resolved
   expect(
     within(card).getByText(String(open), { exact: true }),
   ).toBeInTheDocument();
-  expect(within(card).getByRole("link", { name: "View" })).toHaveAttribute(
-    "href",
-    "/projects/beacon-portal/support/bugs?view=open",
-  );
+  expect(
+    within(card).getByRole("link", { name: messages.Overview.viewBugs }),
+  ).toHaveAttribute("href", "/projects/beacon-portal/support/bugs?view=open");
   fireEvent.click(screen.getByRole("button", { name: "Resolve sample" }));
   expect(
     within(card).getByText(String(open - 1), { exact: true }),
+  ).toBeInTheDocument();
+  expect(
+    within(card).getByText(messages.Overview.emptyActive),
   ).toBeInTheDocument();
 });
 
@@ -74,9 +76,25 @@ test("Orchid overview does not show Beacon bug titles", () => {
   ).toBeInTheDocument();
   expect(
     within(screen.getByRole("region", { name: "Guides" })).getByRole("link", {
-      name: "View",
+      name: messages.Overview.viewGuides,
     }),
   ).toHaveAttribute("href", "/projects/orchid-reports/guides");
+});
+
+test("each overview card has a descriptive link and at most three previews", () => {
+  renderHub("beacon-portal");
+  for (const [label, view] of [
+    [messages.Overview.openBugs, messages.Overview.viewBugs],
+    [messages.Overview.openHelp, messages.Overview.viewHelp],
+    [messages.Overview.openFeatures, messages.Overview.viewFeatures],
+    [messages.Overview.newFeedback, messages.Overview.viewFeedback],
+    [messages.Overview.guides, messages.Overview.viewGuides],
+    [messages.Overview.discussions, messages.Overview.viewDiscussions],
+  ]) {
+    const card = screen.getByRole("region", { name: label });
+    expect(within(card).getByRole("link", { name: view })).toBeInTheDocument();
+    expect(within(card).getAllByRole("link").length).toBeLessThanOrEqual(4);
+  }
 });
 
 test("unknown project does not display module counts", () => {

@@ -1,8 +1,15 @@
-type NamedRecord = {
-  id: string;
-  projectId: string;
-  title: string;
-};
+import { bugInView, type BugStatus } from "@/modules/bug-reports/lib/state";
+import {
+  featureInView,
+  type FeatureStatus,
+} from "@/modules/feature-requests/lib/state";
+import {
+  feedbackInView,
+  type FeedbackStatus,
+} from "@/modules/feedback/lib/state";
+import { helpInView, type HelpStatus } from "@/modules/help/lib/state";
+
+import type { PortalState } from "./seed";
 
 export const sessionKinds = [
   "bug",
@@ -15,46 +22,81 @@ export const sessionKinds = [
 
 export type SessionKind = (typeof sessionKinds)[number];
 
-export type SessionRow = {
+type SessionRowBase = {
   id: string;
+  projectId: string;
   title: string;
   href: string;
-  kind: SessionKind;
 };
+
+export type SessionRow = SessionRowBase &
+  (
+    | { kind: "bug"; status: BugStatus; active: boolean }
+    | { kind: "help"; status: HelpStatus; active: boolean }
+    | { kind: "feature"; status: FeatureStatus; active: boolean }
+    | { kind: "feedback"; status: FeedbackStatus; active: boolean }
+    | { kind: "guide" }
+    | { kind: "discussion" }
+  );
 
 export function sessionRows(
   projectId: string,
-  source: {
-    bugs: NamedRecord[];
-    help: NamedRecord[];
-    features: NamedRecord[];
-    feedback: NamedRecord[];
-    guides: NamedRecord[];
-    discussions: NamedRecord[];
-  },
+  source: PortalState,
 ): SessionRow[] {
+  const base = (
+    record: { id: string; projectId: string },
+    title: string,
+    section: string,
+  ) => ({
+    id: record.id,
+    projectId: record.projectId,
+    title,
+    href: `/projects/${projectId}/${section}/${record.id}`,
+  });
   return [
-    ...rows(source.bugs, projectId, "bug", "support/bugs"),
-    ...rows(source.help, projectId, "help", "support/help"),
-    ...rows(source.features, projectId, "feature", "ideas/features"),
-    ...rows(source.feedback, projectId, "feedback", "ideas/feedback"),
-    ...rows(source.guides, projectId, "guide", "guides"),
-    ...rows(source.discussions, projectId, "discussion", "discussions"),
+    ...source.bugs
+      .filter((item) => item.projectId === projectId)
+      .map((item) => ({
+        ...base(item, item.title, "support/bugs"),
+        kind: "bug" as const,
+        status: item.status,
+        active: bugInView(item, "open"),
+      })),
+    ...source.help
+      .filter((item) => item.projectId === projectId)
+      .map((item) => ({
+        ...base(item, item.question, "support/help"),
+        kind: "help" as const,
+        status: item.status,
+        active: helpInView(item, "open"),
+      })),
+    ...source.features
+      .filter((item) => item.projectId === projectId)
+      .map((item) => ({
+        ...base(item, item.title, "ideas/features"),
+        kind: "feature" as const,
+        status: item.status,
+        active: featureInView(item, "open"),
+      })),
+    ...source.feedback
+      .filter((item) => item.projectId === projectId)
+      .map((item) => ({
+        ...base(item, item.title, "ideas/feedback"),
+        kind: "feedback" as const,
+        status: item.status,
+        active: feedbackInView(item, "open"),
+      })),
+    ...source.guides
+      .filter((item) => item.projectId === projectId)
+      .map((item) => ({
+        ...base(item, item.title, "guides"),
+        kind: "guide" as const,
+      })),
+    ...source.discussions
+      .filter((item) => item.projectId === projectId)
+      .map((item) => ({
+        ...base(item, item.title, "discussions"),
+        kind: "discussion" as const,
+      })),
   ];
-}
-
-function rows(
-  items: NamedRecord[],
-  projectId: string,
-  kind: SessionKind,
-  section: string,
-): SessionRow[] {
-  return items
-    .filter((item) => item.projectId === projectId)
-    .map((item) => ({
-      id: item.id,
-      title: item.title,
-      href: `/projects/${projectId}/${section}/${item.id}`,
-      kind,
-    }));
 }

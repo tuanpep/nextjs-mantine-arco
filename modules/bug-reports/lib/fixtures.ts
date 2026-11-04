@@ -8,6 +8,7 @@ export function bugFixtures(): BugReport[] {
       title: "Export button does nothing",
       happened: "The export control does not respond.",
       steps: "Open a saved view and choose Export.",
+      reproduction: "known",
       expected: "A file download starts.",
       environment: "Production · Chrome",
       correlationId: "EXP-4401",
@@ -20,7 +21,12 @@ export function bugFixtures(): BugReport[] {
       status: "Open",
       notes: [],
       messages: [
-        { id: "MSG-1", text: "It also fails from the saved view menu." },
+        {
+          id: "MSG-1",
+          text: "It also fails from the saved view menu.",
+          order: 1,
+          resumedFromWaiting: false,
+        },
       ],
     },
     {
@@ -29,6 +35,7 @@ export function bugFixtures(): BugReport[] {
       title: "Avatar image stays blank",
       happened: "The profile image area is empty.",
       steps: "Open the account menu.",
+      reproduction: "known",
       expected: "The avatar image is visible.",
       environment: "Production · Firefox",
       correlationId: "",
@@ -39,7 +46,13 @@ export function bugFixtures(): BugReport[] {
       urgency: "can-wait",
       severity: "Low",
       status: "Resolved",
-      notes: [{ action: "resolve", text: "Replaced the missing image path." }],
+      notes: [
+        {
+          action: "resolve",
+          text: "Replaced the missing image path.",
+          order: 1,
+        },
+      ],
       messages: [],
     },
     {
@@ -48,6 +61,7 @@ export function bugFixtures(): BugReport[] {
       title: "Scheduled report stays queued",
       happened: "A due report remains in the queue.",
       steps: "Open the queue after the scheduled time.",
+      reproduction: "known",
       expected: "The report leaves the queue.",
       environment: "Staging · scheduler",
       correlationId: "",
@@ -58,7 +72,7 @@ export function bugFixtures(): BugReport[] {
       urgency: "this-week",
       severity: "Medium",
       status: "In progress",
-      notes: [{ action: "start", text: "Checking the scheduler." }],
+      notes: [{ action: "start", text: "Checking the scheduler.", order: 1 }],
       messages: [],
     },
     {
@@ -67,6 +81,7 @@ export function bugFixtures(): BugReport[] {
       title: "Chart legend covers the axis",
       happened: "The legend overlaps the axis labels.",
       steps: "Open a chart with more than four series.",
+      reproduction: "known",
       expected: "The axis labels stay readable.",
       environment: "Production · chart view",
       correlationId: "",

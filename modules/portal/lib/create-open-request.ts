@@ -9,6 +9,7 @@ export type OpenRequestValues = {
   title: string;
   happened: string;
   steps: string;
+  reproduction: "known" | "unknown";
   expected: string;
   environment: string;
   pageUrl: string;
@@ -38,6 +39,7 @@ export function createOpenRequest(
       title: string;
       happened: string;
       steps: string;
+      reproduction: "known" | "unknown";
       expected: string;
       environment: string;
       pageUrl: string;
@@ -72,7 +74,8 @@ export function createOpenRequest(
         projectId,
         title: values.title,
         happened: values.happened,
-        steps: values.steps,
+        steps: values.reproduction === "unknown" ? "" : values.steps,
+        reproduction: values.reproduction,
         expected: values.expected,
         environment: values.environment,
         pageUrl: values.pageUrl,

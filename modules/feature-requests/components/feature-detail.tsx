@@ -1,24 +1,23 @@
 "use client";
 
-import { Text } from "@mantine/core";
+import { Anchor } from "@mantine/core";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { parseAsString, useQueryState } from "nuqs";
 
 import { usePortal } from "@/modules/portal/components/portal-provider";
 import { getApplication } from "@/modules/projects/lib/applications";
 import { recordTrail } from "@/modules/projects/lib/record-trail";
-import { NoteAction } from "@/modules/ui/components/note-action";
 import { NotesList } from "@/modules/ui/components/notes-list";
 import { ProjectUnavailable } from "@/modules/ui/components/project-unavailable";
 import { RecordDetailFrame } from "@/modules/ui/components/record-detail-frame";
 import { RecordFields } from "@/modules/ui/components/record-fields";
 import { RecordUnavailable } from "@/modules/ui/components/record-unavailable";
 
-import {
-  featureActions,
-  type FeatureNoteAction,
-  type FeatureStatus,
-  type FeatureTransition,
-} from "../lib/state";
+import { featureQueueReturnHref } from "../lib/queue-navigation";
+import { FeatureDecisionForm } from "./feature-decision-form";
+import { FeatureNoteForm } from "./feature-note-form";
+import { useFeatureCopy } from "./use-feature-copy";
 
 export function FeatureDetail({
   projectId,
@@ -30,25 +29,31 @@ export function FeatureDetail({
   const t = useTranslations("Features");
   const portal = useTranslations("Portal");
   const nav = useTranslations("Workspace");
-  const { features, transitionFeature } = usePortal();
+  const copy = useFeatureCopy();
+  const [returnTo] = useQueryState("returnTo", parseAsString);
+  const { features, transitionFeature, addFeatureNote } = usePortal();
   const item = features.find(
     (entry) => entry.id === featureId && entry.projectId === projectId,
   );
   const application = getApplication(projectId);
   const base = `/projects/${projectId}/ideas/features`;
+  const backHref = featureQueueReturnHref(base, returnTo);
   if (!application) return <ProjectUnavailable />;
-  if (!item) return <RecordUnavailable backHref={base} />;
+  if (!item) return <RecordUnavailable backHref={backHref} />;
 
   return (
     <RecordDetailFrame
       title={item.title}
-      status={featureStatusLabel(item.status, portal)}
+      status={copy.status(item.status)}
       meta={item.id}
       breadcrumbs={recordTrail(application, nav("projects"), [
-        { title: t("title"), href: base },
+        { title: t("title"), href: backHref },
         { title: item.title, href: `${base}/${item.id}` },
       ])}
     >
+      <Anchor component={Link} href={backHref}>
+        {t("back")}
+      </Anchor>
       <RecordFields
         fields={[
           { label: t("problem"), value: item.problem },
@@ -58,62 +63,18 @@ export function FeatureDetail({
       <NotesList
         title={portal("notes")}
         notes={item.notes.map((note) => ({
-          label: featureActionLabel(note.action, portal),
+          label: copy.action(note.action),
           text: note.text,
         }))}
       />
-      {featureActions(item.status).length === 0 ? (
-        <Text size="sm">{portal("decisionStands")}</Text>
-      ) : (
-        <NoteAction
-          actions={featureActions(item.status).map((kind) => ({
-            value: kind,
-            label: featureActionLabel(kind, portal),
-          }))}
-          onSubmit={(action, note) => {
-            if (!isFeatureAction(action)) return;
-            transitionFeature(projectId, item.id, { kind: action, note });
-          }}
+      <FeatureNoteForm
+        onSubmit={(text) => addFeatureNote(projectId, item.id, text)}
+      />
+      {item.status === "Submitted" ? (
+        <FeatureDecisionForm
+          onSubmit={(action) => transitionFeature(projectId, item.id, action)}
         />
-      )}
+      ) : null}
     </RecordDetailFrame>
   );
-}
-
-function isFeatureAction(value: string): value is FeatureTransition["kind"] {
-  return value === "accept" || value === "decline";
-}
-
-function featureStatusLabel(
-  status: FeatureStatus,
-  t: ReturnType<typeof useTranslations<"Portal">>,
-) {
-  switch (status) {
-    case "Submitted":
-      return t("statusSubmitted");
-    case "Accepted":
-      return t("statusAccepted");
-    case "Declined":
-      return t("statusDeclined");
-    default: {
-      const neverStatus: never = status;
-      return neverStatus;
-    }
-  }
-}
-
-function featureActionLabel(
-  action: FeatureNoteAction,
-  t: ReturnType<typeof useTranslations<"Portal">>,
-) {
-  switch (action) {
-    case "accept":
-      return t("actionAccept");
-    case "decline":
-      return t("actionDecline");
-    default: {
-      const neverAction: never = action;
-      return neverAction;
-    }
-  }
 }

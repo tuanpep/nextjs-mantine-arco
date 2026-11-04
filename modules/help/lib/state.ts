@@ -1,6 +1,6 @@
 export const helpStatuses = ["Open", "Answered"] as const;
 export type HelpStatus = (typeof helpStatuses)[number];
-export type HelpNoteAction = "answer" | "reopen";
+export type HelpNoteAction = "reply" | "answer" | "reopen";
 
 export type HelpRequest = {
   id: string;
@@ -18,7 +18,9 @@ export type HelpDraft = {
 };
 
 export type HelpTransition =
-  { kind: "answer"; note: string } | { kind: "reopen"; note: string };
+  | { kind: "reply"; note: string }
+  | { kind: "answer"; note: string }
+  | { kind: "reopen"; note: string };
 
 export function createHelpRequest(
   id: string,
@@ -40,9 +42,9 @@ export function createHelpRequest(
 export function helpActions(status: HelpStatus): HelpTransition["kind"][] {
   switch (status) {
     case "Open":
-      return ["answer"];
+      return ["reply", "answer"];
     case "Answered":
-      return ["reopen"];
+      return ["reply", "reopen"];
     default: {
       const neverStatus: never = status;
       return neverStatus;
@@ -73,6 +75,8 @@ export function applyHelpTransition(
   const text = action.note.trim();
   if (!text) return null;
   switch (action.kind) {
+    case "reply":
+      return append(item, item.status, "reply", text);
     case "answer":
       if (item.status !== "Open") return null;
       return append(item, "Answered", "answer", text);

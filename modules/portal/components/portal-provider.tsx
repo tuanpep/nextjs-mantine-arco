@@ -21,10 +21,12 @@ import {
   addDiscussionReply,
   createDiscussionThread,
   DEMO_AUTHOR,
+  DISCUSSION_TEXT_LIMIT,
   type DiscussionDraft,
   type DiscussionThread,
 } from "@/modules/discussions/lib/state";
 import {
+  addFeatureNote,
   applyFeatureTransition,
   createFeatureRequest,
   type FeatureDraft,
@@ -51,6 +53,7 @@ import {
 } from "@/modules/help/lib/state";
 
 import { nextId } from "../lib/ids";
+import { addRecentRecord, type RecordReference } from "../lib/recent-records";
 import {
   buildSequences,
   seedPortal,
@@ -59,32 +62,47 @@ import {
 } from "../lib/seed";
 
 type PortalContextValue = PortalState & {
+  recentRecords: RecordReference[];
+  recordVisit: (reference: RecordReference) => void;
   createBug: (draft: BugDraft) => BugReport | null;
-  transitionBug: (projectId: string, id: string, action: BugTransition) => void;
-  addBugMessage: (projectId: string, id: string, text: string) => void;
+  transitionBug: (
+    projectId: string,
+    id: string,
+    action: BugTransition,
+  ) => boolean;
+  addBugMessage: (projectId: string, id: string, text: string) => boolean;
   createHelp: (draft: HelpDraft) => HelpRequest | null;
   transitionHelp: (
     projectId: string,
     id: string,
     action: HelpTransition,
-  ) => void;
+  ) => boolean;
   createFeature: (draft: FeatureDraft) => FeatureRequest | null;
   transitionFeature: (
     projectId: string,
     id: string,
     action: FeatureTransition,
-  ) => void;
+  ) => boolean;
+  addFeatureNote: (projectId: string, id: string, text: string) => boolean;
   createFeedback: (draft: FeedbackDraft) => FeedbackItem | null;
-  reviewFeedback: (projectId: string, id: string, note: string) => void;
+  reviewFeedback: (projectId: string, id: string, note: string) => boolean;
   createGuide: (draft: GuideDraft) => GuideArticle | null;
   createDiscussion: (draft: DiscussionDraft) => DiscussionThread | null;
-  replyToDiscussion: (projectId: string, id: string, text: string) => void;
+  replyToDiscussion: (projectId: string, id: string, text: string) => boolean;
 };
 
 const PortalContext = createContext<PortalContextValue | null>(null);
 
 export function PortalProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState(seedPortal);
+  const [recentRecords, setRecentRecords] = useState<RecordReference[]>([]);
+  const recordVisit = useCallback((reference: RecordReference) => {
+    setRecentRecords((previous) => addRecentRecord(previous, reference));
+  }, []);
+  const bugs = useRef(state.bugs);
+  const featuresRef = useRef(state.features);
+  const feedbackRef = useRef(state.feedback);
+  const help = useRef(state.help);
   const sequences = useRef<PortalSequences | null>(null);
   if (sequences.current === null) {
     sequences.current = buildSequences(seedPortal());
@@ -96,40 +114,56 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     const record = createBugReport(nextId("BUG", current.BUG), draft);
     if (!record) return null;
     current.BUG += 1;
+    const nextBugs = [record, ...bugs.current];
+    bugs.current = nextBugs;
     setState((previous) => ({
       ...previous,
-      bugs: [record, ...previous.bugs],
+      bugs: nextBugs,
     }));
     return record;
   }, []);
 
   const postBugMessage = useCallback(
     (projectId: string, id: string, text: string) => {
-      const message = text.trim();
       const current = sequences.current;
-      if (!current || !message) return;
+      const item = bugs.current.find(
+        (entry) => entry.id === id && entry.projectId === projectId,
+      );
+      if (!current || !item) return false;
       const messageId = nextId("MSG", current.MSG);
+      const updated = addBugMessage(item, messageId, text);
+      if (!updated) return false;
       current.MSG += 1;
+      const nextBugs = bugs.current.map((entry) =>
+        entry === item ? updated : entry,
+      );
+      bugs.current = nextBugs;
       setState((previous) => ({
         ...previous,
-        bugs: previous.bugs.map((item) => {
-          if (item.id !== id || item.projectId !== projectId) return item;
-          return addBugMessage(item, messageId, message) ?? item;
-        }),
+        bugs: nextBugs,
       }));
+      return true;
     },
     [],
   );
 
   const transitionBug = useCallback(
     (projectId: string, id: string, action: BugTransition) => {
+      const item = bugs.current.find(
+        (entry) => entry.id === id && entry.projectId === projectId,
+      );
+      if (!item) return false;
+      const updated = applyBugTransition(item, action);
+      if (!updated) return false;
+      const nextBugs = bugs.current.map((entry) =>
+        entry === item ? updated : entry,
+      );
+      bugs.current = nextBugs;
       setState((previous) => ({
         ...previous,
-        bugs: previous.bugs.map((item) => {
-          if (item.id !== id || item.projectId !== projectId) return item;
-          return applyBugTransition(item, action) ?? item;
-        }),
+        bugs: nextBugs,
       }));
+      return true;
     },
     [],
   );
@@ -140,22 +174,32 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     const record = createHelpRequest(nextId("HELP", current.HELP), draft);
     if (!record) return null;
     current.HELP += 1;
+    const nextHelp = [record, ...help.current];
+    help.current = nextHelp;
     setState((previous) => ({
       ...previous,
-      help: [record, ...previous.help],
+      help: nextHelp,
     }));
     return record;
   }, []);
 
   const transitionHelp = useCallback(
     (projectId: string, id: string, action: HelpTransition) => {
+      const item = help.current.find(
+        (entry) => entry.id === id && entry.projectId === projectId,
+      );
+      if (!item) return false;
+      const updated = applyHelpTransition(item, action);
+      if (!updated) return false;
+      const nextHelp = help.current.map((entry) =>
+        entry === item ? updated : entry,
+      );
+      help.current = nextHelp;
       setState((previous) => ({
         ...previous,
-        help: previous.help.map((item) => {
-          if (item.id !== id || item.projectId !== projectId) return item;
-          return applyHelpTransition(item, action) ?? item;
-        }),
+        help: nextHelp,
       }));
+      return true;
     },
     [],
   );
@@ -166,6 +210,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     const record = createFeatureRequest(nextId("FEAT", current.FEAT), draft);
     if (!record) return null;
     current.FEAT += 1;
+    featuresRef.current = [record, ...featuresRef.current];
     setState((previous) => ({
       ...previous,
       features: [record, ...previous.features],
@@ -175,13 +220,44 @@ export function PortalProvider({ children }: { children: ReactNode }) {
 
   const transitionFeature = useCallback(
     (projectId: string, id: string, action: FeatureTransition) => {
+      const item = featuresRef.current.find(
+        (entry) => entry.id === id && entry.projectId === projectId,
+      );
+      if (!item) return false;
+      const updated = applyFeatureTransition(item, action);
+      if (!updated) return false;
+      featuresRef.current = featuresRef.current.map((entry) =>
+        entry === item ? updated : entry,
+      );
       setState((previous) => ({
         ...previous,
-        features: previous.features.map((item) => {
-          if (item.id !== id || item.projectId !== projectId) return item;
-          return applyFeatureTransition(item, action) ?? item;
-        }),
+        features: previous.features.map((entry) =>
+          entry.id === id && entry.projectId === projectId ? updated : entry,
+        ),
       }));
+      return true;
+    },
+    [],
+  );
+
+  const postFeatureNote = useCallback(
+    (projectId: string, id: string, text: string) => {
+      const item = featuresRef.current.find(
+        (entry) => entry.id === id && entry.projectId === projectId,
+      );
+      if (!item) return false;
+      const updated = addFeatureNote(item, text);
+      if (!updated) return false;
+      featuresRef.current = featuresRef.current.map((entry) =>
+        entry === item ? updated : entry,
+      );
+      setState((previous) => ({
+        ...previous,
+        features: previous.features.map((entry) =>
+          entry.id === id && entry.projectId === projectId ? updated : entry,
+        ),
+      }));
+      return true;
     },
     [],
   );
@@ -192,22 +268,29 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     const record = createFeedbackItem(nextId("FB", current.FB), draft);
     if (!record) return null;
     current.FB += 1;
+    const nextFeedback = [record, ...feedbackRef.current];
+    feedbackRef.current = nextFeedback;
     setState((previous) => ({
       ...previous,
-      feedback: [record, ...previous.feedback],
+      feedback: nextFeedback,
     }));
     return record;
   }, []);
 
   const reviewFeedback = useCallback(
     (projectId: string, id: string, note: string) => {
-      setState((previous) => ({
-        ...previous,
-        feedback: previous.feedback.map((item) => {
-          if (item.id !== id || item.projectId !== projectId) return item;
-          return applyFeedbackReview(item, note) ?? item;
-        }),
-      }));
+      const item = feedbackRef.current.find(
+        (entry) => entry.id === id && entry.projectId === projectId,
+      );
+      if (!item) return false;
+      const updated = applyFeedbackReview(item, note);
+      if (!updated) return false;
+      const nextFeedback = feedbackRef.current.map((entry) =>
+        entry === item ? updated : entry,
+      );
+      feedbackRef.current = nextFeedback;
+      setState((previous) => ({ ...previous, feedback: nextFeedback }));
+      return true;
     },
     [],
   );
@@ -242,7 +325,15 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     (projectId: string, id: string, text: string) => {
       const current = sequences.current;
       const reply = text.trim();
-      if (!current || !reply) return;
+      if (
+        !current ||
+        !reply ||
+        reply.length > DISCUSSION_TEXT_LIMIT ||
+        !state.discussions.some(
+          (item) => item.id === id && item.projectId === projectId,
+        )
+      )
+        return false;
       const replyId = nextId("REPLY", current.REPLY);
       current.REPLY += 1;
       setState((previous) => ({
@@ -252,14 +343,17 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           return addDiscussionReply(item, replyId, DEMO_AUTHOR, reply) ?? item;
         }),
       }));
+      return true;
     },
-    [],
+    [state.discussions],
   );
 
   return (
     <PortalContext.Provider
       value={{
         ...state,
+        recentRecords,
+        recordVisit,
         createBug,
         transitionBug,
         addBugMessage: postBugMessage,
@@ -267,6 +361,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         transitionHelp,
         createFeature,
         transitionFeature,
+        addFeatureNote: postFeatureNote,
         createFeedback,
         reviewFeedback,
         createGuide,

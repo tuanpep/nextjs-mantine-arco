@@ -9,9 +9,35 @@ import {
 
 export const bugSeverities = ["Low", "Medium", "High", "Critical"] as const;
 export type BugSeverity = (typeof bugSeverities)[number];
-export const bugStatuses = ["Open", "In progress", "Resolved"] as const;
+export const bugStatuses = [
+  "Open",
+  "In progress",
+  "Waiting for reporter",
+  "Resolved",
+] as const;
 export type BugStatus = (typeof bugStatuses)[number];
-export type BugNoteAction = "start" | "resolve" | "reopen";
+export type BugNoteAction = "start" | "resolve" | "reopen" | "wait" | "resume";
+
+export const bugTextLimits = {
+  title: 160,
+  happened: 10000,
+  steps: 10000,
+  expected: 10000,
+  environment: 500,
+  correlationId: 500,
+  impactDetail: 10000,
+  pageUrl: 2048,
+} as const;
+
+export function validateBugText(
+  value: string,
+  limit: number,
+  required = true,
+): "required" | "tooLong" | null {
+  const text = value.trim();
+  if (!text && required) return "required";
+  return text.length > limit ? "tooLong" : null;
+}
 
 export type BugReport = {
   id: string;
@@ -19,6 +45,7 @@ export type BugReport = {
   title: string;
   happened: string;
   steps: string;
+  reproduction: "known" | "unknown";
   expected: string;
   environment: string;
   correlationId: string;
@@ -29,8 +56,13 @@ export type BugReport = {
   urgency: Urgency;
   severity: BugSeverity;
   status: BugStatus;
-  notes: { action: BugNoteAction; text: string }[];
-  messages: { id: string; text: string }[];
+  notes: { action: BugNoteAction; text: string; order: number }[];
+  messages: {
+    id: string;
+    text: string;
+    order: number;
+    resumedFromWaiting: boolean;
+  }[];
 };
 
 export type BugDraft = {
@@ -38,6 +70,7 @@ export type BugDraft = {
   title: string;
   happened: string;
   steps: string;
+  reproduction?: "known" | "unknown";
   expected: string;
   environment: string;
   correlationId: string;
@@ -51,6 +84,8 @@ export type BugDraft = {
 export type BugTransition =
   | { kind: "start"; note: string }
   | { kind: "resolve"; note: string }
+  | { kind: "wait"; note: string }
+  | { kind: "resume"; note: string }
   | { kind: "reopen"; note: string };
 
 export function isBugSeverity(value: string): value is BugSeverity {
@@ -60,11 +95,23 @@ export function isBugSeverity(value: string): value is BugSeverity {
 export function createBugReport(id: string, draft: BugDraft): BugReport | null {
   const title = draft.title.trim();
   const happened = draft.happened.trim();
-  const steps = draft.steps.trim();
+  const reproduction = draft.reproduction ?? "known";
+  if (reproduction !== "known" && reproduction !== "unknown") return null;
+  const steps = reproduction === "unknown" ? "" : draft.steps.trim();
   const expected = draft.expected.trim();
   const environment = draft.environment.trim();
   const pageUrl = draft.pageUrl.trim();
-  if (!title || !happened || !steps || !expected || !environment) return null;
+  if (
+    validateBugText(title, bugTextLimits.title) ||
+    validateBugText(happened, bugTextLimits.happened) ||
+    validateBugText(steps, bugTextLimits.steps, reproduction === "known") ||
+    validateBugText(expected, bugTextLimits.expected) ||
+    validateBugText(environment, bugTextLimits.environment, false) ||
+    validateBugText(draft.correlationId, bugTextLimits.correlationId, false) ||
+    validateBugText(draft.impactDetail, bugTextLimits.impactDetail, false) ||
+    validateBugText(pageUrl, bugTextLimits.pageUrl, false)
+  )
+    return null;
   if (pageUrl && !isPageUrl(pageUrl)) return null;
   if (!isImpactScope(draft.impactScope) || !isUrgency(draft.urgency))
     return null;
@@ -81,6 +128,7 @@ export function createBugReport(id: string, draft: BugDraft): BugReport | null {
     title,
     happened,
     steps,
+    reproduction,
     expected,
     environment,
     correlationId: draft.correlationId.trim(),
@@ -121,19 +169,26 @@ export function addBugMessage(
   text: string,
 ): BugReport | null {
   const message = text.trim();
-  if (!message || bug.status === "Resolved") return null;
+  if (validateBugText(message, 10000)) return null;
+  const resumedFromWaiting = bug.status === "Waiting for reporter";
   return {
     ...bug,
-    messages: [...bug.messages, { id, text: message }],
+    status: resumedFromWaiting ? "Open" : bug.status,
+    messages: [
+      ...bug.messages,
+      { id, text: message, order: nextOrder(bug), resumedFromWaiting },
+    ],
   };
 }
 
 export function bugActions(status: BugStatus): BugTransition["kind"][] {
   switch (status) {
     case "Open":
-      return ["start", "resolve"];
+      return ["start", "wait", "resolve"];
     case "In progress":
-      return ["resolve"];
+      return ["wait", "resolve"];
+    case "Waiting for reporter":
+      return ["resume", "resolve"];
     case "Resolved":
       return ["reopen"];
     default: {
@@ -202,7 +257,7 @@ export function applyBugTransition(
   action: BugTransition,
 ): BugReport | null {
   const text = action.note.trim();
-  if (!text) return null;
+  if (validateBugText(text, 10000)) return null;
   switch (action.kind) {
     case "start":
       if (bug.status !== "Open") return null;
@@ -210,6 +265,12 @@ export function applyBugTransition(
     case "resolve":
       if (bug.status === "Resolved") return null;
       return append(bug, "Resolved", "resolve", text);
+    case "wait":
+      if (bug.status !== "Open" && bug.status !== "In progress") return null;
+      return append(bug, "Waiting for reporter", "wait", text);
+    case "resume":
+      if (bug.status !== "Waiting for reporter") return null;
+      return append(bug, "Open", "resume", text);
     case "reopen":
       if (bug.status !== "Resolved") return null;
       return append(bug, "Open", "reopen", text);
@@ -229,6 +290,16 @@ function append(
   return {
     ...bug,
     status,
-    notes: [...bug.notes, { action, text }],
+    notes: [...bug.notes, { action, text, order: nextOrder(bug) }],
   };
+}
+
+function nextOrder(bug: BugReport): number {
+  return (
+    Math.max(
+      0,
+      ...bug.notes.map((note) => note.order),
+      ...bug.messages.map((message) => message.order),
+    ) + 1
+  );
 }

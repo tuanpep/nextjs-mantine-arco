@@ -53,6 +53,7 @@ import { writeSidebarCollapsedCookie } from "../lib/sidebar-preference";
 
 import { NavGroup } from "./nav-group";
 import { ProjectSwitcher } from "./project-switcher";
+import { RecordVisitTracker } from "./record-visit-tracker";
 
 const projectOptions = applications.map((item) => ({
   value: item.id,
@@ -140,6 +141,7 @@ export function WorkspaceShell({
       }}
       padding={0}
     >
+      <RecordVisitTracker />
       <Anchor
         href="#main-content"
         size="sm"

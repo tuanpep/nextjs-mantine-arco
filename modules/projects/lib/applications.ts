@@ -3,7 +3,7 @@ export type Application = {
   name: string;
   initials: string;
   owner: string;
-  description: string;
+  descriptionKey: "beaconDescription" | "orchidDescription";
 };
 
 export const DEFAULT_PROJECT_ID = "beacon-portal";
@@ -14,14 +14,14 @@ export const applications: Application[] = [
     name: "Beacon Portal",
     initials: "BP",
     owner: "Product Services",
-    description: "Truy cập sản phẩm nội bộ",
+    descriptionKey: "beaconDescription",
   },
   {
     id: "orchid-reports",
     name: "Orchid Reports",
     initials: "OR",
     owner: "Business Analytics",
-    description: "Báo cáo và xuất dữ liệu theo lịch",
+    descriptionKey: "orchidDescription",
   },
 ];
 

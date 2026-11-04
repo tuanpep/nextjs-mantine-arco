@@ -1,6 +1,18 @@
 export const featureStatuses = ["Submitted", "Accepted", "Declined"] as const;
 export type FeatureStatus = (typeof featureStatuses)[number];
-export type FeatureNoteAction = "accept" | "decline";
+export type FeatureNoteAction = "accept" | "decline" | "comment";
+
+export const FEATURE_TITLE_MAX_LENGTH = 160;
+export const FEATURE_TEXT_MAX_LENGTH = 10000;
+
+export function validateFeatureText(
+  value: string,
+  maxLength: number,
+): "required" | "tooLong" | null {
+  const text = value.trim();
+  if (!text) return "required";
+  return text.length > maxLength ? "tooLong" : null;
+}
 
 export type FeatureRequest = {
   id: string;
@@ -29,7 +41,12 @@ export function createFeatureRequest(
   const title = draft.title.trim();
   const problem = draft.problem.trim();
   const outcome = draft.outcome.trim();
-  if (!title || !problem || !outcome) return null;
+  if (
+    validateFeatureText(title, FEATURE_TITLE_MAX_LENGTH) ||
+    validateFeatureText(problem, FEATURE_TEXT_MAX_LENGTH) ||
+    validateFeatureText(outcome, FEATURE_TEXT_MAX_LENGTH)
+  )
+    return null;
   return {
     id,
     projectId: draft.projectId,
@@ -59,9 +76,11 @@ export function featureActions(
 
 export function featureInView(
   item: FeatureRequest,
-  view: "open" | "closed",
+  view: "open" | "closed" | "all",
 ): boolean {
   switch (view) {
+    case "all":
+      return true;
     case "open":
       return item.status === "Submitted";
     case "closed":
@@ -78,7 +97,11 @@ export function applyFeatureTransition(
   action: FeatureTransition,
 ): FeatureRequest | null {
   const text = action.note.trim();
-  if (!text || item.status !== "Submitted") return null;
+  if (
+    validateFeatureText(text, FEATURE_TEXT_MAX_LENGTH) ||
+    item.status !== "Submitted"
+  )
+    return null;
   switch (action.kind) {
     case "accept":
       return append(item, "Accepted", "accept", text);
@@ -89,6 +112,15 @@ export function applyFeatureTransition(
       return neverAction;
     }
   }
+}
+
+export function addFeatureNote(
+  item: FeatureRequest,
+  note: string,
+): FeatureRequest | null {
+  const text = note.trim();
+  if (validateFeatureText(text, FEATURE_TEXT_MAX_LENGTH)) return null;
+  return append(item, item.status, "comment", text);
 }
 
 function append(

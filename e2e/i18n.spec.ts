@@ -1,5 +1,18 @@
 import { expect, test } from "@playwright/test";
 
+test("home app descriptions follow the selected locale", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByText(/Truy cập sản phẩm nội bộ/)).toBeVisible();
+  await page.getByRole("combobox", { name: "Ngôn ngữ" }).selectOption("en");
+  await expect(page.getByText(/Internal product access/)).toBeVisible();
+  await expect(
+    page.getByText(/Reports and scheduled data exports/),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Session records" }),
+  ).toBeVisible();
+});
+
 test("Vietnamese default, keyboard switching, persistence, and unchanged URLs", async ({
   page,
   context,
