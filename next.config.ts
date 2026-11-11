@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
       "@mantine/core",
       "@mantine/form",
       "@mantine/hooks",
+      "@tabler/icons-react",
       "@tanstack/react-query",
     ],
   },

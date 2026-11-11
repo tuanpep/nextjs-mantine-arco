@@ -4,17 +4,17 @@ A check in one entry point does not cover the others. The layout, the page, a se
 
 ## Who decides
 
-| Entry | Does | Does not |
-| --- | --- | --- |
-| Layout | Chrome, sidebar cookie, user menu | Authorize a record. A layout does not re-render on client navigation, and it does not stop the page, a route handler, or an action from running |
-| Page | Await params, `notFound()` or redirect for this URL, pass ids and a permission prop | Own the list, the form, or the record array |
-| Feature `lib/` | Pure rules. `createX` returns the record or `null` | React, `fetch`, or a session lookup |
-| Feature `actions.ts` | The write the screen performs | Trust that the page already checked |
-| `route.ts` | The write or read an external client performs | Repeat a write that already has an action |
-| `proxy.ts` | Optimistic redirect from the cookie | Be the only protection for a record |
-| Client screen | Hide a control. Read `usePortal()` | Import `server-only` code, a secret, or the session check |
+| Entry                | Does                                                                                | Does not                                                                                                                                        |
+| -------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Layout               | Chrome, sidebar cookie, user menu                                                   | Authorize a record. A layout does not re-render on client navigation, and it does not stop the page, a route handler, or an action from running |
+| Page                 | Await params, `notFound()` or redirect for this URL, pass ids and a permission prop | Own the list, the form, or the record array                                                                                                     |
+| Feature `lib/`       | Pure rules. `createX` returns the record or `null`                                  | React, `fetch`, or a session lookup                                                                                                             |
+| Feature `actions.ts` | The write the screen performs                                                       | Trust that the page already checked                                                                                                             |
+| `route.ts`           | The write or read an external client performs                                       | Repeat a write that already has an action                                                                                                       |
+| `proxy.ts`           | Optimistic redirect from the cookie                                                 | Be the only protection for a record                                                                                                             |
+| Client screen        | Hide a control. Read `usePortal()`                                                  | Import `server-only` code, a secret, or the session check                                                                                       |
 
-`proxy.ts` stays a last resort for redirects and headers. Do not add `middleware.ts`. Locale stays a cookie (`DX_LOCALE`); do not add a locale proxy.
+Root `proxy.ts` is optional and a last resort for redirects and headers. Do not add `middleware.ts`. Locale stays a cookie (`DX_LOCALE`); do not add a locale proxy.
 
 ## Server and client
 
@@ -23,6 +23,10 @@ Pages and layouts stay Server Components. `"use client"` goes on the screen in `
 Use a Client Component for state, event handlers, and browser APIs. Use a Server Component for request data and secrets.
 
 Props passed into a Client Component are visible to the browser. Pass the fields the screen renders: ids, labels, and plain rows. Do not pass a session, a token, or a raw API payload.
+
+## Today vs server I/O
+
+Most record flows are **in-memory** for this browser session: screens read and mutate through `usePortal()`. The only server action in wide use today is `lib/i18n/actions.ts` (`setLocale`). Add `modules/<feature>/actions.ts` when a screen mutation must hit the network or persist outside the portal model; until then, portal methods are the write path.
 
 ## Reads
 

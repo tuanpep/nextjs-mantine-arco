@@ -6,16 +6,16 @@ Add a file when an existing file would mix two jobs. Add a folder only when the 
 
 ## Layers
 
-| Layer            | Owns                                                                                          | Must not own                                      |
-| ---------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `app/`           | `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`, `providers.tsx`, `env.ts` | Lists, forms, domain types, fetch helpers     |
-| `modules/<feature>/components/` | Screens and widgets for that domain                                                | Another feature's types                           |
-| `modules/<feature>/lib/` | Types, guards, transitions, nuqs parsers, fixtures                                    | JSX, `"use client"` on pure modules               |
-| `modules/ui/components/` | Page chrome, lists, empty states, skeletons used by a second feature                 | Feature types, portal, routing rules              |
-| `modules/portal/` | Session store that holds every record collection and the create/transition methods    | Route files, page chrome, one feature's filters   |
-| `modules/projects/` | Shell, project catalog (`applications.ts`), breadcrumbs (`recordTrail`)              | A single record type's fields                     |
-| `modules/account/` | Keycloak, profile, permissions, `apiFetch`, the one session lookup for actions       | Bug, help, or idea screens                        |
-| `lib/`           | i18n, fonts, repeated detail fields (`form-details`)                                          | Anything that imports `modules/` or `app/`        |
+| Layer                           | Owns                                                                                             | Must not own                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| `app/`                          | `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`, `providers.tsx`, `env.ts` | Lists, forms, domain types, fetch helpers       |
+| `modules/<feature>/components/` | Screens and widgets for that domain                                                              | Another feature's types                         |
+| `modules/<feature>/lib/`        | Types, guards, transitions, nuqs parsers, fixtures                                               | JSX, `"use client"` on pure modules             |
+| `modules/ui/components/`        | Page chrome, lists, empty states, skeletons used by a second feature                             | Feature types, portal, routing rules            |
+| `modules/portal/`               | Session store that holds every record collection and the create/transition methods               | Route files, page chrome, one feature's filters |
+| `modules/projects/`             | Shell, project catalog (`applications.ts`), breadcrumbs (`recordTrail`)                          | A single record type's fields                   |
+| `modules/account/`              | Keycloak, profile, permissions, `apiFetch`, the one session lookup for actions                   | Bug, help, or idea screens                      |
+| `lib/`                          | i18n, fonts, repeated detail fields (`form-details`)                                             | Anything that imports `modules/` or `app/`      |
 
 Fixed modules:
 
@@ -25,7 +25,9 @@ Fixed modules:
 - **ui** — shared Mantine composition. Lists render `RecordCollection`. Pages use `PageFrame` and `PageHeader`. Suspense fallbacks come from `page-skeletons.tsx` (`CollectionPageSkeleton`, `DetailPageSkeleton`, `FormPageSkeleton`, `OverviewPageSkeleton`, `WorkspaceShellSkeleton`). `RecordCollection` takes plain rows. If a prop needs a feature type, that UI belongs in the feature.
 - **Record features** — `bug-reports`, `help`, `feature-requests`, `feedback`, `guides`, `discussions`. One folder per record type.
 
-There is no `common/`, `shared/`, or root `components/`. Do not add `src/app`, `pages/`, `packages/`, or a root `hooks/` or `actions/`.
+There is no `common/`, `shared/`, or new root `components/`. Do not add `src/app`, `pages/`, `packages/`, or a root `hooks/` or `actions/`.
+
+Signed-out `/` uses `modules/ui/components/landing-page.tsx` and `app-header.tsx`. Put new screens in `modules/<feature>/components/`.
 
 ## Imports
 
@@ -44,7 +46,7 @@ record feature  →  not another record feature
 
 Inside a feature, import with relative paths (`../lib/state`, `./use-bug-copy`). Across layers, use `@/`. Do not add `index.ts` under `modules/`. `lib/form-details/index.ts` is the only barrel; leave it as the public entry for that folder.
 
-Tests may import another feature's fixtures. Production modules may not. Colocate unit tests as `name.test.ts` or `name.test.tsx` beside the file. Browser journeys stay one spec each in `e2e/`.
+Tests may import another feature's fixtures. Production modules may not. See [testing](testing.md).
 
 ## Routes
 
@@ -72,7 +74,7 @@ export default function Page({
 
 Pass ids and any server-known permission into the screen as props. The screen does not re-parse the URL. The project hub calls `notFound()` when `getApplication` misses. Record screens render `ProjectUnavailable` in the client component. Follow the screen you are extending. When an id must 404 or redirect before the client paints, do that in the page.
 
-Request interception is `proxy.ts` beside `app/` (Node runtime). It may redirect from the cookie. It is not the check that protects a record. Do not create `middleware.ts`. See [boundaries](boundaries.md).
+Optional request interception is root `proxy.ts` (same level as `app/`), exporting `proxy` — Node runtime by default. The repo may omit this file until redirects or headers need it. It may redirect from a cookie; it is not the check that protects a record. Do not create `middleware.ts`. See [boundaries](boundaries.md) and [runtime](runtime.md).
 
 Do not use `layout`, `template`, `page`, `loading`, `error`, `global-error`, `not-found`, `forbidden`, `unauthorized`, `route`, `default`, `icon`, `apple-icon`, `opengraph-image`, `twitter-image`, `sitemap`, `robots`, or `manifest` except for their Next.js role. Add a parallel or intercepting route only for a real slot or modal; a parallel slot needs a sibling `default.tsx`.
 
@@ -98,21 +100,22 @@ modules/<feature>/
 
 A list keeps its parsers in `lib/search-params.ts`, reads them with `useQueryStates`, narrows rows with `forProject` and `includesQuery` from `modules/portal/lib/search`, and passes plain rows into `RecordCollection`. Extend `RecordCollection` when a second list needs the same control. Do not copy a list layout into the feature.
 
-Forms keep the draft in the form until submit, then call the portal create method. Repeated detail fields use `lib/form-details`. User-visible strings go in both message files under that feature's namespace (`Bugs`, `Help`, `Features`, `Feedback`, `Guides`, `Discussions`). Shell copy uses `Workspace`. Shared list chrome uses `Portal`.
+Forms keep the draft in the form until submit, then call the portal create method. Repeated detail fields use `lib/form-details`. User-visible strings: [i18n](i18n.md).
 
 ## When a feature grows
 
-| Situation | Do this |
-| --- | --- |
-| `lib/` file mixes a second job (intake rules, attachments) | New file in that feature's `lib/`. Same folder. |
-| A hook has one caller | Keep it beside that component (`use-bug-copy.ts`). |
-| A second file in the feature uses the hook | Move it to the feature `lib/` (`use-profile.ts`). Still no `hooks/` folder. |
-| One URL must render two screens (a list and a calendar) | `views/` for those route screens. Pieces stay in `components/`. |
-| A widget's parts make the parent file hard to scan | One nested folder under `components/` (`book-upload/` once it has siblings). |
-| A function starts calling the network or the database | Pure rules stay in `state.ts`. That operation goes in `actions.ts`. A second operation gets its own file next to it. |
-| Several actions need the session | One helper in `modules/account`. Each action calls it. |
-| Shared UI grows a prop that takes a feature type | Move that UI back into the feature. |
-| A second app must use the domain without React | Only then a package. Do not add `packages/` before that. |
+| Situation                                                  | Do this                                                                                                              |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `lib/` file mixes a second job (intake rules, attachments) | New file in that feature's `lib/`. Same folder.                                                                      |
+| A hook has one caller                                      | Keep it beside that component (`use-bug-copy.ts`).                                                                   |
+| A second file in the feature uses the hook                 | Move it to the feature `lib/` (`use-profile.ts`). Still no `hooks/` folder.                                          |
+| One URL must render two screens (a list and a calendar)    | `views/` for those route screens. Pieces stay in `components/`.                                                      |
+| A widget's parts make the parent file hard to scan         | One nested folder under `components/` (`book-upload/` once it has siblings).                                         |
+| A function starts calling the network or the database      | Pure rules stay in `state.ts`. That operation goes in `actions.ts`. A second operation gets its own file next to it. |
+| Several actions need the session                           | One helper in `modules/account`. Each action calls it.                                                               |
+| Shared UI grows a prop that takes a feature type           | Move that UI back into the feature.                                                                                  |
+| A second app must use the domain without React             | Only then a package. Do not add `packages/` before that. See [ecosystem](ecosystem.md).                              |
+| Team asks to “match Cal.com / monorepo”                    | Stay on `modules/` unless [ecosystem](ecosystem.md) triggers (second deployable, shared package consumers) fire.     |
 
 Do not add `hooks/`, `views/`, `services/`, `repositories/`, or `store/` to match a larger codebase. List, detail, and form are three routes, so they stay flat `components/`.
 

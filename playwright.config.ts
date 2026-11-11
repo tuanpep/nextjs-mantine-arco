@@ -8,7 +8,6 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:4202",
     trace: "on-first-retry",
-    // Feature tests exercise the Vietnamese UI. Locale tests clear this cookie.
     storageState: {
       cookies: [
         {
@@ -35,9 +34,5 @@ export default defineConfig({
     command: "npm run dev",
     url: "http://localhost:4202",
     reuseExistingServer: !process.env.CI,
-    env: {
-      ...process.env,
-      NEXT_PUBLIC_E2E_AUTH_BYPASS: "1",
-    },
   },
 });

@@ -1,6 +1,11 @@
 # Next.js 16 runtime (this repo)
 
-Sources: bundled docs under `node_modules/next/dist/docs/`, [upgrade to 16](https://nextjs.org/docs/app/guides/upgrading/version-16), [proxy](https://nextjs.org/docs/app/api-reference/file-conventions/proxy), [async dynamic APIs](https://nextjs.org/docs/messages/sync-dynamic-apis).
+Sources: `node_modules/next/dist/docs/index.md`, [upgrade to 16](https://nextjs.org/docs/app/guides/upgrading/version-16), [proxy](https://nextjs.org/docs/app/api-reference/file-conventions/proxy), [async dynamic APIs](https://nextjs.org/docs/messages/sync-dynamic-apis).
+
+Bundled paths worth opening first:
+
+- Cache / fetching: `01-app/01-getting-started/08-caching.md`, `01-app/02-guides/adopting-partial-prefetching.md`
+- Proxy: `01-app/03-api-reference/03-file-conventions/proxy.md`
 
 ## Async request APIs
 
@@ -24,16 +29,16 @@ In this repo the await lives in an inner async component under `Suspense`, so th
 `next.config.ts` sets `cacheComponents: true` and `partialPrefetching: true`. Do not turn them off casually.
 
 - Keep request-time reads (`cookies()`, `headers()`, `searchParams`) inside the narrowest Suspense / dynamic boundary so the static shell can still prerender.
-- Use `"use cache"` only when a stable, explicit cache boundary is required; read the local Cache Components guide first.
+- Use `"use cache"` only when a stable, explicit cache boundary is required; read `01-app/01-getting-started/08-caching.md` first.
 - Prefer `revalidateTag` / `updateTag` / `refresh` from current docs over memorized Next 14/15 cache APIs.
 
 ## Proxy (not middleware)
 
-`middleware.ts` is deprecated. Request interception is `proxy.ts` next to `app/`, exporting `proxy`. Runtime is Node.js (not Edge). Prefer route handlers, layouts, or Server Actions when they suffice; use proxy as a last resort for redirects, rewrites, and headers.
+`middleware.ts` is deprecated. When needed, add root `proxy.ts` (same level as `app/`), exporting `proxy`. Proxy defaults to the Node.js runtime. This repository may not have `proxy.ts` yet. Prefer route handlers, layouts, or Server Actions when they suffice; use proxy as a last resort for redirects, rewrites, and headers.
 
 Who may authorize a record, and how a write chooses its door, is in [boundaries](boundaries.md).
 
-Do not add next-intl middleware/proxy for locale prefixes — this app uses a cookie locale (`DX_LOCALE`) without a `[locale]` segment. Change locale via `lib/i18n/actions.ts` (`setLocale`).
+Do not add next-intl middleware/proxy for locale prefixes — this app uses a cookie locale (`DX_LOCALE`) without a `[locale]` segment. See [i18n](i18n.md).
 
 ## Server Actions and RSC
 

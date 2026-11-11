@@ -4,19 +4,18 @@ import "@/pajamas.module.css";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale } from "next-intl/server";
+import { getLocale, getMessages } from "next-intl/server";
 import { Suspense, type ReactNode } from "react";
 
 import { fontClassName } from "@/lib/fonts";
 import { AppProviders } from "./providers";
 
 export const metadata: Metadata = {
-  title: { default: "DX Portal", template: "%s | DX Portal" },
-  description:
-    "Không gian dự án cho báo cáo lỗi, trợ giúp, đề xuất, phản hồi, hướng dẫn và thảo luận. Chỉ dùng để minh họa.",
+  title: { default: "App", template: "%s | App" },
+  description: "Next.js starter with Mantine theming and next-intl.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <Suspense>
       <LocalizedDocument>{children}</LocalizedDocument>
@@ -26,13 +25,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
 async function LocalizedDocument({ children }: { children: ReactNode }) {
   const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <html lang={locale} {...mantineHtmlProps} className={fontClassName}>
       <head>
         <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body>
-        <NextIntlClientProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <AppProviders>{children}</AppProviders>
         </NextIntlClientProvider>
       </body>

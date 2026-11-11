@@ -1,10 +1,13 @@
 export const locales = ["vi", "en"] as const;
+
 export type Locale = (typeof locales)[number];
+
 export const defaultLocale: Locale = "vi";
+
 export const localeCookie = "DX_LOCALE";
 
 export function isLocale(value: unknown): value is Locale {
-  return value === "vi" || value === "en";
+  return typeof value === "string" && locales.includes(value as Locale);
 }
 
 export function resolveLocale(value: unknown): Locale {
