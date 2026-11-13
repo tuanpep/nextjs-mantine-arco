@@ -9,6 +9,6 @@
   },
   "Home": {
     "title": "Welcome",
-    "body": "Next.js starter with Mantine and GitLab Pajamas theming. Add features under app/ and components/."
+    "body": "Next.js starter with Mantine and GitLab Pajamas theming. Add thin routes under app/ and screens under modules/."
   }
 }

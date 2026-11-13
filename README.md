@@ -1,6 +1,6 @@
 # Next.js frontend template
 
-Foundation: **Next.js 16**, **Mantine** + **GitLab Pajamas** (`theme.ts`, `pajamas.module.css`), **TanStack Query**, **next-intl** (Vietnamese default, English). Workspace routes under `app/(workspace)/`; architecture rules live in `.cursor/skills/nextjs-frontend/`.
+Foundation: **Next.js 16**, **Mantine** + **GitLab Pajamas** (`theme.ts`, `pajamas.module.css`), **TanStack Query**, **next-intl** (Vietnamese default, English). **App / modules** layout and placement: `.cursor/skills/app-modules/SKILL.md` (Cursor skill `@app-modules`).
 
 ```bash
 npm install

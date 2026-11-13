@@ -9,6 +9,6 @@
   },
   "Home": {
     "title": "Chào mừng",
-    "body": "Mẫu Next.js với Mantine và theme GitLab Pajamas. Thêm tính năng trong app/ và components/."
+    "body": "Mẫu Next.js với Mantine và theme GitLab Pajamas. Thêm route mỏng trong app/ và màn hình trong modules/."
   }
 }
