@@ -1,14 +1,81 @@
 {
   "App": {
-    "name": "Ứng dụng",
     "language": "Ngôn ngữ",
     "languageError": "Không thể đổi ngôn ngữ. Vui lòng thử lại.",
     "lightTheme": "Chuyển sang giao diện sáng",
     "darkTheme": "Chuyển sang giao diện tối",
     "skipToContent": "Chuyển đến nội dung chính"
   },
-  "Home": {
-    "title": "Chào mừng",
-    "body": "Mẫu Next.js với Mantine và theme GitLab Pajamas. Thêm route mỏng trong app/ và màn hình trong modules/."
+  "ComponentBook": {
+    "title": "Thư viện giao diện",
+    "menu": "Điều hướng thành phần",
+    "toggleMenu": "Bật hoặc tắt menu thành phần",
+    "search": "Tìm thành phần",
+    "empty": "Không có thành phần phù hợp.",
+    "categories": {
+      "inputs": "Nhập liệu",
+      "navigation": "Điều hướng",
+      "overlays": "Lớp phủ",
+      "display": "Hiển thị",
+      "feedback": "Phản hồi"
+    },
+    "status": {
+      "published": "Đã xuất bản",
+      "draft": "Bản nháp",
+      "review": "Đang duyệt"
+    },
+    "components": {
+      "primary": "Chính",
+      "secondary": "Phụ",
+      "outline": "Viền",
+      "light": "Nhạt",
+      "subtle": "Tinh tế",
+      "danger": "Nguy hiểm",
+      "searchableSelect": "Tìm trạng thái",
+      "searchableMultiSelect": "Tìm nhiều trạng thái",
+      "nothingFound": "Không có kết quả",
+      "tab": {
+        "overview": "Tổng quan",
+        "analytics": "Phân tích",
+        "settings": "Cài đặt"
+      },
+      "tabOverviewBody": "Nội dung tổng quan",
+      "tabAnalyticsBody": "Nội dung phân tích",
+      "tabSettingsBody": "Nội dung cài đặt"
+    },
+    "extensions": {
+      "mentions": "Nhắc đến một người bằng @",
+      "comment": "Bản nháp đã sẵn sàng để duyệt.",
+      "available": "Người có thể thêm",
+      "members": "Thành viên nhóm",
+      "search": "Tìm kiếm",
+      "add": "Thêm vào nhóm",
+      "remove": "Xóa khỏi nhóm",
+      "question": "Xác nhận thao tác mẫu này?",
+      "confirm": "Xác nhận",
+      "cancel": "Hủy",
+      "action": "Mở xác nhận",
+      "confirmed": "Đã xác nhận thao tác",
+      "details": "Xem chi tiết",
+      "resize": "Đổi kích thước bảng thành viên",
+      "sample": "Mẫu",
+      "localOnly": "Chỉ là bản mẫu. Tệp không được gửi hoặc lưu.",
+      "upload": "Chọn tệp mẫu",
+      "removeFile": "Xóa tệp",
+      "retry": "Thử lại",
+      "progress": "Tiến độ của {name}",
+      "uploading": "Đang tải lên",
+      "complete": "Hoàn tất",
+      "failed": "Thất bại",
+      "cancelled": "Đã hủy",
+      "directory": "Danh sách nhân sự",
+      "searchPeople": "Tìm người",
+      "selectPerson": "Chọn {name}",
+      "selectPage": "Chọn trang này",
+      "name": "Tên",
+      "empty": "Không có kết quả",
+      "backTop": "Về đầu trang",
+      "showBackTop": "Hiện nút về đầu trang"
+    }
   }
 }

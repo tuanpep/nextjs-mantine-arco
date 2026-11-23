@@ -8,31 +8,31 @@
 
 ## Present now
 
-`app/` (layout, page, providers, env) · `lib/i18n`, `lib/query`, `lib/fonts` · `modules/ui/components/` · `messages` (`App`, `Home`) · `test-utils/render.tsx` · root `__tests__/` for lib-only units · port **4202** · `cacheComponents` + `partialPrefetching`
+`app/` (layout, page, providers, env) · `lib/i18n`, `lib/query` · `modules/ui/components/<group>/`, `modules/ui/component-book/`, `modules/ui/theme/` · `messages` (`App`, `ComponentBook`) · `test-utils/render.tsx` · root `__tests__/` for lib-only units · port **4202** · `cacheComponents` + `partialPrefetching`
 
 ## Absent until needed
 
-| Path | When |
-| ---- | ---- |
-| `app/(workspace)/` | Signed-in shell |
-| `modules/account/` | Auth, `apiFetch` |
-| `modules/portal/` | `usePortal()` records |
-| `modules/projects/` | Catalog, breadcrumbs |
-| `modules/<record>/` | Record routes |
-| `proxy.ts` | Redirects/headers last resort |
+| Path                | When                          |
+| ------------------- | ----------------------------- |
+| `app/(workspace)/`  | Signed-in shell               |
+| `modules/account/`  | Auth, `apiFetch`              |
+| `modules/portal/`   | `usePortal()` records         |
+| `modules/projects/` | Catalog, breadcrumbs          |
+| `modules/<record>/` | Record routes                 |
+| `proxy.ts`          | Redirects/headers last resort |
 
 Normative rules: [placement](placement.md) even if folder missing.
 
 ## Write path
 
-| Stage | Record writes |
-| ----- | ------------- |
-| Starter | `lib/i18n/actions.ts` only |
+| Stage              | Record writes                                       |
+| ------------------ | --------------------------------------------------- |
+| Starter            | `lib/i18n/actions.ts` only                          |
 | Workspace + portal | Portal methods; `actions.ts` when persisting to API |
 
 ## Scaffold order (workspace)
 
-`(workspace)` layout → `account`? → `projects`? → `portal`? → first record + routes → `en`/`vi` namespaces. Shell: [gitlab-pajamas](../../gitlab-pajamas/SKILL.md).
+`(workspace)` layout → `account`? → `projects`? → `portal`? → first record + routes → `en`/`vi` namespaces.
 
 ## Maintain
 

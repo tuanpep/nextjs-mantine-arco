@@ -21,7 +21,7 @@ Data / write:
   [ ] forms: mantine-form-zod-resolver if client validation
 
 UI / shell:
-  [ ] ui.md + gitlab-pajamas if chrome/nav
+  [ ] ui.md if chrome/nav
   [ ] no god screen: split fetch vs form vs list when touched file mixes them
 ```
 

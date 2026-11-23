@@ -1,14 +1,81 @@
 {
   "App": {
-    "name": "App",
     "language": "Language",
     "languageError": "Could not change language. Please try again.",
     "lightTheme": "Switch to light theme",
     "darkTheme": "Switch to dark theme",
     "skipToContent": "Skip to content"
   },
-  "Home": {
-    "title": "Welcome",
-    "body": "Next.js starter with Mantine and GitLab Pajamas theming. Add thin routes under app/ and screens under modules/."
+  "ComponentBook": {
+    "title": "Component Book",
+    "menu": "Component navigation",
+    "toggleMenu": "Toggle component menu",
+    "search": "Search components",
+    "empty": "No components match your search.",
+    "categories": {
+      "inputs": "Inputs",
+      "navigation": "Navigation",
+      "overlays": "Overlays",
+      "display": "Display",
+      "feedback": "Feedback"
+    },
+    "status": {
+      "published": "Published",
+      "draft": "Draft",
+      "review": "In review"
+    },
+    "components": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "outline": "Outline",
+      "light": "Light",
+      "subtle": "Subtle",
+      "danger": "Danger",
+      "searchableSelect": "Searchable status",
+      "searchableMultiSelect": "Searchable statuses",
+      "nothingFound": "No results",
+      "tab": {
+        "overview": "Overview",
+        "analytics": "Analytics",
+        "settings": "Settings"
+      },
+      "tabOverviewBody": "Overview content",
+      "tabAnalyticsBody": "Analytics content",
+      "tabSettingsBody": "Settings content"
+    },
+    "extensions": {
+      "mentions": "Mention someone with @",
+      "comment": "The draft is ready for review.",
+      "available": "Available people",
+      "members": "Team members",
+      "search": "Search",
+      "add": "Add to team",
+      "remove": "Remove from team",
+      "question": "Confirm this example action?",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "action": "Open confirmation",
+      "confirmed": "Action confirmed",
+      "details": "Show details",
+      "resize": "Resize member panel",
+      "sample": "Sample",
+      "localOnly": "Demo only. Files are not sent or stored.",
+      "upload": "Choose a demo file",
+      "removeFile": "Remove file",
+      "retry": "Retry",
+      "progress": "Progress for {name}",
+      "uploading": "Uploading",
+      "complete": "Complete",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "directory": "People directory",
+      "searchPeople": "Search people",
+      "selectPerson": "Select {name}",
+      "selectPage": "Select this page",
+      "name": "Name",
+      "empty": "No results",
+      "backTop": "Back to top",
+      "showBackTop": "Show back-to-top button"
+    }
   }
 }

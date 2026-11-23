@@ -31,9 +31,9 @@ describe("locale configuration", () => {
     expect(catalogKeys(vi).sort()).toEqual(catalogKeys(en).sort());
   });
 
-  it("formats Vietnamese home strings", () => {
+  it("formats Vietnamese component book strings", () => {
     const t = createTranslator({ locale: "vi", messages: vi });
-    expect(t("Home.title")).toBe("Chào mừng");
-    expect(t("App.name")).toBe("Ứng dụng");
+    expect(t("ComponentBook.title")).toBe("Thư viện giao diện");
+    expect(t("ComponentBook.search")).toBe("Tìm thành phần");
   });
 });

@@ -11,7 +11,7 @@
 | E2E | `e2e/*.spec.ts` |
 | RTL + Mantine + Query wrapper | `@/test-utils/render` |
 
-Add `NextIntlClientProvider` in the test when the component calls `useTranslations` ([landing-page.test.tsx](../../../modules/ui/components/landing-page.test.tsx)).
+Add `NextIntlClientProvider` in the test when the component calls `useTranslations`.
 
 Vitest: `vitest.config.ts`, `vitest.setup.ts` — `e2e/` excluded. Playwright: port **4202**, `DX_LOCALE` in config.
 

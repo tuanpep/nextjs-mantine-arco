@@ -2,10 +2,12 @@ import { expect, test } from "@playwright/test";
 
 test("persists locale in cookie after reload", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("combobox", { name: "Ngôn ngữ" }).selectOption("en");
+  await page.getByRole("combobox", { name: "Ngôn ngữ" }).click();
+  await page.getByRole("option", { name: "English" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await page.reload();
   await expect(page.getByRole("combobox", { name: "Language" })).toHaveValue(
-    "en",
+    "English",
   );
 });
 

@@ -1,0 +1,5 @@
+.collapsed {
+  @media (width < $mantine-breakpoint-sm) {
+    visibility: hidden;
+  }
+}

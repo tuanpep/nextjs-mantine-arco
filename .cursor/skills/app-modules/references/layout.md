@@ -25,9 +25,9 @@ Invalid id before paint → `notFound()` in page when siblings do. `proxy.ts` op
 
 ## Errors
 
-| Expected (validation, 404, forbidden) | Unexpected (bugs) |
-| --------------------------------------- | ----------------- |
-| Return values, `notFound()`, inline UI  | `error.tsx`, `global-error.tsx` |
+| Expected (validation, 404, forbidden)  | Unexpected (bugs)               |
+| -------------------------------------- | ------------------------------- |
+| Return values, `notFound()`, inline UI | `error.tsx`, `global-error.tsx` |
 
 Validation in actions: return errors, do not throw. Event-handler errors are not caught by error boundaries.
 
@@ -48,12 +48,12 @@ Loading UI: `*-skeleton.tsx` colocated in the feature `components/`, or `modules
 
 ## When a feature grows
 
-| Signal | Action |
-| ------ | ------ |
-| Second job in `lib/` | New file same folder |
-| Hook: 1 vs 2 callers | Beside component → `lib/` (no `hooks/` folder) |
-| Two screens one URL | `components/views/` |
-| Network in logic | `actions.ts`; pure stays `state.ts` |
-| UI prop needs feature type | Move UI into feature |
+| Signal                     | Action                                         |
+| -------------------------- | ---------------------------------------------- |
+| Second job in `lib/`       | New file same folder                           |
+| Hook: 1 vs 2 callers       | Beside component → `lib/` (no `hooks/` folder) |
+| Two screens one URL        | `components/views/`                            |
+| Network in logic           | `actions.ts`; pure stays `state.ts`            |
+| UI prop needs feature type | Move UI into feature                           |
 
-Kebab-case files; PascalCase export. Mantine + `pajamas.module.css`; CSS module only if Mantine cannot.
+Kebab-case files; PascalCase export. Mantine first; CSS module only if Mantine cannot meet the layout or interaction need.

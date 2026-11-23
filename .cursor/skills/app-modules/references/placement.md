@@ -10,7 +10,7 @@ New code?
 ├─ Copy → messages/en.json + vi.json
 ├─ Interactive screen → modules/<feature>/components/ ("use client" on screen)
 ├─ Pure rules, parsers, fixtures → modules/<feature>/lib/
-├─ Shared UI (plain props only) → modules/ui/components/
+├─ Shared UI (plain props only) → modules/ui/components/<group>/
 ├─ Auth, apiFetch, action session → modules/account/
 ├─ Record session store → modules/portal/
 ├─ Workspace shell, breadcrumbs → modules/projects/
